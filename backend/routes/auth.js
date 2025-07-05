@@ -1,20 +1,23 @@
-
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('crypto');
-const db = require('../config/database');
+const { sql, poolPromise } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Login
+// Login Route
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const pool = await poolPromise;
 
-    const [users] = await db.execute('SELECT * FROM users WHERE email = ?', [email]);
-    
+    const result = await pool.request()
+      .input('email', sql.VarChar, email)
+      .query('SELECT * FROM users WHERE email = @email');
+
+    const users = result.recordset;
+
     if (users.length === 0) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
@@ -26,7 +29,11 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign(
+      { userId: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.json({
       token,
@@ -40,20 +47,26 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('❌ Login Error:', error.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Get current user
-router.get('/me', authenticateToken, (req, res) => {
-  res.json({
-    id: req.user.id,
-    email: req.user.email,
-    firstName: req.user.firstName,
-    lastName: req.user.lastName,
-    role: req.user.role,
-    avatar: req.user.avatar
-  });
+// Get Current User Route
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    res.json({
+      id: req.user.id,
+      email: req.user.email,
+      firstName: req.user.firstName,
+      lastName: req.user.lastName,
+      role: req.user.role,
+      avatar: req.user.avatar
+    });
+  } catch (error) {
+    console.error('❌ Get Me Error:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
 module.exports = router;

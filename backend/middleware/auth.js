@@ -1,7 +1,7 @@
-
 const jwt = require('jsonwebtoken');
-const db = require('../config/database');
+const { poolPromise, sql } = require('../config/database');
 
+// ✅ Token validation middleware
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -12,23 +12,31 @@ const authenticateToken = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const [users] = await db.execute('SELECT * FROM users WHERE id = ?', [decoded.userId]);
-    
-    if (users.length === 0) {
-      return res.status(401).json({ error: 'Invalid token' });
+
+    const pool = await poolPromise;
+    const result = await pool.request()
+      .input('userId', sql.UniqueIdentifier, decoded.userId)
+      .query('SELECT * FROM users WHERE id = @userId');
+
+    const user = result.recordset[0];
+
+    if (!user) {
+      return res.status(401).json({ error: 'Invalid token or user not found' });
     }
 
-    req.user = users[0];
+    req.user = user;
     next();
   } catch (error) {
+    console.error('JWT middleware error:', error.message);
     return res.status(403).json({ error: 'Invalid token' });
   }
 };
 
+// ✅ Role-based authorization middleware
 const authorizeRoles = (...roles) => {
   return (req, res, next) => {
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ error: 'Access denied' });
+      return res.status(403).json({ error: 'Access denied: insufficient role' });
     }
     next();
   };

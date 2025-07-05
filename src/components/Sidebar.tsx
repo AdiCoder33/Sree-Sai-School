@@ -157,8 +157,9 @@ export const Sidebar: React.FC = () => {
                           }`
                         }
                       >
-                        <Icon className="h-5 w-5 flex-shrink-0" />
-                        <span className="font-medium">{item.label}</span>
+                        <Icon className="h-5 w-5 flex-shrink-0 text-black !opacity-100 !visible" />
+                        <span className="font-medium text-sm text-black block">{item.label}</span>
+
                       </NavLink>
                     </SidebarMenuButton>
                   </SidebarMenuItem>

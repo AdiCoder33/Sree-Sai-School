@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types/auth';
 
@@ -13,37 +12,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo
-const mockUsers: User[] = [
-  {
-    id: '1',
-    email: 'principal@sreesaischool.com',
-    firstName: 'John',
-    lastName: 'Principal',
-    role: 'principal'
-  },
-  {
-    id: '2',
-    email: 'teacher@sreesaischool.com',
-    firstName: 'Sarah',
-    lastName: 'Johnson',
-    role: 'teacher'
-  },
-  {
-    id: '3',
-    email: 'parent@sreesaischool.com',
-    firstName: 'Mike',
-    lastName: 'Wilson',
-    role: 'parent'
-  }
-];
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user on mount
     const storedUser = localStorage.getItem('smartschool_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
@@ -52,24 +25,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    setLoading(true);
-    
-    // Mock authentication
-    const foundUser = mockUsers.find(u => u.email === email);
-    if (foundUser && password === 'password123') {
-      setUser(foundUser);
-      localStorage.setItem('smartschool_user', JSON.stringify(foundUser));
-      setLoading(false);
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error('❌ Backend login failed:', data.error);
+        return false;
+      }
+
+      localStorage.setItem('smartschool_user', JSON.stringify(data.user));
+      localStorage.setItem('smartschool_token', data.token);
+      setUser(data.user);
       return true;
+    } catch (error) {
+      console.error('❌ Login error:', error);
+      return false;
     }
-    
-    setLoading(false);
-    return false;
   };
 
   const logout = () => {
     setUser(null);
     localStorage.removeItem('smartschool_user');
+    localStorage.removeItem('smartschool_token');
   };
 
   const updateUser = (userData: Partial<User>) => {

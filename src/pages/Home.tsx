@@ -23,11 +23,17 @@ export const Home: React.FC = () => {
                 </p>
               </div>
             </div>
-            <Link to="/login">
-              <Button className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base px-4 sm:px-6">
-                Login
-              </Button>
-            </Link>
+            <Link
+  to="/login"
+  onClick={() => {
+    localStorage.removeItem("smartschool_user"); // ✨ force fresh login
+  }}
+>
+  <Button className="bg-blue-600 hover:bg-blue-700 text-sm sm:text-base px-4 sm:px-6">
+    Login
+  </Button>
+</Link>
+
           </div>
         </div>
       </header>

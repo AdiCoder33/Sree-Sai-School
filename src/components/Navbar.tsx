@@ -73,7 +73,13 @@ export const Navbar: React.FC = () => {
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={logout}>
+              <DropdownMenuItem
+  onClick={() => {
+    logout();
+    window.location.href = '/';
+  }}
+>
+
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

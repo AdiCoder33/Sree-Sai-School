@@ -52,7 +52,7 @@ export const Navbar: React.FC = () => {
                     {user.firstName} {user.lastName}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user.role === 'principal' ? 'Principal' : user.role}
+                    {user.role === 'admin' ? 'Principal' : user.role}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
                     {user.email}

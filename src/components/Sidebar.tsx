@@ -121,23 +121,18 @@ export const Sidebar: React.FC = () => {
 
   return (
     <SidebarComponent>
-      <SidebarHeader className="p-4 bg-gradient-to-r from-indigo-600 to-blue-700">
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-            <span className="text-indigo-600 font-bold text-lg">SS</span>
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-bold text-white truncate">
-              Sree Sai School
-            </h2>
-            <p className="text-sm text-indigo-100 truncate">
-              Management System
-            </p>
-          </div>
-        </div>
-      </SidebarHeader>
-
+      
       <SidebarContent className="bg-white">
+  {/* Logo moved inside SidebarContent */}
+  <div className="p-4 pb-2 flex items-center space-x-3">
+    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-bold shadow">
+      SS
+    </div>
+    <div className="min-w-0">
+      <h2 className="text-lg font-bold text-gray-900 leading-tight">Sree Sai School</h2>
+      <p className="text-xs text-gray-500 leading-none">Management System</p>
+    </div>
+  </div>
         <SidebarGroup>
           <SidebarGroupLabel className="text-black font-semibold px-4 py-2">Navigation</SidebarGroupLabel>
           <SidebarGroupContent>

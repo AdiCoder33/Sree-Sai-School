@@ -3,12 +3,12 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const multer = require('multer');
 const path = require('path');
-const db = require('../config/database');
+const { poolPromise, sql } = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Multer config
+// Multer configuration for avatar uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/avatars/'),
   filename: (req, file, cb) => {
@@ -17,14 +17,16 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// GET all users (admin only)
+// ✅ Get all users (admin only)
 router.get('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
-    const result = await db.request().query(`
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
       SELECT id, email, firstName, lastName, role, avatar, phone, 
              address, qualification, experience, subject, dateOfJoining, 
              emergencyContact, childName, childClass, occupation, 
-             status, created_at 
+             status, alternatePhone, workplace, annualIncome, 
+             emergencyContactRelation, nationality, religion, maritalStatus, created_at 
       FROM users 
       ORDER BY created_at DESC
     `);
@@ -35,19 +37,23 @@ router.get('/', authenticateToken, authorizeRoles('admin'), async (req, res) => 
   }
 });
 
-// Create user (admin only)
+// ✅ Create user (admin only)
 router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
+    const pool = await poolPromise;
+
     const {
       email, password, firstName, lastName, role, phone, address,
       qualification, experience, subject, dateOfJoining, emergencyContact,
-      childName, childClass, occupation
+      childName, childClass, occupation,
+      alternatePhone, workplace, annualIncome, emergencyContactRelation,
+      nationality, religion, maritalStatus
     } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const userId = uuidv4();
 
-    await db.request()
+    await pool.request()
       .input('id', userId)
       .input('email', email)
       .input('password', hashedPassword)
@@ -65,39 +71,54 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
       .input('childClass', childClass)
       .input('occupation', occupation)
       .input('status', 'active')
+      .input('alternatePhone', alternatePhone)
+      .input('workplace', workplace)
+      .input('annualIncome', annualIncome)
+      .input('emergencyContactRelation', emergencyContactRelation)
+      .input('nationality', nationality)
+      .input('religion', religion)
+      .input('maritalStatus', maritalStatus)
       .query(`
         INSERT INTO users (
           id, email, password, firstName, lastName, role, phone, address,
           qualification, experience, subject, dateOfJoining, emergencyContact,
-          childName, childClass, occupation, status
+          childName, childClass, occupation, status,
+          alternatePhone, workplace, annualIncome,
+          emergencyContactRelation, nationality, religion, maritalStatus
         ) VALUES (
           @id, @email, @password, @firstName, @lastName, @role, @phone, @address,
           @qualification, @experience, @subject, @dateOfJoining, @emergencyContact,
-          @childName, @childClass, @occupation, @status
+          @childName, @childClass, @occupation, @status,
+          @alternatePhone, @workplace, @annualIncome,
+          @emergencyContactRelation, @nationality, @religion, @maritalStatus
         )
       `);
 
     res.status(201).json({ message: 'User created successfully', id: userId });
   } catch (error) {
     console.error('❌ Create user error:', error);
-    if (error.message.includes('Violation of PRIMARY KEY') || error.message.includes('duplicate')) {
+    if (error.message.includes('duplicate')) {
       return res.status(400).json({ error: 'Email already exists' });
     }
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// Update user (admin only)
+// ✅ Update user (admin only)
 router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
+    const pool = await poolPromise;
+
     const { id } = req.params;
     const {
       firstName, lastName, role, phone, address, qualification,
       experience, subject, dateOfJoining, emergencyContact,
-      childName, childClass, occupation, status
+      childName, childClass, occupation, status,
+      alternatePhone, workplace, annualIncome,
+      emergencyContactRelation, nationality, religion, maritalStatus
     } = req.body;
 
-    await db.request()
+    await pool.request()
       .input('id', id)
       .input('firstName', firstName)
       .input('lastName', lastName)
@@ -113,11 +134,21 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
       .input('childClass', childClass)
       .input('occupation', occupation)
       .input('status', status)
+      .input('alternatePhone', alternatePhone)
+      .input('workplace', workplace)
+      .input('annualIncome', annualIncome)
+      .input('emergencyContactRelation', emergencyContactRelation)
+      .input('nationality', nationality)
+      .input('religion', religion)
+      .input('maritalStatus', maritalStatus)
       .query(`
         UPDATE users SET 
           firstName = @firstName, lastName = @lastName, role = @role, phone = @phone, address = @address,
           qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
-          emergencyContact = @emergencyContact, childName = @childName, childClass = @childClass, occupation = @occupation, status = @status
+          emergencyContact = @emergencyContact, childName = @childName, childClass = @childClass, occupation = @occupation,
+          status = @status, alternatePhone = @alternatePhone, workplace = @workplace,
+          annualIncome = @annualIncome, emergencyContactRelation = @emergencyContactRelation,
+          nationality = @nationality, religion = @religion, maritalStatus = @maritalStatus
         WHERE id = @id
       `);
 
@@ -128,9 +159,10 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
   }
 });
 
-// Upload avatar
+// ✅ Upload avatar
 router.post('/:id/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
   try {
+    const pool = await poolPromise;
     const { id } = req.params;
 
     if (req.user.id !== id && req.user.role !== 'admin') {
@@ -142,7 +174,7 @@ router.post('/:id/avatar', authenticateToken, upload.single('avatar'), async (re
     }
 
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    await db.request().input('id', id).input('avatar', avatarUrl)
+    await pool.request().input('id', id).input('avatar', avatarUrl)
       .query('UPDATE users SET avatar = @avatar WHERE id = @id');
 
     res.json({ avatarUrl, message: 'Avatar updated successfully' });
@@ -152,10 +184,11 @@ router.post('/:id/avatar', authenticateToken, upload.single('avatar'), async (re
   }
 });
 
-// Delete own account
+// ✅ Delete own account
 router.delete('/delete-account', authenticateToken, async (req, res) => {
   try {
-    await db.request().input('id', req.user.id).query('DELETE FROM users WHERE id = @id');
+    const pool = await poolPromise;
+    await pool.request().input('id', req.user.id).query('DELETE FROM users WHERE id = @id');
     res.json({ message: 'Account deleted successfully' });
   } catch (error) {
     console.error('❌ Account deletion error:', error);
@@ -163,10 +196,11 @@ router.delete('/delete-account', authenticateToken, async (req, res) => {
   }
 });
 
-// Delete user by admin
+// ✅ Delete user by admin
 router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
-    await db.request().input('id', req.params.id).query('DELETE FROM users WHERE id = @id');
+    const pool = await poolPromise;
+    await pool.request().input('id', req.params.id).query('DELETE FROM users WHERE id = @id');
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     console.error('❌ Delete user error:', error);

@@ -11,7 +11,7 @@ export const Dashboard: React.FC = () => {
   if (!user) return null;
 
   switch (user.role) {
-    case 'principal':
+    case 'admin':
       return <AdminDashboard />;
     case 'teacher':
       return <TeacherDashboard />;

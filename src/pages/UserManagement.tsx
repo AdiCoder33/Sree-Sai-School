@@ -1,4 +1,6 @@
+// UserManagement.tsx
 
+// (All imports remain unchanged)
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -9,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 
+// User interface definition stays the same
 interface User {
   id: string;
   firstName: string;
@@ -26,6 +29,8 @@ export const UserManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editMode, setEditMode] = useState(false);
+const [editUserId, setEditUserId] = useState<string | null>(null);
   const [newUser, setNewUser] = useState({
     firstName: '',
     lastName: '',
@@ -41,7 +46,8 @@ export const UserManagement: React.FC = () => {
     emergencyContact: '',
     childName: '',
     childClass: '',
-    occupation: ''
+    occupation: '',
+    status: 'active'
   });
 
   useEffect(() => {
@@ -50,13 +56,14 @@ export const UserManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/users', {
+      const token = localStorage.getItem('smartschool_token');
+      const response = await fetch('http://localhost:5000/api/users', {
+        method: 'GET',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        }
+          }
       });
-      
       if (response.ok) {
         const data = await response.json();
         setUsers(data);
@@ -70,71 +77,100 @@ export const UserManagement: React.FC = () => {
       setLoading(false);
     }
   };
+  const handleEditUser = (user: User) => {
+  setNewUser({
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    password: '',
+    role: user.role,
+    phone: user.phone || '',
+    address: '',
+    qualification: '',
+    experience: '',
+    subject: '',
+    dateOfJoining: '',
+    emergencyContact: '',
+    childName: '',
+    childClass: '',
+    occupation: '',
+    status: user.status || 'active'  // ✅ Add this line
+  });
+  setEditUserId(user.id);
+  setEditMode(true);
+  setShowAddForm(true);
+  toast.info(`Editing ${user.firstName} ${user.lastName}`);
+};
 
-  const filteredUsers = users.filter(user =>
-    `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
-  const handleAddUser = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(newUser)
-      });
 
-      if (response.ok) {
-        const result = await response.json();
-        toast.success('User added successfully!');
-        setShowAddForm(false);
-        setNewUser({
-          firstName: '',
-          lastName: '',
-          email: '',
-          password: '',
-          role: 'teacher',
-          phone: '',
-          address: '',
-          qualification: '',
-          experience: '',
-          subject: '',
-          dateOfJoining: '',
-          emergencyContact: '',
-          childName: '',
-          childClass: '',
-          occupation: ''
-        });
-        fetchUsers();
-      } else {
-        const error = await response.json();
-        toast.error(error.error || 'Failed to add user');
-      }
-    } catch (error) {
-      console.error('Error adding user:', error);
-      toast.error('Error adding user');
+  const handleAddOrUpdateUser = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const token = localStorage.getItem('smartschool_token');
+  const url = editMode
+    ? `http://localhost:5000/api/users/${editUserId}`
+    : 'http://localhost:5000/api/users';
+  const method = editMode ? 'PUT' : 'POST';
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(newUser)
+    });
+
+    if (response.ok) {
+      toast.success(editMode ? 'User updated successfully!' : 'User added successfully!');
+      setShowAddForm(false);
+      setEditMode(false);
+      setEditUserId(null);
+      resetForm();
+      fetchUsers();
+    } else {
+      const error = await response.json();
+      toast.error(error.error || 'Failed to submit user');
     }
-  };
+  } catch (error) {
+    toast.error('Error saving user');
+  }
+};
+const resetForm = () => {
+  setNewUser({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    role: 'teacher',
+    phone: '',
+    address: '',
+    qualification: '',
+    experience: '',
+    subject: '',
+    dateOfJoining: '',
+    emergencyContact: '',
+    childName: '',
+    childClass: '',
+    occupation: '',
+    status: 'active'
+    
+  });
+};
+
+
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user?')) return;
-
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/users/${userId}`, {
+      const token = localStorage.getItem('smartschool_token');
+      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
       if (response.ok) {
         toast.success('User deleted successfully');
         fetchUsers();
@@ -171,6 +207,13 @@ export const UserManagement: React.FC = () => {
     teachers: users.filter(u => u.role === 'teacher').length,
     parents: users.filter(u => u.role === 'parent').length
   };
+  const filteredUsers = users.filter(user =>
+  `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  user.role.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
+
 
   if (loading) {
     return <div className="flex justify-center p-8">Loading...</div>;
@@ -249,7 +292,7 @@ export const UserManagement: React.FC = () => {
             <CardDescription>Create a new user account</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAddUser} className="space-y-4">
+            <form onSubmit={handleAddOrUpdateUser} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">First Name *</label>
@@ -448,9 +491,14 @@ export const UserManagement: React.FC = () => {
                         {user.status}
                       </Badge>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+
                         <Button 
                           variant="outline" 
                           size="sm" 

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -8,6 +7,8 @@ import { Users, Search, BookOpen, User, Plus } from 'lucide-react';
 import { ClassView } from '../components/ClassView';
 import { StudentProfile } from '../components/StudentProfile';
 import { AddStudentModal } from '../components/AddStudentModal';
+import { AllocateStudentsModal } from '../components/AllocateStudentsModal';
+import { GlobalAllocateStudentModal } from '../components/GlobalAllocateStudentModal';
 import { toast } from 'sonner';
 
 interface Class {
@@ -108,6 +109,11 @@ export const Students: React.FC = () => {
     fetchClasses();
   };
 
+  const handleAllocateSuccess = () => {
+    // Refresh classes to update student count
+    fetchClasses();
+  };
+
   if (currentView === 'student-profile') {
     return (
       <div className="p-4 md:p-6">
@@ -149,7 +155,9 @@ export const Students: React.FC = () => {
           </p>
         </div>
 
-        <AddStudentModal onAddStudent={handleAddStudent} />
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+          <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
+        </div>
       </div>
 
       <div className="flex items-center space-x-2 max-w-md">
@@ -167,41 +175,46 @@ export const Students: React.FC = () => {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
         {filteredClasses.map((classData) => (
-          <Card 
-            key={classData.id} 
-            className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-indigo-200"
-            onClick={() => handleClassClick(classData.id)}
-          >
-            <CardHeader className="p-4 md:p-6">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg md:text-xl flex items-center space-x-2">
-                  <BookOpen className="h-5 w-5 text-indigo-600" />
-                  <span>{classData.name}</span>
-                </CardTitle>
-                <Badge variant="secondary" className="text-xs">
-                  {classData.students} students
-                </Badge>
-              </div>
-              <CardDescription className="text-sm">
-                {classData.description}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-4 md:p-6 pt-0">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <User className="h-4 w-4" />
-                <span>{classData.teacher}</span>
-              </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Users className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm text-gray-600">{classData.students} students</span>
-                </div>
-                <Button size="sm" variant="outline">
-                  View Class
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+         <Card 
+  key={classData.id} 
+  onClick={() => handleClassClick(classData.id)}
+  className="cursor-pointer hover:shadow-lg transition-all duration-200 border-2 hover:border-indigo-200"
+>
+  <CardHeader className="p-4 md:p-6">
+    <div className="flex items-center justify-between">
+      <CardTitle className="text-lg md:text-xl flex items-center space-x-2">
+        <BookOpen className="h-5 w-5 text-indigo-600" />
+        <span>{classData.name}</span>
+      </CardTitle>
+      <Badge variant="secondary" className="text-xs">
+        {classData.students} students
+      </Badge>
+    </div>
+    <CardDescription className="text-sm">
+      {classData.description}
+    </CardDescription>
+  </CardHeader>
+  <CardContent className="p-4 md:p-6 pt-0">
+    <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
+      <User className="h-4 w-4" />
+      <span>{classData.teacher}</span>
+    </div>
+    <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center space-x-2">
+        <Users className="h-4 w-4 text-gray-500" />
+        <span className="text-sm text-gray-600">{classData.students} students</span>
+      </div>
+    </div>
+    <div className="flex flex-col space-y-2">
+      <AllocateStudentsModal 
+        classId={classData.id}
+        className={classData.name}
+        onSuccess={handleAllocateSuccess}
+      />
+    </div>
+  </CardContent>
+</Card>
+
         ))}
       </div>
 

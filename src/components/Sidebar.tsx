@@ -32,7 +32,7 @@ interface SidebarItem {
   label: string;
   path: string;
   icon: React.ElementType;
-  roles: ('principal' | 'teacher' | 'parent')[];
+  roles: ('admin' | 'teacher' | 'parent')[];
 }
 
 const sidebarItems: SidebarItem[] = [
@@ -40,73 +40,73 @@ const sidebarItems: SidebarItem[] = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: LayoutDashboard,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Classes',
     path: '/students',
     icon: Users,
-    roles: ['principal', 'teacher']
+    roles: ['admin', 'teacher']
   },
   {
     label: 'Attendance',
     path: '/attendance',
     icon: UserCheck,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Learning Logs',
     path: '/learning-logs',
     icon: BookOpen,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Homework',
     path: '/homework',
     icon: FileText,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Timetable',
     path: '/timetable',
     icon: Calendar,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Events',
     path: '/events',
     icon: CalendarDays,
-    roles: ['principal', 'teacher', 'parent']
+    roles: ['admin', 'teacher', 'parent']
   },
   {
     label: 'Announcements',
     path: '/announcements',
     icon: Megaphone,
-    roles: ['principal', 'teacher']
+    roles: ['admin', 'teacher']
   },
   {
     label: 'Fee Management',
     path: '/fees',
     icon: CreditCard,
-    roles: ['principal', 'parent']
+    roles: ['admin', 'parent']
   },
   {
     label: 'Reports',
     path: '/reports',
     icon: BarChart3,
-    roles: ['principal', 'teacher']
+    roles: ['admin', 'teacher']
   },
   {
     label: 'User Management',
     path: '/user-management',
     icon: UserCog,
-    roles: ['principal']
+    roles: ['admin']
   },
   {
     label: 'Settings',
     path: '/settings',
     icon: Settings,
-    roles: ['principal']
+    roles: ['admin']
   }
 ];
 

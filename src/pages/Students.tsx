@@ -165,10 +165,7 @@ export const Students: React.FC = () => {
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
           <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
-            <Button className="bg-green-600 text-white hover:bg-green-700">
-              <GraduationCap className="mr-2 h-4 w-4" />
-              Promote Students
-            </Button>
+
 
         </div>
       </div>

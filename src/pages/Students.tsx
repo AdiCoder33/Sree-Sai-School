@@ -3,13 +3,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../co
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
-import { Users, Search, BookOpen, User, Plus } from 'lucide-react';
+import { Users, Search, BookOpen, User, Plus , GraduationCap} from 'lucide-react';
 import { ClassView } from '../components/ClassView';
 import { StudentProfile } from '../components/StudentProfile';
 import { AddStudentModal } from '../components/AddStudentModal';
 import { AllocateStudentsModal } from '../components/AllocateStudentsModal';
 import { GlobalAllocateStudentModal } from '../components/GlobalAllocateStudentModal';
 import { toast } from 'sonner';
+import { PromoteStudentsModal } from '../components/students/PromoteStudentsModal';
+import { StudentPromotionModal } from '../components/StudentPromotionModal';
+import { BulkPromotionModal } from '../components/BulkPromotionModal'; // adjust path if needed
+
+
 
 interface Class {
   id: string;
@@ -26,6 +31,8 @@ export const Students: React.FC = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
+
 
   useEffect(() => {
     fetchClasses();
@@ -157,6 +164,12 @@ export const Students: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
           <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
+          <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
+            <Button className="bg-green-600 text-white hover:bg-green-700">
+              <GraduationCap className="mr-2 h-4 w-4" />
+              Promote Students
+            </Button>
+
         </div>
       </div>
 

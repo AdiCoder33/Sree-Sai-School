@@ -1,73 +1,99 @@
-# Welcome to your Lovable project
+# 🎓 SmartSchool Platform
 
-## Project info
+SmartSchool is a full-stack, role-based school management platform built with **Next.js** (frontend) and **ASP.NET Core Web API + SQL Server** (backend). It enables real-time collaboration between teachers, parents, and admins — managing student profiles, daily learning logs, attendance tracking, and online fee payments — with Codex-integrated agent instructions and color strategy.
 
-**URL**: https://lovable.dev/projects/489b19d7-637c-424b-a3a8-c9c062fecee7
+---
 
-## How can I edit this code?
+## 🚀 Features
 
-There are several ways of editing your application.
+- ✅ Role-based dashboards (Admin, Teacher, Parent)  
+- ✅ Daily attendance logging (by teacher)  
+- ✅ Daily learning updates auto-shared with parents  
+- ✅ Online fee payment via Razorpay/Stripe (planned)  
+- ✅ Admin control for users, roles, and analytics  
+- ✅ Modern UI using Tailwind CSS  
+- ✅ Secure ASP.NET API with EF Core and JWT  
+- ✅ GitHub Copilot / Codex support with embedded guidance  
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/489b19d7-637c-424b-a3a8-c9c062fecee7) and start prompting.
+## 🧠 Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+| Layer        | Technology                     |
+|--------------|--------------------------------|
+| Frontend     | Next.js 14 (App Router)        |
+| Styling      | Tailwind CSS                   |
+| State Mgmt   | React Context API              |
+| Backend      | ASP.NET Core Web API (.NET 8+) |
+| Database     | Microsoft SQL Server           |
+| Auth         | JWT or Cookie-based Auth       |
+| Payments     | Razorpay / Stripe (Planned)    |
+| Hosting      | Vercel (Frontend), Azure/IIS   |
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🎨 Color Strategy
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Defined in: `styles/theme.config.md`
 
-Follow these steps:
+| Use Case       | Color Name | Hex       |
+|----------------|------------|-----------|
+| Primary        | Indigo     | `#1976D2` |
+| Secondary      | Green      | `#4CAF50` |
+| Accent         | Amber      | `#FFC107` |
+| Background     | Light Gray | `#F4F6F8` |
+| Text Main      | Charcoal   | `#212121` |
+| Text Subdued   | Gray       | `#616161` |
+| Error          | Red        | `#D32F2F` |
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+---
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+## 📁 Project Structure
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 📦 Frontend (Next.js)
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```txt
+/smartschool/
+├── app/                         # App Router Pages
+│   ├── login/page.tsx
+│   ├── dashboard/[role]/page.tsx
+│   ├── student/[id]/page.tsx
+│   └── layout.tsx               # Shared layout
+├── components/                  # UI Components
+│   ├── Navbar.tsx
+│   ├── Sidebar.tsx
+│   ├── AttendanceTable.tsx
+│   └── PaymentForm.tsx
+├── context/                     # React Context API
+│   ├── AuthContext.tsx
+│   └── RoleGuard.tsx
+├── lib/                         # Utilities
+│   └── api.ts                   # Axios wrapper
+├── public/                      # Static assets
+├── styles/
+│   ├── globals.css
+│   └── theme.config.md          # Codex-readable color guide
+├── middleware.ts                # Role-based route guard
+├── tailwind.config.js           # Tailwind theme extension
+├── AGENTS.md                    # Codex agents + instructions
+├── ACCESS_MATRIX.md             # Role-wise permission rules
+└── README.md                    # Project documentation
 ```
+<details/>
+###🧩 Backend (ASP.NET Core)
 
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/489b19d7-637c-424b-a3a8-c9c062fecee7) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+```txt
+/SmartSchoolAPI/
+├── Controllers/                 # API Controllers
+│   ├── AuthController.cs
+│   ├── StudentController.cs
+│   ├── AttendanceController.cs
+├── DTOs/                        # Input/Output Models
+├── Models/                      # Entity Models
+├── Data/                        # DbContext, Seeders, Migrations
+├── Services/                    # Business Logic Layer
+├── Helpers/                     # JWT, Password Hashing
+├── appsettings.json             # DB & Auth Config
+└── Program.cs                   # Startup & Configuration
+```
+<details/>

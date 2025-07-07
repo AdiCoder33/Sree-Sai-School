@@ -70,4 +70,28 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
   }
 });
 
+// PUT /api/classes/:id/assign-teacher
+router.put('/:id/assign-teacher', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { teacherId } = req.body;
+
+    if (!teacherId) {
+      return res.status(400).json({ error: 'teacherId is required' });
+    }
+
+    const pool = await poolPromise;
+    await pool.request()
+      .input('id', sql.VarChar, id)
+      .input('teacher_id', sql.VarChar, teacherId)
+      .query('UPDATE classes SET teacher_id = @teacher_id WHERE id = @id');
+
+    res.json({ message: 'Teacher assigned successfully' });
+  } catch (err) {
+    console.error('❌ Assign teacher error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
 module.exports = router;

@@ -13,6 +13,8 @@ import { toast } from 'sonner';
 import { PromoteStudentsModal } from '../components/students/PromoteStudentsModal';
 import { StudentPromotionModal } from '../components/StudentPromotionModal';
 import { BulkPromotionModal } from '../components/BulkPromotionModal'; // adjust path if needed
+import { AssignTeacherModal } from '../components/AssignTeacherModal';
+
 
 
 
@@ -40,8 +42,8 @@ export const Students: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/classes', {
+      const token = localStorage.getItem('smartschool_token');
+      const response = await fetch('http://localhost:5000/api/classes', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -184,7 +186,14 @@ export const Students: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
-        {filteredClasses.map((classData) => (
+        {filteredClasses
+  .sort((a, b) => {
+    const numA = parseInt(a.name.match(/\d+/)?.[0] || '0', 10);
+    const numB = parseInt(b.name.match(/\d+/)?.[0] || '0', 10);
+    return numA - numB;
+  })
+  .map((classData) => (
+
          <Card 
   key={classData.id} 
   onClick={() => handleClassClick(classData.id)}
@@ -206,9 +215,19 @@ export const Students: React.FC = () => {
   </CardHeader>
   <CardContent className="p-4 md:p-6 pt-0">
     <div className="flex items-center space-x-2 text-sm text-gray-600 mb-4">
-      <User className="h-4 w-4" />
-      <span>{classData.teacher}</span>
-    </div>
+  <User className="h-4 w-4" />
+  <span>{classData.teacher}</span>
+  <div onClick={(e) => e.stopPropagation()}>
+  <AssignTeacherModal
+    classId={classData.id}
+    currentTeacher={classData.teacher}
+    onSuccess={fetchClasses}
+  />
+</div>
+
+
+</div>
+
     <div className="flex items-center justify-between mb-4">
       <div className="flex items-center space-x-2">
         <Users className="h-4 w-4 text-gray-500" />

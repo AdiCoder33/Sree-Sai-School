@@ -6,14 +6,14 @@ SmartSchool is a full-stack, role-based school management platform built with **
 
 ## 🚀 Features
 
-- ✅ Role-based dashboards (Admin, Teacher, Parent)  
-- ✅ Daily attendance logging (by teacher)  
-- ✅ Daily learning updates auto-shared with parents  
-- ✅ Online fee payment via Razorpay/Stripe (planned)  
-- ✅ Admin control for users, roles, and analytics  
-- ✅ Modern UI using Tailwind CSS  
-- ✅ Secure ASP.NET API with EF Core and JWT  
-- ✅ GitHub Copilot / Codex support with embedded guidance  
+- ✅ Role-based dashboards (Admin, Teacher, Parent)
+- ✅ Daily attendance logging (by teacher)
+- ✅ Daily learning updates auto-shared with parents
+- ✅ Online fee payment via Razorpay/Stripe (planned)
+- ✅ Admin control for users, roles, and analytics
+- ✅ Modern UI using Tailwind CSS
+- ✅ Secure ASP.NET API with EF Core and JWT
+- ✅ GitHub Copilot / Codex support with embedded guidance
 
 ---
 
@@ -34,7 +34,7 @@ SmartSchool is a full-stack, role-based school management platform built with **
 
 ## 🎨 Color Strategy
 
-Defined in: `styles/theme.config.md`
+Defined in: [`styles/theme.config.md`](./styles/theme.config.md)
 
 | Use Case       | Color Name | Hex       |
 |----------------|------------|-----------|
@@ -50,7 +50,8 @@ Defined in: `styles/theme.config.md`
 
 ## 📁 Project Structure
 
-### 📦 Frontend (Next.js)
+<details>
+<summary>📦 Frontend (Next.js)</summary>
 
 ```txt
 /smartschool/
@@ -79,9 +80,9 @@ Defined in: `styles/theme.config.md`
 ├── ACCESS_MATRIX.md             # Role-wise permission rules
 └── README.md                    # Project documentation
 ```
-<details/>
-###🧩 Backend (ASP.NET Core)
-
+ </details>
+<details> <summary>🧩 Backend (ASP.NET Core)</summary>
+  
 ```txt
 /SmartSchoolAPI/
 ├── Controllers/                 # API Controllers
@@ -96,4 +97,4 @@ Defined in: `styles/theme.config.md`
 ├── appsettings.json             # DB & Auth Config
 └── Program.cs                   # Startup & Configuration
 ```
-<details/>
+</details>

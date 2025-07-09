@@ -36,25 +36,36 @@ export const SelectParentModal: React.FC<SelectParentModalProps> = ({
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (open) fetchParents();
-  }, [open]);
+  if (open) {
+    console.log('🔍 Fetching parents...');
+    fetchParents();
+  }
+}, [open]);
+
 
   const fetchParents = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/users/parents', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      setParents(data);
-    } catch (error) {
-      console.error('Error fetching parents:', error);
-      toast.error('Failed to load parent list');
-    } finally {
-      setLoading(false);
+  setLoading(true);
+  try {
+    const token = localStorage.getItem('smartschool_token');
+    const res = await fetch('http://localhost:5000/api/users/parents', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errorText}`);
     }
-  };
+
+    const data = await res.json();
+    setParents(data);
+  } catch (error) {
+    console.error('Error fetching parents:', error);
+    toast.error('Failed to load parent list');
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const filteredParents = parents.filter((p) =>
     `${p.firstName} ${p.lastName} ${p.email}`.toLowerCase().includes(searchTerm.toLowerCase())

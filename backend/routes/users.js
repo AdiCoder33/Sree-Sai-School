@@ -204,20 +204,22 @@ router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, re
 });
 
 // GET /api/parents
-router.get('/parents', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// In authRoutes.js or userRoutes.js
+router.get('/parents', authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT id, firstName, lastName, email, phone, address 
-      FROM users 
+      SELECT id, firstName, lastName, email, phone, address
+      FROM users
       WHERE role = 'parent'
     `);
     res.json(result.recordset);
   } catch (error) {
-    console.error('❌ Get parents error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Error fetching parents:', error.message);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 
 
 module.exports = router;

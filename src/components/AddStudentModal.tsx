@@ -57,32 +57,33 @@ const [showParentModal, setShowParentModal] = useState(false);
   }, [open]);
 
   const fetchClasses = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('/api/classes', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setClasses(data);
-      } else {
-        toast.error('Failed to fetch classes');
+  try {
+    const token = localStorage.getItem('smartschool_token');
+    const response = await fetch('/api/classes', {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    } catch (error) {
-      console.error('Error fetching classes:', error);
-      toast.error('Error fetching classes');
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      setClasses(data);
+    } else {
+      toast.error('Failed to fetch classes');
     }
-  };
+  } catch (error) {
+    console.error('Error fetching classes:', error);
+    toast.error('Error fetching classes');
+  }
+};
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('smartschool_token');
     
 
       // Then create the student

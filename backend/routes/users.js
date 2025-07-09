@@ -24,7 +24,7 @@ router.get('/', authenticateToken, authorizeRoles('admin'), async (req, res) => 
     const result = await pool.request().query(`
       SELECT id, email, firstName, lastName, role, avatar, phone, 
              address, qualification, experience, subject, dateOfJoining, 
-             emergencyContact, childName, childClass, occupation, 
+             emergencyContact, occupation, 
              status, alternatePhone, workplace, annualIncome, 
              emergencyContactRelation, nationality, religion, maritalStatus, created_at 
       FROM users 
@@ -44,8 +44,7 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
 
     const {
       email, password, firstName, lastName, role, phone, address,
-      qualification, experience, subject, dateOfJoining, emergencyContact,
-      childName, childClass, occupation,
+      qualification, experience, subject, dateOfJoining, emergencyContact, occupation,
       alternatePhone, workplace, annualIncome, emergencyContactRelation,
       nationality, religion, maritalStatus
     } = req.body;
@@ -67,8 +66,6 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
       .input('subject', subject)
       .input('dateOfJoining', dateOfJoining)
       .input('emergencyContact', emergencyContact)
-      .input('childName', childName)
-      .input('childClass', childClass)
       .input('occupation', occupation)
       .input('status', 'active')
       .input('alternatePhone', alternatePhone)
@@ -82,13 +79,13 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
         INSERT INTO users (
           id, email, password, firstName, lastName, role, phone, address,
           qualification, experience, subject, dateOfJoining, emergencyContact,
-          childName, childClass, occupation, status,
+           occupation, status,
           alternatePhone, workplace, annualIncome,
           emergencyContactRelation, nationality, religion, maritalStatus
         ) VALUES (
           @id, @email, @password, @firstName, @lastName, @role, @phone, @address,
           @qualification, @experience, @subject, @dateOfJoining, @emergencyContact,
-          @childName, @childClass, @occupation, @status,
+           @occupation, @status,
           @alternatePhone, @workplace, @annualIncome,
           @emergencyContactRelation, @nationality, @religion, @maritalStatus
         )
@@ -113,7 +110,7 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
     const {
       firstName, lastName, role, phone, address, qualification,
       experience, subject, dateOfJoining, emergencyContact,
-      childName, childClass, occupation, status,
+       occupation, status,
       alternatePhone, workplace, annualIncome,
       emergencyContactRelation, nationality, religion, maritalStatus
     } = req.body;
@@ -130,8 +127,6 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
       .input('subject', subject)
       .input('dateOfJoining', dateOfJoining)
       .input('emergencyContact', emergencyContact)
-      .input('childName', childName)
-      .input('childClass', childClass)
       .input('occupation', occupation)
       .input('status', status)
       .input('alternatePhone', alternatePhone)
@@ -145,7 +140,7 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
         UPDATE users SET 
           firstName = @firstName, lastName = @lastName, role = @role, phone = @phone, address = @address,
           qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
-          emergencyContact = @emergencyContact, childName = @childName, childClass = @childClass, occupation = @occupation,
+          emergencyContact = @emergencyContact,  occupation = @occupation,
           status = @status, alternatePhone = @alternatePhone, workplace = @workplace,
           annualIncome = @annualIncome, emergencyContactRelation = @emergencyContactRelation,
           nationality = @nationality, religion = @religion, maritalStatus = @maritalStatus
@@ -207,5 +202,22 @@ router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, re
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// GET /api/parents
+router.get('/parents', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const result = await pool.request().query(`
+      SELECT id, firstName, lastName, email, phone, address 
+      FROM users 
+      WHERE role = 'parent'
+    `);
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('❌ Get parents error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 module.exports = router;

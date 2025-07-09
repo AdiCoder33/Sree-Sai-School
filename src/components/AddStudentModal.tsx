@@ -23,6 +23,9 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
   const [open, setOpen] = useState(false);
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(false);
+  const [useExistingParent, setUseExistingParent] = useState(false);
+const [existingParents, setExistingParents] = useState([]);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -40,7 +43,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
     parentAddress: '',
     emergencyContact: '',
     bloodGroup: '',
-    medicalConditions: ''
+    medicalConditions: '',
+    parent_id: ''
   });
 
   useEffect(() => {
@@ -142,6 +146,22 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
       setLoading(false);
     }
   };
+  const fetchParents = async () => {
+  const token = localStorage.getItem('token');
+  const res = await fetch('/api/users/parents', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const data = await res.json();
+  setExistingParents(data);
+};
+
+useEffect(() => {
+  if (open) {
+    fetchClasses();
+    fetchParents();
+  }
+}, [open]);
+
 
   const resetForm = () => {
     setFormData({
@@ -161,7 +181,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
       parentAddress: '',
       emergencyContact: '',
       bloodGroup: '',
-      medicalConditions: ''
+      medicalConditions: '',
+      parent_id: ''
     });
   };
 
@@ -235,6 +256,34 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2">
+  <Label>Select Parent Option</Label>
+  <Select onValueChange={(val) => setUseExistingParent(val === 'existing')}>
+    <SelectTrigger>
+      <SelectValue placeholder="Choose option" />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="new">Create New Parent</SelectItem>
+      <SelectItem value="existing">Attach Existing Parent</SelectItem>
+    </SelectContent>
+  </Select>
+
+  {useExistingParent && (
+    <Select onValueChange={(val) => setFormData({...formData, parent_id: val})}>
+      <SelectTrigger>
+        <SelectValue placeholder="Select existing parent" />
+      </SelectTrigger>
+      <SelectContent>
+        {existingParents.map((p) => (
+          <SelectItem key={p.id} value={p.id}>
+            {p.firstName} {p.lastName} - {p.email}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )}
+</div>
+
               <div>
                 <Label htmlFor="section">Section</Label>
                 <Select value={formData.section} onValueChange={(value) => setFormData({...formData, section: value})}>

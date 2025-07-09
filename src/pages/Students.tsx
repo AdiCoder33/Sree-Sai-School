@@ -10,8 +10,6 @@ import { AddStudentModal } from '../components/AddStudentModal';
 import { AllocateStudentsModal } from '../components/AllocateStudentsModal';
 import { GlobalAllocateStudentModal } from '../components/GlobalAllocateStudentModal';
 import { toast } from 'sonner';
-import { PromoteStudentsModal } from '../components/students/PromoteStudentsModal';
-import { StudentPromotionModal } from '../components/StudentPromotionModal';
 import { BulkPromotionModal } from '../components/BulkPromotionModal'; // adjust path if needed
 import { AssignTeacherModal } from '../components/AssignTeacherModal';
 
@@ -112,11 +110,11 @@ export const Students: React.FC = () => {
     setCurrentView('class-detail');
     setSelectedStudentId('');
   };
+  const handleAddStudent = () => {
+  fetchClasses(); // Refresh class data
+};
 
-  const handleAddStudent = (student: any) => {
-    // Refresh classes to update student count
-    fetchClasses();
-  };
+
 
   const handleAllocateSuccess = () => {
     // Refresh classes to update student count
@@ -165,11 +163,11 @@ export const Students: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-          <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
-          <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
+  <AddStudentModal onAddStudent={handleAddStudent} />
+  <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
+  <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
+</div>
 
-
-        </div>
       </div>
 
       <div className="flex items-center space-x-2 max-w-md">

@@ -44,8 +44,6 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
     subject: '',
     dateOfJoining: '',
     emergencyContact: '',
-    childName: '',
-    childClass: '',
     occupation: '',
     status: 'active'
   });
@@ -91,8 +89,6 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
     subject: '',
     dateOfJoining: '',
     emergencyContact: '',
-    childName: '',
-    childClass: '',
     occupation: '',
     status: user.status || 'active'  // ✅ Add this line
   });
@@ -151,8 +147,6 @@ const resetForm = () => {
     subject: '',
     dateOfJoining: '',
     emergencyContact: '',
-    childName: '',
-    childClass: '',
     occupation: '',
     status: 'active'
     
@@ -388,21 +382,6 @@ const resetForm = () => {
                 
                 {newUser.role === 'parent' && (
                   <>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Child's Name</label>
-                      <Input
-                        value={newUser.childName}
-                        onChange={(e) => setNewUser({...newUser, childName: e.target.value})}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Child's Class</label>
-                      <Input
-                        value={newUser.childClass}
-                        onChange={(e) => setNewUser({...newUser, childClass: e.target.value})}
-                        placeholder="e.g., Class 5"
-                      />
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Occupation</label>
                       <Input

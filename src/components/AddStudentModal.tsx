@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { SelectParentModal } from './SelectParentModal';
 
 interface AddStudentModalProps {
   onAddStudent: (student: any) => void;
@@ -25,6 +26,8 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
   const [loading, setLoading] = useState(false);
   const [useExistingParent, setUseExistingParent] = useState(false);
 const [existingParents, setExistingParents] = useState([]);
+const [showParentModal, setShowParentModal] = useState(false);
+
 
   const [formData, setFormData] = useState({
     firstName: '',
@@ -80,30 +83,7 @@ const [existingParents, setExistingParents] = useState([]);
     
     try {
       const token = localStorage.getItem('token');
-      
-      // First create the parent user
-      const parentResponse = await fetch('/api/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          firstName: formData.parentFirstName,
-          lastName: formData.parentLastName,
-          email: formData.parentEmail,
-          role: 'parent',
-          phone: formData.parentPhone,
-          address: formData.parentAddress
-        })
-      });
-
-      if (!parentResponse.ok) {
-        const error = await parentResponse.json();
-        throw new Error(error.error || 'Failed to create parent account');
-      }
-
-      const parentData = await parentResponse.json();
+    
 
       // Then create the student
       const studentResponse = await fetch('/api/students', {
@@ -122,7 +102,7 @@ const [existingParents, setExistingParents] = useState([]);
           dateOfBirth: formData.dateOfBirth,
           address: formData.address,
           phone: formData.phone,
-          parent_id: parentData.id,
+          parent_id: formData.parent_id,
           bloodGroup: formData.bloodGroup,
           medicalConditions: formData.medicalConditions,
           emergencyContact: formData.emergencyContact
@@ -258,30 +238,28 @@ useEffect(() => {
               </div>
               <div className="space-y-2">
   <Label>Select Parent Option</Label>
-  <Select onValueChange={(val) => setUseExistingParent(val === 'existing')}>
-    <SelectTrigger>
-      <SelectValue placeholder="Choose option" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="new">Create New Parent</SelectItem>
-      <SelectItem value="existing">Attach Existing Parent</SelectItem>
-    </SelectContent>
-  </Select>
+  <Button type="button" variant="secondary" onClick={() => setShowParentModal(true)}>
+  {formData.parentFirstName ? `${formData.parentFirstName} ${formData.parentLastName}` : "Select Parent"}
+</Button>
+{showParentModal && (
+  <SelectParentModal
+    open={showParentModal}
+    onClose={() => setShowParentModal(false)}
+    onSelect={(parent) => {
+      setFormData({
+        ...formData,
+        parent_id: parent.id,
+        parentFirstName: parent.firstName,
+        parentLastName: parent.lastName,
+        parentEmail: parent.email,
+        parentPhone: parent.phone,
+        parentAddress: parent.address || ''
+      });
+      toast.success(`Parent ${parent.firstName} selected`);
+    }}
+  />
+)}
 
-  {useExistingParent && (
-    <Select onValueChange={(val) => setFormData({...formData, parent_id: val})}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select existing parent" />
-      </SelectTrigger>
-      <SelectContent>
-        {existingParents.map((p) => (
-          <SelectItem key={p.id} value={p.id}>
-            {p.firstName} {p.lastName} - {p.email}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  )}
 </div>
 
               <div>
@@ -370,84 +348,15 @@ useEffect(() => {
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Parent Information</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="parentFirstName">Parent First Name *</Label>
-                <Input
-                  id="parentFirstName"
-                  value={formData.parentFirstName}
-                  onChange={(e) => setFormData({...formData, parentFirstName: e.target.value})}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="parentLastName">Parent Last Name *</Label>
-                <Input
-                  id="parentLastName"
-                  value={formData.parentLastName}
-                  onChange={(e) => setFormData({...formData, parentLastName: e.target.value})}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="parentEmail">Parent Email *</Label>
-                <Input
-                  id="parentEmail"
-                  type="email"
-                  value={formData.parentEmail}
-                  onChange={(e) => setFormData({...formData, parentEmail: e.target.value})}
-                  placeholder="This will be used for login and notifications"
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="parentPhone">Parent Phone *</Label>
-                <Input
-                  id="parentPhone"
-                  value={formData.parentPhone}
-                  onChange={(e) => setFormData({...formData, parentPhone: e.target.value})}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                <Input
-                  id="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={(e) => setFormData({...formData, emergencyContact: e.target.value})}
-                  placeholder="Alternative contact number"
-                />
-              </div>
-            </div>
-
-            <div>
-              <Label htmlFor="parentAddress">Parent Address</Label>
-              <Textarea
-                id="parentAddress"
-                value={formData.parentAddress}
-                onChange={(e) => setFormData({...formData, parentAddress: e.target.value})}
-                placeholder="Parent's full address"
-                rows={2}
-              />
-            </div>
-          </div>
-
+         
           <div className="flex justify-end space-x-2 pt-4 border-t">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Creating...' : 'Create Student & Parent Account'}
-            </Button>
+  {loading ? 'Creating...' : 'Create Student'}
+</Button>
+
           </div>
         </form>
       </DialogContent>

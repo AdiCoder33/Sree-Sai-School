@@ -5,22 +5,8 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { ArrowLeft, Search, User, Phone, MapPin, Calendar } from 'lucide-react';
-
-const mockClassData = {
-  '1': {
-    name: 'Class 1',
-    teacher: 'Ms. Sarah Johnson',
-    teacherEmail: 'sarah.johnson@smartschool.com',
-    teacherPhone: '+1-555-0101',
-    students: [
-      { id: '1', firstName: 'Emma', lastName: 'Wilson', rollNumber: '001', dateOfBirth: '2018-03-15', phone: '+1-555-1001', address: '123 Oak St, City', status: 'Active' },
-      { id: '2', firstName: 'Liam', lastName: 'Brown', rollNumber: '002', dateOfBirth: '2018-07-22', phone: '+1-555-1002', address: '456 Pine Ave, City', status: 'Active' },
-      { id: '3', firstName: 'Olivia', lastName: 'Davis', rollNumber: '003', dateOfBirth: '2018-11-08', phone: '+1-555-1003', address: '789 Elm Rd, City', status: 'Active' },
-    ]
-  },
-  // Add more classes as needed
-};
-
+import { useEffect } from 'react';
+import axios from 'axios';
 interface ClassViewProps {
   classId: string;
   onBack: () => void;
@@ -29,13 +15,43 @@ interface ClassViewProps {
 
 export const ClassView: React.FC<ClassViewProps> = ({ classId, onBack, onStudentClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const classData = mockClassData[classId as keyof typeof mockClassData] || mockClassData['1'];
-  
-  const filteredStudents = classData.students.filter(student =>
+  const [classData, setClassData] = useState<any>(null);
+  const [students, setStudents] = useState<any[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+
+
+    // Fetch class details
+    axios.get(`http://localhost:5000/api/classes/${classId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      const teacherName = `${res.data.teacherFirstName} ${res.data.teacherLastName}`;
+      setClassData({
+        name: res.data.className,
+        teacher: teacherName,
+        teacherEmail: res.data.teacherEmail,
+        teacherPhone: res.data.teacherPhone,
+      });
+    });
+
+    // Fetch students for class
+    axios.get(`http://localhost:5000/api/students/class/${classId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      const studentsArray = Array.isArray(res.data) ? res.data : [];
+      setStudents(studentsArray);
+    });
+  }, [classId]);
+
+  const filteredStudents = students.filter(student =>
     `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    student.rollNumber.includes(searchTerm)
+    student.rollNumber?.includes(searchTerm)
   );
+
+  if (!classData) return <p>Loading class details...</p>;
+
+  // ... keep your return UI block unchanged
 
   return (
     <div className="space-y-6">

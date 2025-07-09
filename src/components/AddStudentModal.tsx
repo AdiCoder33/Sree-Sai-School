@@ -59,7 +59,7 @@ const [showParentModal, setShowParentModal] = useState(false);
   const fetchClasses = async () => {
   try {
     const token = localStorage.getItem('smartschool_token');
-    const response = await fetch('/api/classes', {
+    const response = await fetch('http://localhost:5000/api/classes', {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -79,54 +79,54 @@ const [showParentModal, setShowParentModal] = useState(false);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    
-    try {
-      const token = localStorage.getItem('smartschool_token');
-    
+  e.preventDefault();
+  setLoading(true);
 
-      // Then create the student
-      const studentResponse = await fetch('/api/students', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          gender: formData.gender,
-          class_id: formData.classId,
-          section: formData.section,
-          rollNumber: formData.rollNumber,
-          dateOfBirth: formData.dateOfBirth,
-          address: formData.address,
-          phone: formData.phone,
-          parent_id: formData.parent_id,
-          bloodGroup: formData.bloodGroup,
-          medicalConditions: formData.medicalConditions,
-          emergencyContact: formData.emergencyContact
-        })
-      });
+  try {
+    const token = localStorage.getItem('smartschool_token');
 
-      if (studentResponse.ok) {
-        const newStudent = await studentResponse.json();
-        onAddStudent(newStudent);
-        toast.success('Student and parent account created successfully!');
-        setOpen(false);
-        resetForm();
-      } else {
-        const error = await studentResponse.json();
-        toast.error(error.error || 'Failed to add student');
-      }
-    } catch (error) {
-      console.error('Error adding student:', error);
-      toast.error(error instanceof Error ? error.message : 'Error adding student');
-    } finally {
-      setLoading(false);
+    const studentResponse = await fetch('http://localhost:5000/api/students', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        gender: formData.gender,
+        class_id: formData.classId,
+        section: formData.section,
+        rollNumber: formData.rollNumber,
+        dateOfBirth: formData.dateOfBirth,
+        address: formData.address,
+        phone: formData.phone,
+        parent_id: formData.parent_id,
+        bloodGroup: formData.bloodGroup,
+        medicalConditions: formData.medicalConditions,
+        emergencyContact: formData.emergencyContact,
+      }),
+    });
+
+    const text = await studentResponse.text();
+    const json = text ? JSON.parse(text) : {};
+
+    if (studentResponse.ok) {
+      onAddStudent(json);
+      toast.success('Student added successfully!');
+      setOpen(false);
+      resetForm();
+    } else {
+      toast.error(json?.error || 'Failed to add student');
     }
-  };
+  } catch (error) {
+    console.error('Error adding student:', error);
+    toast.error('Something went wrong');
+  } finally {
+    setLoading(false);
+  }
+};
+
   const fetchParents = async () => {
   const token = localStorage.getItem('token');
   const res = await fetch('/api/users/parents', {

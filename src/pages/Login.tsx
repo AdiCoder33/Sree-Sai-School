@@ -18,6 +18,7 @@ export const Login: React.FC = () => {
   if (user) {
     return <Navigate to="/dashboard" replace />;
   }
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

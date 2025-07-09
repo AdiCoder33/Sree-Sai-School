@@ -93,5 +93,36 @@ router.put('/:id/assign-teacher', authenticateToken, authorizeRoles('admin'), as
   }
 });
 
+// Get class by ID
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input('id', sql.VarChar, id)
+      .query(`
+        SELECT 
+          c.*, 
+          u.firstName AS teacherFirstName, 
+          u.lastName AS teacherLastName,
+          u.email AS teacherEmail,
+          u.phone AS teacherPhone
+        FROM classes c
+        LEFT JOIN users u ON c.teacher_id = u.id
+        WHERE c.id = @id
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: 'Class not found' });
+    }
+
+    res.json(result.recordset[0]);
+  } catch (error) {
+    console.error('❌ Get class by ID error:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 module.exports = router;

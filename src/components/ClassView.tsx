@@ -21,6 +21,9 @@ export const ClassView: React.FC<ClassViewProps> = ({ classId, onBack, onStudent
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [editOpen, setEditOpen] = useState(false);
 const [selectedStudent, setSelectedStudent] = useState<any>(null);
+const user = JSON.parse(localStorage.getItem('smartschool_user') || '{}');
+const role = user.role;
+
 
 
 
@@ -83,22 +86,25 @@ const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">{classData.name}</h1>
-        <Button
-          variant="destructive"
-          onClick={() => {
-            if (deleteMode && selectedStudents.size > 0) {
-              if (confirm("Are you sure you want to delete selected students?")) {
-                handleDelete();
-              }
-            } else {
-              setDeleteMode(prev => !prev);
-              setSelectedStudents(new Set());
-            }
-          }}
-        >
-          <Trash2 className="h-4 w-4 mr-2" />
-          {deleteMode ? 'Confirm Delete' : 'Delete Students'}
-        </Button>
+        {role === 'admin' && (
+  <Button
+    variant="destructive"
+    onClick={() => {
+      if (deleteMode && selectedStudents.size > 0) {
+        if (confirm("Are you sure you want to delete selected students?")) {
+          handleDelete();
+        }
+      } else {
+        setDeleteMode(prev => !prev);
+        setSelectedStudents(new Set());
+      }
+    }}
+  >
+    <Trash2 className="h-4 w-4 mr-2" />
+    {deleteMode ? 'Confirm Delete' : 'Delete Students'}
+  </Button>
+)}
+
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -159,14 +165,17 @@ const [selectedStudent, setSelectedStudent] = useState<any>(null);
                     
 
                     <div className="absolute top-2 right-2 space-x-2 flex">
-                      <Pencil
-  className="h-4 w-4 text-blue-600 hover:text-blue-800"
-  onClick={(e) => {
-    e.stopPropagation();
-    setSelectedStudent(student);
-    setEditOpen(true);
-  }}
-/>
+                      {role === 'admin' && (
+  <Pencil
+    className="h-4 w-4 text-blue-600 hover:text-blue-800"
+    onClick={(e) => {
+      e.stopPropagation();
+      setSelectedStudent(student);
+      setEditOpen(true);
+    }}
+  />
+)}
+
 
                     </div>
 

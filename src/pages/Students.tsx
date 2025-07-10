@@ -32,6 +32,9 @@ export const Students: React.FC = () => {
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
+  const user = JSON.parse(localStorage.getItem('smartschool_user') || '{}');
+const role = user.role;
+
 
 
   useEffect(() => {
@@ -163,8 +166,13 @@ export const Students: React.FC = () => {
         </div>
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-  <AddStudentModal onAddStudent={handleAddStudent} />
-  <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
+  {role === 'admin' && (
+  <>
+    <AddStudentModal onAddStudent={handleAddStudent} />
+    <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
+  </>
+)}
+
 </div>
 
       </div>
@@ -215,11 +223,16 @@ export const Students: React.FC = () => {
   <User className="h-4 w-4" />
   <span>{classData.teacher}</span>
   <div onClick={(e) => e.stopPropagation()}>
-  <AssignTeacherModal
-    classId={classData.id}
-    currentTeacher={classData.teacher}
-    onSuccess={fetchClasses}
-  />
+  {role === 'admin' && (
+  <div onClick={(e) => e.stopPropagation()}>
+    <AssignTeacherModal
+      classId={classData.id}
+      currentTeacher={classData.teacher}
+      onSuccess={fetchClasses}
+    />
+  </div>
+)}
+
 </div>
 
 

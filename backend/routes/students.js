@@ -2,6 +2,8 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const { sql, poolPromise } = require('../config/database');
+
 
 
 const router = express.Router();
@@ -74,31 +76,34 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
 
 // Promote students
 // promote students from one class to another
-router.post('/api/students/promote', authenticateToken, async (req, res) => {
+// In routes/studentRoutes.js or similar
+router.post('/promote', authenticateToken, async (req, res) => {
   const { studentIds, fromClassId, toClassId } = req.body;
 
-  if (!studentIds?.length || !fromClassId || !toClassId) {
-    return res.status(400).json({ message: 'Invalid promotion request' });
+  if (!studentIds || !Array.isArray(studentIds) || !fromClassId || !toClassId) {
+    return res.status(400).json({ error: 'Missing or invalid parameters' });
   }
 
   try {
     const pool = await poolPromise;
-    const request = pool.request();
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
 
-    for (const id of studentIds) {
-      await request.query(`
-        UPDATE students
-        SET class_id = '${toClassId}'
-        WHERE id = '${id}' AND class_id = '${fromClassId}'
-      `);
+    for (const studentId of studentIds) {
+      await transaction.request()
+        .input('studentId', sql.UniqueIdentifier, studentId)
+        .input('toClassId', sql.UniqueIdentifier, toClassId)
+        .query(`UPDATE students SET class_id = @toClassId WHERE id = @studentId`);
     }
 
+    await transaction.commit();
     res.status(200).json({ message: 'Students promoted successfully' });
-  } catch (error) {
-    console.error('❌ Promotion error:', error);
-    res.status(500).json({ message: 'Server error during promotion' });
+  } catch (err) {
+    console.error('❌ Promotion error:', err.message);
+    res.status(500).json({ error: 'Promotion failed' });
   }
 });
+
 
 
 // Create student with comprehensive details

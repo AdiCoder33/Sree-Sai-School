@@ -32,7 +32,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
     try {
       const token = localStorage.getItem('smartschool_token');
 
-      const response = await fetch('/api/classes', {
+      const response = await fetch('http://localhost:5000/api/classes', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -70,7 +70,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
   const handlePromoteAllClasses = async () => {
     setPromoting(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('smartschool_token');
       
       // Process each class for promotion
       for (const cls of classes) {
@@ -80,7 +80,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
         if (!nextClassName) continue;
 
         // Get all students from current class
-        const studentsResponse = await fetch(`/api/students/class/${cls.id}`, {
+        const studentsResponse = await fetch(`http://localhost:5000/api/students/class/${cls.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -99,7 +99,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (!lastYearClass) {
                 // Create "Last Year Students" class
-                const createClassResponse = await fetch('/api/classes', {
+                const createClassResponse = await fetch('http://localhost:5000/api/classes', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -121,7 +121,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (targetClassId) {
                 // Move Class 10 students to Last Year Students
-                await fetch('/api/students/promote', {
+                await fetch('http://localhost:5000/api/students/promote', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -141,7 +141,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (!nextClass) {
                 // Create the next class
-                const createClassResponse = await fetch('/api/classes', {
+                const createClassResponse = await fetch('http://localhost:5000/api/classes', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (targetClassId) {
                 // Move students to next class
-                await fetch('/api/students/promote', {
+                await fetch('http://localhost:5000/api/students/promote', {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -184,7 +184,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
       // Handle Last Year Students (they graduate and are removed)
       const lastYearClass = classes.find(c => c.name === 'Last Year Students');
       if (lastYearClass && lastYearClass.studentCount > 0) {
-        const studentsResponse = await fetch(`/api/students/class/${lastYearClass.id}`, {
+        const studentsResponse = await fetch(`http://localhost:5000/api/students/class/${lastYearClass.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -195,7 +195,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
           
           // Delete all last year students (they've graduated)
           for (const student of lastYearStudents) {
-            await fetch(`/api/students/${student.id}`, {
+            await fetch(`http://localhost:5000/api/students/${student.id}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${token}`

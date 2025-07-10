@@ -5,7 +5,7 @@ import { Input } from './ui/input';
 import { Badge } from './ui/badge';
 import { ArrowLeft, Search, User, Phone, Pencil, Trash2 } from 'lucide-react';
 import axios from 'axios';
-import { AddStudentModal } from './students/AddStudentModal';
+import { EditStudentModal } from './EditStudentModal';
 
 interface ClassViewProps {
   classId: string;
@@ -19,8 +19,9 @@ export const ClassView: React.FC<ClassViewProps> = ({ classId, onBack, onStudent
   const [students, setStudents] = useState<any[]>([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
-  const [modalOpen, setModalOpen] = useState(false);
-const [editStudent, setEditStudent] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
+const [selectedStudent, setSelectedStudent] = useState<any>(null);
+
 
 
   useEffect(() => {
@@ -146,34 +147,29 @@ const [editStudent, setEditStudent] = useState<any>(null);
   if (deleteMode) {
     toggleSelect(student.id);
   } else {
-    setEditStudent(student);
-    setModalOpen(true);
+    onStudentClick(student.id); // 🔥 Navigate to student profile only
   }
 }}
+
+
 
                   className={`relative cursor-pointer ${selectedStudents.has(student.id) ? 'ring-2 ring-red-400' : ''}`}
                 >
                   <CardContent className="p-4">
+                    
+
                     <div className="absolute top-2 right-2 space-x-2 flex">
                       <Pencil
-                        className="h-4 w-4 text-blue-600 hover:text-blue-800"
-                        onClick={(e) => {
-  e.stopPropagation();
-  setEditStudent(student);
-  setModalOpen(true);
-}}
-
-                      />
-                    </div>
-                    <AddStudentModal
-  open={modalOpen}
-  onOpenChange={(open) => {
-    setModalOpen(open);
-    if (!open) setEditStudent(null);
+  className="h-4 w-4 text-blue-600 hover:text-blue-800"
+  onClick={(e) => {
+    e.stopPropagation();
+    setSelectedStudent(student);
+    setEditOpen(true);
   }}
-  student={editStudent}
-  mode="edit"
 />
+
+                    </div>
+
 
 
                     <div className="flex items-center space-x-3">
@@ -195,6 +191,24 @@ const [editStudent, setEditStudent] = useState<any>(null);
           </CardContent>
         </Card>
       </div>
+      {selectedStudent && (
+  <EditStudentModal
+    open={editOpen}
+    setOpen={setEditOpen}
+    studentId={selectedStudent.id}
+    onSuccess={() => {
+      setEditOpen(false);
+      // Re-fetch students after update
+      const token = localStorage.getItem('smartschool_token');
+      axios.get(`http://localhost:5000/api/students/class/${classId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).then(res => {
+        const studentsArray = Array.isArray(res.data) ? res.data : [];
+        setStudents(studentsArray);
+      });
+    }}
+  />
+)}
     </div>
   );
 };

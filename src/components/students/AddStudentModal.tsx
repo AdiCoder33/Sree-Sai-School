@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -8,9 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 interface AddStudentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  student?: any; // Pass student object for edit
+  mode?: 'add' | 'edit'; // Determines the operation
 }
 
-export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenChange }) => {
+
+export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenChange, student, mode }) => {
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -20,12 +24,18 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenCh
     parentName: '',
     parentEmail: ''
   });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle form submission
-    console.log('Adding student:', formData);
-    onOpenChange(false);
+   useEffect(() => {
+  if (mode === 'edit' && student) {
+    setFormData({
+      firstName: student.firstName || '',
+      lastName: student.lastName || '',
+      email: student.email || '',
+      className: student.className || 'Form 1A',
+      dateOfBirth: student.dateOfBirth?.split('T')[0] || '',
+      parentName: student.parentName || '',
+      parentEmail: student.parentEmail || ''
+    });
+  } else {
     setFormData({
       firstName: '',
       lastName: '',
@@ -35,16 +45,50 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenCh
       parentName: '',
       parentEmail: ''
     });
-  };
+  }
+}, [student, mode, open]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  const token = localStorage.getItem('smartschool_token');
+
+  if (mode === 'edit' && student?.id) {
+    await fetch(`http://localhost:5000/api/students/${student.id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(formData)
+    });
+  } else {
+    await fetch('http://localhost:5000/api/students', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(formData)
+    });
+  }
+
+  onOpenChange(false);
+};
+
+ 
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
-          <DialogDescription>
-            Enter the student's information to add them to the system.
-          </DialogDescription>
+          <DialogTitle>{mode === 'edit' ? 'Edit Student' : 'Add New Student'}</DialogTitle>
+<DialogDescription>
+  {mode === 'edit'
+    ? 'Update the student’s details below.'
+    : 'Enter the student’s information to add them to the system.'}
+</DialogDescription>
+
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -127,8 +171,9 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenCh
               Cancel
             </Button>
             <Button type="submit">
-              Add Student
-            </Button>
+  {mode === 'edit' ? 'Update Student' : 'Add Student'}
+</Button>
+
           </div>
         </form>
       </DialogContent>

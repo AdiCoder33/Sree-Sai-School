@@ -175,6 +175,24 @@ await pool.request()
   }
 });
 
+// Delete student by ID
+router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pool = await db.poolPromise;
+    await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .query('DELETE FROM students WHERE id = @id');
+
+    res.status(200).json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    console.error('❌ Student deletion error:', error.message);
+    res.status(500).json({ error: 'Failed to delete student' });
+  }
+});
+
+
 
 
 

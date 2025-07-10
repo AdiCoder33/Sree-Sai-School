@@ -73,23 +73,33 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
 
 
 // Promote students
-router.post('/promote', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// promote students from one class to another
+router.post('/api/students/promote', authenticateToken, async (req, res) => {
+  const { studentIds, fromClassId, toClassId } = req.body;
+
+  if (!studentIds?.length || !fromClassId || !toClassId) {
+    return res.status(400).json({ message: 'Invalid promotion request' });
+  }
+
   try {
-    const { studentIds, fromClassId, toClassId } = req.body;
-    
-    for (const studentId of studentIds) {
-      await db.execute(
-        'UPDATE students SET class_id = ? WHERE id = ? AND class_id = ?',
-        [toClassId, studentId, fromClassId]
-      );
+    const pool = await poolPromise;
+    const request = pool.request();
+
+    for (const id of studentIds) {
+      await request.query(`
+        UPDATE students
+        SET class_id = '${toClassId}'
+        WHERE id = '${id}' AND class_id = '${fromClassId}'
+      `);
     }
 
-    res.json({ message: 'Students promoted successfully' });
+    res.status(200).json({ message: 'Students promoted successfully' });
   } catch (error) {
-    console.error('Student promotion error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('❌ Promotion error:', error);
+    res.status(500).json({ message: 'Server error during promotion' });
   }
 });
+
 
 // Create student with comprehensive details
 // Create student with only required fields from frontend

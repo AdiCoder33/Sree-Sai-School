@@ -30,7 +30,8 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
   const fetchClasses = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('smartschool_token');
+
       const response = await fetch('/api/classes', {
         headers: {
           'Authorization': `Bearer ${token}`

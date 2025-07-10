@@ -164,7 +164,6 @@ export const Students: React.FC = () => {
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
   <AddStudentModal onAddStudent={handleAddStudent} />
-  <GlobalAllocateStudentModal onSuccess={handleAllocateSuccess} />
   <BulkPromotionModal onPromotionComplete={() => setRefreshKey(prev => prev + 1)} />
 </div>
 

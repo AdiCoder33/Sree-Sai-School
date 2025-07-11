@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -8,50 +8,97 @@ import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
+import axios from 'axios';
 
-const classList = Array.from({ length: 10 }, (_, i) => `Class ${i + 1}`);
 
-const mockStudents = [
-  { id: '1', name: 'Emma Johnson', rollNumber: '001', class: 'Class 1', avatar: 'https://images.unsplash.com/photo-1494790108755-2616c34e8ab4' },
-  { id: '2', name: 'Liam Smith', rollNumber: '002', class: 'Class 1', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d' },
-  { id: '3', name: 'Sophia Brown', rollNumber: '003', class: 'Class 1', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80' },
-  { id: '4', name: 'Noah Wilson', rollNumber: '004', class: 'Class 1', avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e' },
-  { id: '5', name: 'Olivia Davis', rollNumber: '005', class: 'Class 1', avatar: 'https://images.unsplash.com/photo-1544725176-7c40e5a71c5e' }
-];
 
-// Mock attendance records for parents
-const mockChildAttendance = [
-  { date: '2024-01-15', status: 'present' },
-  { date: '2024-01-14', status: 'present' },
-  { date: '2024-01-13', status: 'absent' },
-  { date: '2024-01-12', status: 'present' },
-  { date: '2024-01-11', status: 'present' },
-  { date: '2024-01-10', status: 'present' },
-  { date: '2024-01-09', status: 'late' },
-  { date: '2024-01-08', status: 'present' },
-  { date: '2024-01-07', status: 'present' },
-  { date: '2024-01-06', status: 'absent' }
-];
+
+
 
 export const Attendance: React.FC = () => {
   const { user } = useAuth();
-  const [selectedClass, setSelectedClass] = useState('Class 1');
+  const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'unmarked'>>({});
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
+  const [mockChildAttendance, setMockChildAttendance] = useState([]);
+  const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 
-  const studentsInClass = mockStudents.filter(student => student.class === selectedClass);
+
+
+  const [studentsInClass, setStudentsInClass] = useState([]);
+useEffect(() => {
+  const token = localStorage.getItem('smartschool_token');
+  axios.get('http://localhost:5000/api/classes', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  .then(res => {
+    setClassList(res.data);
+    if (res.data.length > 0 && !selectedClass) {
+  setSelectedClass(res.data[0].id);
+}
+
+  })
+  .catch(err => {
+    console.error('❌ Error fetching class list:', err);
+  });
+}, []);
+
+useEffect(() => {
+  if (!selectedClass) return; // 🛡️ Prevent calling API with empty classId
+
+  const token = localStorage.getItem('smartschool_token');
+  axios.get(`http://localhost:5000/api/students/class/${selectedClass}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  })
+  .then(res => {
+    setStudentsInClass(res.data);
+  })
+  .catch(err => {
+    console.error('❌ Error fetching students:', err);
+  });
+}, [selectedClass]);
+
+
   
   const getAttendanceStatus = (studentId: string) => {
     return attendance[studentId] || 'unmarked';
   };
 
-  const markAttendance = (studentId: string, status: 'present' | 'absent') => {
-    setAttendance(prev => ({
-      ...prev,
-      [studentId]: status
-    }));
-  };
+  const markAttendance = async (studentId: string, status: 'present' | 'absent') => {
+  setAttendance(prev => ({
+    ...prev,
+    [studentId]: status
+  }));
+
+  try {
+    const token = localStorage.getItem('smartschool_token');
+    await axios.post('http://localhost:5000/api/attendance', {
+      student_id: studentId,
+      date: selectedDate,
+      status,
+      remarks: ''
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    toast.success('Attendance marked!');
+  } catch (error) {
+    toast.error('Failed to mark attendance');
+    console.error(error);
+  }
+};
+useEffect(() => {
+  if (user?.role === 'parent') {
+    const token = localStorage.getItem('smartschool_token');
+    axios.get(`http://localhost:5000/api/attendance/parent/${user.id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(res => {
+      setMockChildAttendance(res.data);
+    });
+  }
+}, [user]);
+
+
 
   const markAllPresent = () => {
     const newAttendance = { ...attendance };
@@ -62,20 +109,36 @@ export const Attendance: React.FC = () => {
     toast.success('All students marked present!');
   };
 
-  const bulkMarkSelected = (status: 'present' | 'absent') => {
-    if (selectedStudents.length === 0) {
-      toast.error('Please select students first');
-      return;
-    }
-    
-    const newAttendance = { ...attendance };
-    selectedStudents.forEach(studentId => {
-      newAttendance[studentId] = status;
+  const bulkMarkSelected = async (status: 'present' | 'absent') => {
+  if (selectedStudents.length === 0) {
+    toast.error('Please select students first');
+    return;
+  }
+
+  setAttendance(prev => {
+    const updated = { ...prev };
+    selectedStudents.forEach(id => updated[id] = status);
+    return updated;
+  });
+
+  try {
+    const token = localStorage.getItem('smartschool_token');
+    await axios.post('http://localhost:5000/api/attendance/bulk', {
+      students: selectedStudents,
+      date: selectedDate,
+      status
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
     });
-    setAttendance(newAttendance);
-    setSelectedStudents([]);
-    toast.success(`${selectedStudents.length} students marked ${status}!`);
-  };
+    toast.success('Bulk attendance updated');
+  } catch (err) {
+    toast.error('Bulk update failed');
+    console.error(err);
+  }
+
+  setSelectedStudents([]);
+};
+
 
   const toggleStudentSelection = (studentId: string) => {
     setSelectedStudents(prev => 
@@ -99,7 +162,9 @@ export const Attendance: React.FC = () => {
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
       
-      XLSX.writeFile(wb, `attendance_${selectedClass}_${selectedDate}.xlsx`);
+      const className = classList.find(cls => cls.id === selectedClass)?.name || selectedClass;
+XLSX.writeFile(wb, `attendance_${className}_${selectedDate}.xlsx`);
+
       toast.success('Attendance report downloaded successfully!');
     } catch (error) {
       toast.error('Failed to generate report');
@@ -123,6 +188,26 @@ export const Attendance: React.FC = () => {
       default: return <div className="h-5 w-5 bg-gray-300 rounded-full" />;
     }
   };
+  
+
+useEffect(() => {
+  const token = localStorage.getItem('smartschool_token');
+
+  axios.get(`http://localhost:5000/api/attendance/${selectedDate}/${selectedClass}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  .then(res => {
+    const fetched = res.data.reduce((acc: any, curr: any) => {
+      acc[curr.student_id] = curr.status;
+      return acc;
+    }, {});
+    setAttendance(fetched);
+  })
+  .catch(err => {
+    console.error("❌ Error fetching attendance:", err);
+  });
+}, [selectedClass, selectedDate]);
+
 
   // Parent view - show only their child's attendance records
   if (user?.role === 'parent') {
@@ -243,14 +328,16 @@ export const Attendance: React.FC = () => {
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium text-gray-700">Class:</label>
           <select 
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
-          >
-            {classList.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
-            ))}
-          </select>
+  value={selectedClass}
+  onChange={(e) => setSelectedClass(e.target.value)}
+  className="..."
+>
+  {classList.map(cls => (
+    <option key={cls.id} value={cls.id}>{cls.name}</option>
+  ))}
+</select>
+
+
         </div>
 
         <div className="flex items-center space-x-2">
@@ -290,7 +377,12 @@ export const Attendance: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center space-x-2 text-lg md:text-xl">
             <Users className="h-5 w-5" />
-            <span>Student Attendance - {selectedClass}</span>
+            <span>
+  Student Attendance - {
+    classList.find(cls => cls.id === selectedClass)?.name || 'Unknown Class'
+  }
+</span>
+
           </CardTitle>
           <CardDescription className="text-sm md:text-base">
             {new Date(selectedDate).toLocaleDateString('en-US', { 
@@ -324,11 +416,16 @@ export const Attendance: React.FC = () => {
                     <Avatar className="h-8 w-8 md:h-10 md:w-10">
                       <AvatarImage src={student.avatar} alt={student.name} />
                       <AvatarFallback className="text-xs md:text-sm">
-                        {student.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
+  {`${student.firstName?.[0] ?? ''}${student.lastName?.[0] ?? ''}`}
+</AvatarFallback>
+
+
                     </Avatar>
                     <div>
-                      <p className="font-medium text-gray-900 text-sm md:text-base">{student.name}</p>
+                      <p className="font-medium text-gray-900 text-sm md:text-base">
+  {student.name || `${student.firstName ?? ''} ${student.lastName ?? ''}`}
+</p>
+
                       <p className="text-xs md:text-sm text-gray-500">Roll No: {student.rollNumber}</p>
                     </div>
                   </div>

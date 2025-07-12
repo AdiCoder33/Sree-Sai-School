@@ -77,16 +77,15 @@ router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (r
   .input('id', sql.VarChar, notificationId)
   .input('user_id', sql.VarChar, req.user.id)
   .input('type', sql.VarChar, 'announcement')
-  .input('title', sql.NVarChar(255), 'New Announcement Created')
-  .input('message', sql.NVarChar(sql.MAX), `${title} - ${content}`)
+  .input('title', sql.NVarChar(255), title)
+  .input('message', sql.NVarChar(sql.MAX), `${content}`)
   .input('priority', sql.VarChar, cleanPriority.toLowerCase())
-  .input('isRead', sql.Bit, 0)
-  .input('target_role', sql.VarChar, cleanAudience)
+  .input('target_role', sql.VarChar, cleanAudience)  // ✅ FIXED here
   .input('created_by', sql.VarChar, req.user.id)
-  .input('reference_id', sql.VarChar, announcementId)  // ✅ Add this line
+  .input('reference_id', sql.VarChar, announcementId)
   .query(`
-    INSERT INTO notifications (id, user_id, type, title, message, priority, isRead, target_role, created_by, reference_id)
-    VALUES (@id, @user_id, @type, @title, @message, @priority, @isRead, @target_role, @created_by, @reference_id)
+    INSERT INTO notifications (id, user_id, type, title, message, priority, target_role, created_by, reference_id)
+    VALUES (@id, @user_id, @type, @title, @message, @priority, @target_role, @created_by, @reference_id)
   `);
 
     res.status(201).json({ message: 'Announcement created successfully', id: announcementId });
@@ -98,12 +97,12 @@ router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (r
 
 /**
  * PUT: Update Announcement + Notification
- */router.put('/:id', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {
+ */
+router.put('/:id', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {
   try {
     const { id } = req.params;
     const { title = '', content = '', priority = 'Normal', target_audience = 'All' } = req.body;
 
-    const notificationId = uuidv4();
     const pool = await poolPromise;
 
     const cleanTitle = title.trim();
@@ -120,32 +119,59 @@ router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (r
       .input('target_audience', sql.VarChar, cleanAudience)
       .query(`
         UPDATE announcements 
-        SET title = @title, content = @content, priority = @priority, target_audience = @target_audience
+        SET title = @title, content = @content, priority = @priority, target_audience = @target_audience, updated_at = GETDATE()
         WHERE id = @id
       `);
 
-    // ✅ Step 2: Log the Notification
-   await pool.request()
-  .input('id', sql.VarChar, notificationId)
-  .input('user_id', sql.VarChar, req.user.id)
-  .input('type', sql.VarChar, 'announcement')
-  .input('title', sql.NVarChar(255), 'Announcement Updated')
-  .input('message', sql.NVarChar(sql.MAX), `${cleanTitle} - ${cleanContent}`)
-  .input('priority', sql.VarChar, cleanPriority.toLowerCase())
-  .input('isRead', sql.Bit, 0)
-  .input('target_role', sql.VarChar, cleanAudience)
-  .input('created_by', sql.VarChar, req.user.id)
-  .input('reference_id', sql.VarChar, id)  // ✅ Add this line (announcement id)
-  .query(`
-    INSERT INTO notifications (id, user_id, type, title, message, priority, isRead, target_role, created_by, reference_id)
-    VALUES (@id, @user_id, @type, @title, @message, @priority, @isRead, @target_role, @created_by, @reference_id)
-  `);
-    res.json({ message: '✅ Announcement updated successfully' });
+    // ✅ Step 2: Get the related notification ID
+    const notifResult = await pool.request()
+      .input('ref_id', sql.VarChar, id)
+      .query(`
+        SELECT id FROM notifications 
+        WHERE type = 'announcement' AND reference_id = @ref_id
+      `);
+
+    if (notifResult.recordset.length === 0) {
+      return res.status(404).json({ error: 'Notification not found for this announcement' });
+    }
+
+    const notificationId = notifResult.recordset[0].id;
+
+    // ✅ Step 3: Delete all read status for this notification
+    await pool.request()
+      .input('notification_id', sql.VarChar, notificationId)
+      .query(`
+        DELETE FROM notification_reads 
+        WHERE notification_id = @notification_id
+      `);
+
+    // ✅ Step 4: Update the existing notification
+    await pool.request()
+      .input('id', sql.VarChar, notificationId)
+      .input('title', sql.NVarChar(255), `${cleanTitle} - Updated`)
+      .input('message', sql.NVarChar(sql.MAX), cleanContent)
+      .input('priority', sql.VarChar, cleanPriority.toLowerCase())
+      .input('target_role', sql.VarChar, cleanAudience)
+      .input('created_by', sql.VarChar, req.user.id)
+      .query(`
+        UPDATE notifications
+        SET title = @title,
+            message = @message,
+            priority = @priority,
+            target_role = @target_role,
+            created_by = @created_by,
+            updated_at = GETDATE()
+        WHERE id = @id
+      `);
+
+    res.json({ message: '✅ Announcement and notification updated successfully' });
+
   } catch (error) {
     console.error('❌ Update announcement error:', error.message);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
 
 /**
  * DELETE: Delete Announcement + Notification

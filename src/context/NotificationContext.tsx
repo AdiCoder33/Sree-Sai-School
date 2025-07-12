@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 
@@ -10,7 +9,7 @@ export interface Notification {
   createdAt: string;
   read: boolean;
   priority: 'low' | 'medium' | 'high';
-  targetRole?: 'parent' | 'teacher' | 'admin' | 'all';
+  targetRole?: string;
   createdBy?: string;
 }
 
@@ -25,71 +24,65 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
-// Mock notifications data
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    type: 'fee_request',
-    title: 'Fee Payment Due',
-    message: 'Monthly fee payment for January 2024 is due on 31st January',
-    createdAt: '2024-01-15T10:00:00Z',
-    read: false,
-    priority: 'high',
-    targetRole: 'parent'
-  },
-  {
-    id: '2', 
-    type: 'announcement',
-    title: 'School Closed Tomorrow',
-    message: 'Due to weather conditions, school will be closed tomorrow.',
-    createdAt: '2024-01-14T08:00:00Z',
-    read: false,
-    priority: 'high',
-    targetRole: 'all',
-    createdBy: 'Admin'
-  },
-  {
-    id: '3',
-    type: 'event',
-    title: 'Parent-Teacher Meeting',
-    message: 'Parent-teacher meeting scheduled for next week',
-    createdAt: '2024-01-13T15:30:00Z',
-    read: true,
-    priority: 'medium',
-    targetRole: 'parent'
-  }
-];
-
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const token = localStorage.getItem('smartschool_token');
 
   useEffect(() => {
-    if (user) {
-      // Filter notifications based on user role
-      const userNotifications = mockNotifications.filter(notification => 
-        notification.targetRole === 'all' || 
-        notification.targetRole === user.role ||
-        !notification.targetRole
-      );
-      setNotifications(userNotifications);
+    const fetchNotifications = async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/notifications', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+
+        // Convert backend field to match your Notification type
+        const formatted = data.map((n: any) => ({
+          ...n,
+          createdAt: n.created_at,
+          read: n.isRead === 1,
+        }));
+
+        setNotifications(formatted);
+      } catch (err) {
+        console.error('❌ Failed to fetch notifications:', err);
+      }
+    };
+
+    if (user && token) {
+      fetchNotifications();
     }
   }, [user]);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
+  const markAsRead = async (id: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+      );
+    } catch (err) {
+      console.error('❌ Mark as read error:', err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => 
-      prev.map(notification => ({ ...notification, read: true }))
-    );
+  const markAllAsRead = async () => {
+    try {
+      await fetch(`http://localhost:5000/api/notifications/read-all`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('❌ Mark all as read error:', err);
+    }
   };
 
   const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
@@ -97,24 +90,27 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       ...notification,
       id: Date.now().toString(),
       createdAt: new Date().toISOString(),
-      read: false
+      read: false,
     };
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications((prev) => [newNotification, ...prev]);
   };
 
   const removeNotification = (id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    // Optional: Add API DELETE call if needed
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      markAsRead,
-      markAllAsRead,
-      addNotification,
-      removeNotification
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        markAsRead,
+        markAllAsRead,
+        addNotification,
+        removeNotification,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );
@@ -122,8 +118,6 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
-  if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
-  }
+  if (!context) throw new Error('useNotifications must be used within a NotificationProvider');
   return context;
 };

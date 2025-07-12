@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,50 +6,19 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Dialog } from '../components/ui/dialog';
 import { Plus, BookOpen, Calendar, CheckSquare, X, Users } from 'lucide-react';
+import axios from 'axios';
+
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 
-const mockHomework = [
-  {
-    id: '1',
-    class: 'Class 1',
-    subject: 'Mathematics',
-    title: 'Solve multiplication problems',
-    description: 'Complete exercises 1-10 from page 45',
-    date: '2024-01-15',
-    teacherId: '2',
-    teacherName: 'Ms. Sarah Johnson',
-    students: [
-      { id: '1', name: 'Emma Johnson', completed: true },
-      { id: '2', name: 'Liam Smith', completed: false },
-      { id: '3', name: 'Sophia Brown', completed: true }
-    ]
-  },
-  {
-    id: '2',
-    class: 'Class 1',
-    subject: 'English',
-    title: 'Write a short story',
-    description: 'Write a 200-word story about your favorite animal',
-    date: '2024-01-15',
-    teacherId: '2',
-    teacherName: 'Ms. Sarah Johnson',
-    students: [
-      { id: '1', name: 'Emma Johnson', completed: true },
-      { id: '2', name: 'Liam Smith', completed: true },
-      { id: '3', name: 'Sophia Brown', completed: false }
-    ]
-  }
-];
 
-const classList = [
-  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'
-];
+
+
+
 
 export const Homework: React.FC = () => {
   const { user } = useAuth();
-  const [homework, setHomework] = useState(mockHomework);
+  const [homework, setHomework] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState('Class 1');
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
@@ -62,30 +31,106 @@ export const Homework: React.FC = () => {
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
 
-  const handleAddHomework = () => {
-    const teacherName = user ? `${user.firstName} ${user.lastName}` : 'Teacher';
-    const newHw = {
-      id: Date.now().toString(),
-      ...newHomework,
-      date: new Date().toISOString().split('T')[0],
-      teacherId: user?.id || '2',
-      teacherName,
-      students: [] // Would be populated based on class
-    };
-    setHomework(prev => [newHw, ...prev]);
+useEffect(() => {
+  const fetchHomework = async () => {
+    try {
+      const token = localStorage.getItem('smartschool_token');
+const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
+  headers: { Authorization: `Bearer ${token}` }
+});
+
+      setHomework(res.data);
+    } catch (error) {
+      console.error('❌ Failed to fetch homework:', error.message);
+    }
+  };
+
+  fetchHomework();
+}, [selectedClass]);
+
+
+  const handleAddHomework = async () => {
+  try {
+    const res = await axios.post('http://localhost:5000/api/homework', {
+      class_id: selectedClass,
+      subject: newHomework.subject,
+      title: newHomework.title,
+      description: newHomework.description,
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+
+    });
+
+    // Fetch latest homework again
+    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`);
+    setHomework(updatedHomework.data);
+
     setShowAddForm(false);
-    setNewHomework({ class: 'Class 1', subject: '', title: '', description: '' });
-  };
+    setNewHomework({ class: selectedClass, subject: '', title: '', description: '' });
+  } catch (error) {
+    console.error('❌ Failed to add homework:', error.message);
+  }
+};
+const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 
-  const toggleStudentSelection = (homeworkId: string, studentId: string) => {
-    setSelectedStudents(prev => ({
-      ...prev,
-      [homeworkId]: prev[homeworkId]?.includes(studentId) 
-        ? prev[homeworkId].filter(id => id !== studentId)
-        : [...(prev[homeworkId] || []), studentId]
-    }));
-  };
+
+const fetchClasses = async () => {
+  try {
+    const token = localStorage.getItem('smartschool_token');
+const res = await axios.get('http://localhost:5000/api/classes', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+
+    setClassList(res.data);
+  } catch (error: any) {
+    console.error('❌ Failed to fetch classes:', error.message);
+  }
+};
+
+useEffect(() => {
+  fetchClasses();
+}, []);
+
+
+
+
+
+  const toggleStudentCompletion = async (homeworkId: string, studentId: string) => {
+  if (bulkMode[homeworkId]) {
+    toggleStudentSelection(homeworkId, studentId);
+    return;
+  }
+
+  const hw = homework.find(h => h.id === homeworkId);
+  const student = hw?.students.find(s => s.id === studentId);
+  const newStatus = student?.completed ? 'incomplete' : 'completed';
+
+  try {
+    await axios.put(`http://localhost:5000/api/homework/completion/${homeworkId}/${studentId}`, {
+      status: newStatus
+    }, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    // Refresh homework
+    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`);
+    setHomework(updated.data);
+  } catch (error) {
+    console.error('❌ Failed to update completion:', error.message);
+  }
+};
+
+const toggleStudentSelection = (homeworkId: string, studentId: string) => {
+  setSelectedStudents(prev => ({
+    ...prev,
+    [homeworkId]: prev[homeworkId]?.includes(studentId)
+      ? prev[homeworkId].filter(id => id !== studentId)
+      : [...(prev[homeworkId] || []), studentId]
+  }));
+};
+
 
   const markSelectedStudents = (homeworkId: string, status: boolean) => {
     const selectedIds = selectedStudents[homeworkId] || [];
@@ -106,26 +151,6 @@ export const Homework: React.FC = () => {
     // Clear selections and exit bulk mode
     setSelectedStudents(prev => ({ ...prev, [homeworkId]: [] }));
     setBulkMode(prev => ({ ...prev, [homeworkId]: false }));
-  };
-
-  const toggleStudentCompletion = (homeworkId: string, studentId: string) => {
-    if (bulkMode[homeworkId]) {
-      toggleStudentSelection(homeworkId, studentId);
-      return;
-    }
-
-    setHomework(prev => prev.map(hw => 
-      hw.id === homeworkId 
-        ? {
-            ...hw,
-            students: hw.students.map(student => 
-              student.id === studentId 
-                ? { ...student, completed: !student.completed }
-                : student
-            )
-          }
-        : hw
-    ));
   };
 
   const filteredHomework = user?.role === 'parent' 
@@ -166,8 +191,11 @@ export const Homework: React.FC = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {classList.map(cls => (
-                    <option key={cls} value={cls}>{cls}</option>
-                  ))}
+  <option key={cls.id} value={cls.id}>{cls.name}</option>
+
+
+))}
+
                 </select>
               </div>
               <div>
@@ -216,8 +244,11 @@ export const Homework: React.FC = () => {
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             {classList.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
-            ))}
+  <option key={cls.id} value={cls.id}>{cls.name}</option>
+
+
+))}
+
           </select>
         </RoleGuard>
         <RoleGuard allowedRoles={['principal', 'teacher']}>

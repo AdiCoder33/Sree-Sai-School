@@ -18,7 +18,7 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
         FROM homework h
         JOIN users u ON h.teacher_id = u.id
         WHERE h.class_id = @classId
-        ORDER BY h.date DESC
+        ORDER BY h.duedate DESC
       `);
 
     const homework = homeworkResult.recordset;
@@ -53,27 +53,27 @@ router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (r
     const pool = await poolPromise;
 
     await pool.request()
-      .input('id', sql.VarChar, homeworkId)
-      .input('class_id', sql.VarChar, class_id)
+      .input('id', sql.UniqueIdentifier, homeworkId)
+      .input('class_id', sql.UniqueIdentifier, class_id)
       .input('subject', sql.VarChar, subject)
       .input('title', sql.VarChar, title)
       .input('description', sql.Text, description)
-      .input('date', sql.Date, date)
-      .input('teacher_id', sql.VarChar, req.user.id)
+      .input('duedate', sql.Date, date)
+      .input('teacher_id', sql.UniqueIdentifier, req.user.id)
       .query(`
-        INSERT INTO homework (id, class_id, subject, title, description, date, teacher_id)
-        VALUES (@id, @class_id, @subject, @title, @description, @date, @teacher_id)
+        INSERT INTO homework (id, class_id, subject, title, description, duedate, teacher_id)
+        VALUES (@id, @class_id, @subject, @title, @description, @duedate, @teacher_id)
       `);
 
     const studentsResult = await pool.request()
-      .input('class_id', sql.VarChar, class_id)
+      .input('class_id', sql.UniqueIdentifier, class_id)
       .query('SELECT id FROM students WHERE class_id = @class_id');
 
     for (const student of studentsResult.recordset) {
       await pool.request()
-        .input('id', sql.VarChar, uuidv4())
-        .input('homework_id', sql.VarChar, homeworkId)
-        .input('student_id', sql.VarChar, student.id)
+        .input('id', sql.UniqueIdentifier, uuidv4())
+        .input('homework_id', sql.UniqueIdentifier, homeworkId)
+        .input('student_id', sql.UniqueIdentifier, student.id)
         .query(`
           INSERT INTO homework_completion (id, homework_id, student_id)
           VALUES (@id, @homework_id, @student_id)

@@ -24,11 +24,9 @@ export const Homework: React.FC = () => {
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
   const [bulkMode, setBulkMode] = useState<{[homeworkId: string]: boolean}>({});
   const [newHomework, setNewHomework] = useState({
-    class: 'Class 1',
-    subject: '',
-    title: '',
-    description: ''
-  });
+  class_id: '', subject: '', title: '', description: ''
+});
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
@@ -68,7 +66,7 @@ const res = await axios.get(`http://localhost:5000/api/homework/class/${selected
     setHomework(updatedHomework.data);
 
     setShowAddForm(false);
-    setNewHomework({ class: selectedClass, subject: '', title: '', description: '' });
+    setNewHomework({ class_id: selectedClass, subject: '', title: '', description: '' });
   } catch (error) {
     console.error('❌ Failed to add homework:', error.message);
   }
@@ -186,8 +184,8 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
                 <select 
-                  value={newHomework.class}
-                  onChange={(e) => setNewHomework({...newHomework, class: e.target.value})}
+                  value={newHomework.class_id}
+                  onChange={(e) => setNewHomework({...newHomework, class_id: e.target.value})}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 >
                   {classList.map(cls => (
@@ -282,7 +280,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                 
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <BookOpen className="h-4 w-4" />
-                  <span>Assigned by {hw.teacherName}</span>
+                  <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
                 </div>
 
                 <RoleGuard allowedRoles={['teacher', 'principal']}>

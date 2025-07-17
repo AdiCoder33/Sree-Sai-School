@@ -139,7 +139,7 @@ export const Homework: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Homework</h1>
           <p className="text-gray-600 mt-2">Manage daily homework assignments</p>
         </div>
-        <RoleGuard allowedRoles={['teacher', 'principal']}>
+        <RoleGuard allowedRoles={['teacher', 'admin']}>
           <Button 
             onClick={() => setShowAddForm(true)}
             className="bg-indigo-600 hover:bg-indigo-700"
@@ -209,7 +209,7 @@ export const Homework: React.FC = () => {
       )}
 
       <div className="flex items-center space-x-4 mb-6">
-        <RoleGuard allowedRoles={['teacher', 'principal']}>
+        <RoleGuard allowedRoles={['teacher', 'admin']}>
           <select 
             value={selectedClass}
             onChange={(e) => setSelectedClass(e.target.value)}
@@ -220,7 +220,7 @@ export const Homework: React.FC = () => {
             ))}
           </select>
         </RoleGuard>
-        <RoleGuard allowedRoles={['principal', 'teacher']}>
+        <RoleGuard allowedRoles={['admin', 'teacher']}>
           <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
             <BookOpen className="mr-2 h-4 w-4" />
             Create Homework
@@ -254,7 +254,7 @@ export const Homework: React.FC = () => {
                   <span>Assigned by {hw.teacherName}</span>
                 </div>
 
-                <RoleGuard allowedRoles={['teacher', 'principal']}>
+                <RoleGuard allowedRoles={['teacher', 'admin']}>
                   {hw.students.length > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between items-center mb-3">

@@ -17,32 +17,55 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
         SELECT h.*, u.firstName as teacherFirstName, u.lastName as teacherLastName
         FROM homework h
         JOIN users u ON h.teacher_id = u.id
-        WHERE h.class_id = @classId
+        WHERE h.class_id = @classId AND h.created_at >= CAST(GETDATE() - 2 AS DATE)
         ORDER BY h.duedate DESC
       `);
-
+      
     const homework = homeworkResult.recordset;
+    const groupByDate = (list) => {
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  const dayBefore = new Date(Date.now() - 2 * 86400000).toDateString();
 
-    for (let hw of homework) {
-      const completionsResult = await pool.request()
-        .input('homeworkId', sql.VarChar, hw.id)
-        .query(`
-          SELECT hc.*, s.firstName, s.lastName
-          FROM homework_completion hc
-          JOIN students s ON hc.student_id = s.id
-          WHERE hc.homework_id = @homeworkId
-        `);
+  return list.reduce((acc, hw) => {
+    const hwDate = new Date(hw.created_at).toDateString();
+    if (hwDate === today) acc.today.push(hw);
+    else if (hwDate === yesterday) acc.yesterday.push(hw);
+    else if (hwDate === dayBefore) acc.dayBefore.push(hw);
+    return acc;
+  }, { today: [], yesterday: [], dayBefore: [] });
+};
 
-      hw.students = completionsResult.recordset;
-    }
+const groupedHomework = groupByDate(homework);
 
-    res.json(homework);
+for (let label of ['today', 'yesterday', 'dayBefore']) {
+  for (let hw of groupedHomework[label]) {
+    const completionsResult = await pool.request()
+      .input('homeworkId', sql.VarChar, hw.id)
+      .query(`
+        SELECT hc.*, s.firstName, s.lastName
+        FROM homework_completion hc
+        JOIN students s ON hc.student_id = s.id
+        WHERE hc.homework_id = @homeworkId
+      `);
+
+    hw.students = completionsResult.recordset;
+  }
+}
+
+const response = {};
+for (let label of ['today', 'yesterday', 'dayBefore']) {
+  response[label] = groupedHomework[label];
+}
+res.json(response);
   } catch (error) {
     console.error('❌ Get homework error:', error.message);
     console.error(error.stack);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+  
 
 // Create homework
 router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {

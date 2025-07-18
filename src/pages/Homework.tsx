@@ -27,6 +27,8 @@ export const Homework: React.FC = () => {
   class_id: '', subject: '', title: '', description: ''
 });
 
+
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   
@@ -35,18 +37,28 @@ useEffect(() => {
   const fetchHomework = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
-  headers: { Authorization: `Bearer ${token}` }
-});
+      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      setHomework(res.data);
-    } catch (error) {
+      // Flatten all 3 days into 1 array for rendering
+      const combined = [
+        ...(res.data.today || []),
+        ...(res.data.yesterday || []),
+        ...(res.data.dayBefore || [])
+      ];
+      console.log("Fetched homework response:", res.data);
+
+
+      setHomework(combined);
+    } catch (error: any) {
       console.error('❌ Failed to fetch homework:', error.message);
     }
   };
 
-  fetchHomework();
+  if (selectedClass) fetchHomework();
 }, [selectedClass]);
+
 
 
   const handleAddHomework = async () => {
@@ -69,8 +81,15 @@ const res = await axios.get(`http://localhost:5000/api/homework/class/${selected
     const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
   headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
 });
+const combined = [
+  ...(updatedHomework.data.today || []),
+  ...(updatedHomework.data.yesterday || []),
+  ...(updatedHomework.data.dayBefore || [])
+];
+setHomework(combined);
 
-    setHomework(updatedHomework.data);
+
+    
 
     setShowAddForm(false);
     setNewHomework({ class_id: selectedClass, subject: '', title: '', description: '' });
@@ -161,7 +180,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
 
   const filteredHomework = user?.role === 'parent' 
     ? homework.filter(hw => hw.class === 'Class 1') // Parent sees their child's class
-    : homework.filter(hw => hw.class === selectedClass);
+    : homework.filter(hw => hw.class_id === selectedClass);
 
   return (
     <div className="space-y-6">
@@ -271,11 +290,11 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-4">
                   <Badge variant="secondary">{hw.subject}</Badge>
-                  <span className="text-sm text-gray-500">{hw.class}</span>
+                  <span className="text-sm text-gray-500">{classList.find(c => c.id === hw.class_id)?.name}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
-                  <span>{new Date(hw.date).toLocaleDateString()}</span>
+                  <span>{new Date(hw.duedate).toLocaleDateString()}</span>
                 </div>
               </div>
               
@@ -343,7 +362,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                               }`}
                               onClick={() => toggleStudentCompletion(hw.id, student.id)}
                             >
-                              <span className="text-sm">{student.name}</span>
+                              <span className="text-sm">{student.firstName} {student.lastName}</span>
                               <div className="flex items-center space-x-2">
                                 {bulkMode[hw.id] && (
                                   <div className={`w-4 h-4 border-2 rounded ${
@@ -353,9 +372,11 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                                   }`} />
                                 )}
                                 <div className={`p-1 rounded ${
-                                  student.completed ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'
+                                  student.status === 'completed'
+ ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'
                                 }`}>
-                                  {student.completed ? <CheckSquare className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                  {student.status === 'completed'
+? <CheckSquare className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                 </div>
                               </div>
                             </div>

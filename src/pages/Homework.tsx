@@ -20,7 +20,7 @@ export const Homework: React.FC = () => {
   const { user } = useAuth();
   const [homework, setHomework] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedClass, setSelectedClass] = useState('Class 1');
+  const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
   const [bulkMode, setBulkMode] = useState<{[homeworkId: string]: boolean}>({});
   const [newHomework, setNewHomework] = useState({
@@ -51,18 +51,25 @@ const res = await axios.get(`http://localhost:5000/api/homework/class/${selected
 
   const handleAddHomework = async () => {
   try {
+    if (!newHomework.class_id) {
+      alert("Please select a class before submitting homework.");
+      return;
+    }
+
     const res = await axios.post('http://localhost:5000/api/homework', {
-      class_id: selectedClass,
+      class_id: newHomework.class_id,
       subject: newHomework.subject,
       title: newHomework.title,
       description: newHomework.description,
     }, {
       headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
-
     });
 
     // Fetch latest homework again
-    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`);
+    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
+  headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+});
+
     setHomework(updatedHomework.data);
 
     setShowAddForm(false);
@@ -71,6 +78,7 @@ const res = await axios.get(`http://localhost:5000/api/homework/class/${selected
     console.error('❌ Failed to add homework:', error.message);
   }
 };
+
 const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 
 
@@ -184,17 +192,16 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
                 <select 
-                  value={newHomework.class_id}
-                  onChange={(e) => setNewHomework({...newHomework, class_id: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {classList.map(cls => (
-  <option key={cls.id} value={cls.id}>{cls.name}</option>
+  value={newHomework.class_id}
+  onChange={(e) => setNewHomework({ ...newHomework, class_id: e.target.value })}
+>
+    <option value="">Select Class</option>
 
+  {classList.map(cls => (
+    <option key={cls.id} value={cls.id}>{cls.name}</option>
+  ))}
+</select>
 
-))}
-
-                </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
@@ -237,17 +244,17 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
       <div className="flex items-center space-x-4 mb-6">
         <RoleGuard allowedRoles={['teacher', 'principal']}>
           <select 
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {classList.map(cls => (
-  <option key={cls.id} value={cls.id}>{cls.name}</option>
+  value={selectedClass}
+  onChange={(e) => setSelectedClass(e.target.value)}
+>
+    <option value="">Select Class</option>
+
+  {classList.map(cls => (
+    <option key={cls.id} value={cls.id}>{cls.name}</option>
+  ))}
+</select>
 
 
-))}
-
-          </select>
         </RoleGuard>
         <RoleGuard allowedRoles={['principal', 'teacher']}>
           <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">

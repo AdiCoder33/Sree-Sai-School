@@ -294,7 +294,12 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
-                  <span>{new Date(hw.duedate).toLocaleDateString()}</span>
+                  <span>
+  {hw.duedate && !isNaN(Date.parse(hw.duedate))
+    ? new Date(hw.duedate).toLocaleDateString()
+    : 'No Due Date'}
+</span>
+
                 </div>
               </div>
               

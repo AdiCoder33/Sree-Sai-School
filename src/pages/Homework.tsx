@@ -10,6 +10,7 @@ import axios from 'axios';
 
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
 
 
@@ -23,6 +24,11 @@ export const Homework: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
   const [bulkMode, setBulkMode] = useState<{[homeworkId: string]: boolean}>({});
+  const [selectedDate, setSelectedDate] = useState(() => {
+  const today = new Date().toISOString().split('T')[0];
+  return today;
+});
+
   const [newHomework, setNewHomework] = useState({
   class_id: '', subject: '', title: '', description: ''
 });
@@ -37,27 +43,43 @@ useEffect(() => {
   const fetchHomework = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
+      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      // Flatten all 3 days into 1 array for rendering
-      const combined = [
-        ...(res.data.today || []),
-        ...(res.data.yesterday || []),
-        ...(res.data.dayBefore || [])
-      ];
-      console.log("Fetched homework response:", res.data);
+      const todayStr = new Date().toDateString();
+const selectedStr = new Date(selectedDate).toDateString();
+let combined;
+
+if (selectedStr === todayStr) {
+  combined = [
+    ...(res.data.today || []),
+    ...(res.data.yesterday || []),
+    ...(res.data.dayBefore || [])
+  ];
+} else if (res.data.results) {
+  combined = res.data.results;
+} else {
+  combined = [];
+}
 
 
       setHomework(combined);
+      console.log("Fetched homework response:", res.data);
+
+      const selectedClassName = classList.find(c => c.id === selectedClass)?.name || 'Selected Class';
+      const formattedDate = new Date(selectedDate).toLocaleDateString();
+      toast.success(`📚 Homework for ${selectedClassName} on ${formattedDate} loaded successfully`);
     } catch (error: any) {
       console.error('❌ Failed to fetch homework:', error.message);
+      toast.error("Failed to fetch homework");
     }
   };
 
   if (selectedClass) fetchHomework();
-}, [selectedClass]);
+}, [selectedClass, selectedDate]);
+
+
 
 
 
@@ -78,7 +100,7 @@ useEffect(() => {
     });
 
     // Fetch latest homework again
-    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`, {
+    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
   headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
 });
 const combined = [
@@ -140,7 +162,10 @@ useEffect(() => {
     });
 
     // Refresh homework
-    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}`);
+    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+  headers: { Authorization: `Bearer ${user.token}` }
+});
+
     setHomework(updated.data);
   } catch (error) {
     console.error('❌ Failed to update completion:', error.message);
@@ -178,9 +203,11 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
     setBulkMode(prev => ({ ...prev, [homeworkId]: false }));
   };
 
-  const filteredHomework = user?.role === 'parent' 
-    ? homework.filter(hw => hw.class === 'Class 1') // Parent sees their child's class
-    : homework.filter(hw => hw.class_id === selectedClass);
+  const filteredHomework = ['teacher', 'admin'].includes(user?.role)
+  ? homework.filter(hw => hw.class_id === selectedClass)
+  : user?.role === 'parent'
+    ? homework.filter(hw => hw.class === 'Class 1')
+    : [];
 
   return (
     <div className="space-y-6">
@@ -261,27 +288,28 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
       )}
 
       <div className="flex items-center space-x-4 mb-6">
-        <RoleGuard allowedRoles={['teacher', 'principal']}>
-          <select 
-  value={selectedClass}
-  onChange={(e) => setSelectedClass(e.target.value)}
->
-    <option value="">Select Class</option>
+  <RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+    <select 
+      value={selectedClass}
+      onChange={(e) => setSelectedClass(e.target.value)}
+      className="border px-3 py-2 rounded"
+    >
+      <option value="">Select Class</option>
+      {classList.map(cls => (
+        <option key={cls.id} value={cls.id}>{cls.name}</option>
+      ))}
+    </select>
+  </RoleGuard>
 
-  {classList.map(cls => (
-    <option key={cls.id} value={cls.id}>{cls.name}</option>
-  ))}
-</select>
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(e) => setSelectedDate(e.target.value)}
+    className="border px-3 py-2 rounded"
+    max={new Date().toISOString().split('T')[0]}
+  />
+</div>
 
-
-        </RoleGuard>
-        <RoleGuard allowedRoles={['principal', 'teacher']}>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Create Homework
-          </Button>
-        </RoleGuard>
-      </div>
 
       <div className="space-y-4">
         {filteredHomework.map((hw) => (
@@ -314,7 +342,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                   <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
                 </div>
 
-                <RoleGuard allowedRoles={['teacher', 'principal']}>
+                {/*<RoleGuard allowedRoles={['teacher', 'principal']}>
                   {hw.students.length > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between items-center mb-3">
@@ -390,7 +418,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                       </div>
                     </div>
                   )}
-                </RoleGuard>
+                </RoleGuard>*/}
               </div>
             </CardContent>
           </Card>

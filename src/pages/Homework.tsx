@@ -296,7 +296,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
 
 
               </div>
-              {isEditModalOpen && (
+             {/*} {isEditModalOpen && (
   <Card>
     <CardHeader>
       <CardTitle>Edit Homework</CardTitle>
@@ -352,7 +352,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
       </div>
     </CardContent>
   </Card>
-)}
+             )}*/}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                 <Input
@@ -433,7 +433,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
 </span>
 <RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
   <div className="flex gap-2 mt-2">
-    <Button 
+    {/*<Button 
       variant="outline" 
       size="sm"
       onClick={() => {
@@ -448,7 +448,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
       }}
     >
       Edit
-    </Button>
+    </Button>*/}
     <Button 
       variant="destructive" 
       size="sm"

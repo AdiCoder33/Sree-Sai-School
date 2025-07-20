@@ -24,6 +24,7 @@ export const Homework: React.FC = () => {
   const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
   const [bulkMode, setBulkMode] = useState<{[homeworkId: string]: boolean}>({});
+  const [currentEditId, setCurrentEditId] = useState('');
   const [selectedDate, setSelectedDate] = useState(() => {
   const today = new Date().toISOString().split('T')[0];
   return today;
@@ -80,6 +81,50 @@ if (selectedStr === todayStr) {
 }, [selectedClass, selectedDate]);
 
 
+const handleEditHomework = async () => {
+  try {
+    await axios.put(`http://localhost:5000/api/homework/${currentEditId}`, {
+      ...newHomework
+    }, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    setIsEditModalOpen(false);
+    setNewHomework({ class_id: '', subject: '', title: '', description: '' });
+    setCurrentEditId('');
+
+    // Refresh
+    const refreshed = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    setHomework(refreshed.data.results);
+    toast.success("Homework updated successfully");
+  } catch (err) {
+    console.error("❌ Edit failed:", err.message);
+    toast.error("Failed to edit homework");
+  }
+};
+
+const handleDeleteHomework = async (homeworkId: string) => {
+  const confirm = window.confirm("Are you sure you want to delete this homework?");
+  if (!confirm) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/api/homework/${homeworkId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('smartschool_token')}`,
+      },
+    });
+
+    // 🔁 Live update: Remove from local state
+    setHomework(prev => prev.filter(hw => hw.id !== homeworkId));
+
+    toast.success('Homework deleted successfully');
+  } catch (error) {
+    console.error('❌ Delete failed:', error);
+    toast.error('Delete failed');
+  }
+};
 
 
 
@@ -248,7 +293,66 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
   ))}
 </select>
 
+
+
               </div>
+              {isEditModalOpen && (
+  <Card>
+    <CardHeader>
+      <CardTitle>Edit Homework</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
+          <select 
+            value={newHomework.class_id}
+            onChange={(e) => setNewHomework({ ...newHomework, class_id: e.target.value })}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Select Class</option>
+            {classList.map(cls => (
+              <option key={cls.id} value={cls.id}>{cls.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+          <Input
+            value={newHomework.subject}
+            onChange={(e) => setNewHomework({ ...newHomework, subject: e.target.value })}
+            placeholder="Enter subject"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <Input
+            value={newHomework.title}
+            onChange={(e) => setNewHomework({ ...newHomework, title: e.target.value })}
+            placeholder="Homework title"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <Textarea
+            value={newHomework.description}
+            onChange={(e) => setNewHomework({ ...newHomework, description: e.target.value })}
+            placeholder="Detailed homework instructions"
+            rows={3}
+          />
+        </div>
+      </div>
+      <div className="flex justify-end space-x-3 mt-6">
+        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+          Cancel
+        </Button>
+        <Button onClick={handleEditHomework}>
+          Update Homework
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+)}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                 <Input
@@ -327,6 +431,34 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
     ? new Date(hw.duedate).toLocaleDateString()
     : 'No Due Date'}
 </span>
+<RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+  <div className="flex gap-2 mt-2">
+    <Button 
+      variant="outline" 
+      size="sm"
+      onClick={() => {
+        setIsEditModalOpen(true);
+        setNewHomework({
+          class_id: hw.class_id,
+          subject: hw.subject,
+          title: hw.title,
+          description: hw.description
+        });
+        setCurrentEditId(hw.id);
+      }}
+    >
+      Edit
+    </Button>
+    <Button 
+      variant="destructive" 
+      size="sm"
+      onClick={() => handleDeleteHomework(hw.id)}
+    >
+      Delete
+    </Button>
+  </div>
+</RoleGuard>
+
 
                 </div>
               </div>

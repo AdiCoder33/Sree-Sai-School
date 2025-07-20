@@ -171,4 +171,55 @@ router.put('/completion/bulk', authenticateToken, authorizeRoles('admin', 'teach
   }
 });
 
+// Update homework
+router.put('/:id', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { class_id, subject, title, description } = req.body;
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .input('class_id', sql.UniqueIdentifier, class_id)
+      .input('subject', sql.VarChar, subject)
+      .input('title', sql.VarChar, title)
+      .input('description', sql.Text, description)
+      .query(`
+        UPDATE homework
+        SET class_id = @class_id,
+            subject = @subject,
+            title = @title,
+            description = @description
+        WHERE id = @id
+      `);
+
+    res.json({ message: 'Homework updated successfully' });
+  } catch (error) {
+    console.error('❌ Update homework error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+// Delete homework
+router.delete('/:id', authenticateToken, authorizeRoles('admin', 'teacher','principal'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    // Delete completions first to maintain foreign key integrity
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .query(`
+        DELETE FROM homework_completion WHERE homework_id = @id;
+        DELETE FROM homework WHERE id = @id;
+      `);
+
+    res.json({ message: 'Homework deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete homework error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -7,64 +7,15 @@ import { Badge } from '../components/ui/badge';
 import { Plus, BookOpen, Calendar, User, Search, Users, Filter } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 
-const classList = Array.from({ length: 10 }, (_, i) => `Class ${i + 1}`);
-
-const mockStudentsByClass = {
-  'Class 1': [
-    { id: '1', name: 'Emma Johnson' },
-    { id: '2', name: 'Liam Smith' },
-    { id: '3', name: 'Sophia Brown' },
-    { id: '4', name: 'Noah Davis' },
-    { id: '5', name: 'Olivia Wilson' }
-  ],
-  'Class 2': [
-    { id: '6', name: 'James Miller' },
-    { id: '7', name: 'Isabella Garcia' },
-    { id: '8', name: 'William Rodriguez' },
-    { id: '9', name: 'Charlotte Martinez' },
-    { id: '10', name: 'Benjamin Anderson' }
-  ]
-  // Add more classes as needed
-};
-
-const mockLearningLogs = [
-  {
-    id: '1',
-    studentId: '1',
-    studentName: 'Emma Johnson',
-    date: '2024-01-15',
-    subject: 'Mathematics',
-    activity: 'Learned multiplication tables 1-10',
-    notes: 'Emma showed excellent understanding of multiplication concepts. She completed all exercises correctly.',
-    teacherId: '2',
-    teacherName: 'Sarah Johnson'
-  },
-  {
-    id: '2',
-    studentId: '2',
-    studentName: 'Liam Smith',
-    date: '2024-01-15',
-    subject: 'Science',
-    activity: 'Conducted water cycle experiment',
-    notes: 'Great participation in the experiment. Liam asked thoughtful questions about evaporation.',
-    teacherId: '2',
-    teacherName: 'Sarah Johnson'
-  },
-  {
-    id: '3',
-    studentId: '3',
-    studentName: 'Sophia Brown',
-    date: '2024-01-14',
-    subject: 'English',
-    activity: 'Reading comprehension exercises',
-    notes: 'Sophia has improved her reading speed and understanding significantly this week.',
-    teacherId: '2',
-    teacherName: 'Sarah Johnson'
-  }
-];
-
 export const LearningLogs: React.FC = () => {
-  const [logs] = useState(mockLearningLogs);
+  const [classList, setClassList] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [logs, setLogs] = useState<any[]>([]); // 👈 ensures logs is always an array
+
+
+  const token = localStorage.getItem('smartschool_token');
+  const authHeader = { Authorization: `Bearer ${token}` };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState('Class 1');
@@ -80,52 +31,81 @@ export const LearningLogs: React.FC = () => {
   const subjects = ['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art', 'Physical Education'];
 
   const filteredLogs = logs.filter(log => {
-    const matchesSearch = log.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      log.activity.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSubject = !selectedSubject || log.subject === selectedSubject;
-    
-    return matchesSearch && matchesSubject;
-  });
+  const matchesSearch = log.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    log.activity.toLowerCase().includes(searchTerm.toLowerCase());
+
+  const matchesSubject = !selectedSubject || log.subject === selectedSubject;
+const matchesClass = !selectedClass || students.some(s => s.name === log.studentName);
+
+  return matchesSearch && matchesSubject && matchesClass;
+});
+
+useEffect(() => {
+  fetch('http://localhost:5000/api/classes', { headers: authHeader })
+  .then(res => res.json())
+  .then(setClassList);
+}, []);
+
 
   const handleClassChange = (className) => {
-    setSelectedClass(className);
-    setNewLog({ ...newLog, studentId: '', studentName: '' });
-  };
+  setSelectedClass(className);
+  setNewLog({ ...newLog, studentId: '', studentName: '' });
+
+  fetch(`http://localhost:5000/api/students?class=${className}`, { headers: authHeader })
+  .then(res => res.json())
+  .then(setStudents);
+
+};
+
+useEffect(() => {
+  if (selectedClass) {
+    fetch(`http://localhost:5000/api/learninglogs?class=${selectedClass}`, { headers: authHeader })
+  .then(res => res.json())
+  .then(data => setLogs(Array.isArray(data) ? data : []));
+
+
+  }
+}, [selectedClass]);
+
 
   const handleStudentChange = (studentId) => {
-    const student = mockStudentsByClass[selectedClass]?.find(s => s.id === studentId);
-    setNewLog({
-      ...newLog,
-      studentId: studentId,
-      studentName: student?.name || ''
-    });
-  };
+  const student = students.find(s => s.id === studentId);
+  setNewLog({ ...newLog, studentId, studentName: student?.name || '' });
+};
+;
 
   const handleAddLog = () => {
-    console.log('Adding new log:', newLog);
+  fetch('http://localhost:5000/api/learninglogs', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    ...authHeader
+  },
+    body: JSON.stringify(newLog)
+  }).then(() => {
     setShowAddForm(false);
     setNewLog({ studentId: '', studentName: '', subject: '', activity: '', notes: '' });
-  };
+    // Re-fetch logs
+    fetch(`http://localhost:5000/api/learninglogs?class=${selectedClass}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    }).then(res => res.json()).then(setLogs);
+  });
+};
+
 
   return (
     <div className="space-y-6 p-4 md:p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Learning Logs</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-2">Daily learning activities and progress updates</p>
-        </div>
-        <RoleGuard allowedRoles={['teacher']}>
-          <Button 
-            onClick={() => setShowAddForm(true)}
-            className="bg-indigo-600 hover:bg-indigo-700 w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Learning Log
-          </Button>
-        </RoleGuard>
-      </div>
+      <RoleGuard allowedRoles={['teacher']}>
+  <Button 
+    onClick={() => setShowAddForm(true)}
+    className="bg-indigo-600 hover:bg-indigo-700"
+  >
+    <Plus className="h-4 w-4 mr-2" />
+    Add Learning Log
+  </Button>
+</RoleGuard>
+
 
       {showAddForm && (
         <Card className="shadow-lg border-indigo-100">
@@ -143,8 +123,11 @@ export const LearningLogs: React.FC = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 >
                   {classList.map(cls => (
-                    <option key={cls} value={cls}>{cls}</option>
-                  ))}
+  <option key={cls.id} value={cls.name}>
+    {cls.name}
+  </option>
+))}
+
                 </select>
               </div>
               <div className="space-y-2">
@@ -155,9 +138,10 @@ export const LearningLogs: React.FC = () => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 >
                   <option value="">Select Student</option>
-                  {mockStudentsByClass[selectedClass]?.map(student => (
-                    <option key={student.id} value={student.id}>{student.name}</option>
-                  ))}
+                  {students.map(student => (
+  <option key={student.id} value={student.id}>{student.name}</option>
+))}
+
                 </select>
               </div>
               <div className="space-y-2">
@@ -205,12 +189,12 @@ export const LearningLogs: React.FC = () => {
         </Card>
       )}
 
-      <Card className="shadow-lg">
-        <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50">
-          <CardTitle className="text-indigo-900">Recent Learning Logs</CardTitle>
-          <CardDescription className="text-indigo-700">Track daily learning activities and student progress</CardDescription>
-        </CardHeader>
-        <CardContent className="p-6">
+      <div>
+  <div className="mt-6 mb-4">
+    <h2 className="text-xl font-bold text-indigo-900">Recent Learning Logs</h2>
+    <p className="text-sm text-indigo-700">Track daily learning activities and student progress</p>
+  </div>
+
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -221,19 +205,19 @@ export const LearningLogs: React.FC = () => {
                 className="pl-10 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Filter className="h-4 w-4 text-gray-500" />
-              <select
-                value={selectedSubject}
-                onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-              >
-                <option value="">All Subjects</option>
-                {subjects.map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
-            </div>
+            <select
+  value={selectedClass}
+  onChange={(e) => setSelectedClass(e.target.value)}
+  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+>
+  <option value="">All Classes</option>
+  {classList.map(cls => (
+  <option key={cls.id} value={cls.name}>{cls.name}</option>
+))}
+
+
+</select>
+
           </div>
 
           <div className="space-y-4">
@@ -284,8 +268,7 @@ export const LearningLogs: React.FC = () => {
               </Card>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
     </div>
   );
 };

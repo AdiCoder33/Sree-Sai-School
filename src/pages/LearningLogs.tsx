@@ -30,7 +30,7 @@ export const LearningLogs: React.FC = () => {
 
   const subjects = ['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art', 'Physical Education'];
 
-  const filteredLogs = logs.filter(log => {
+  const filteredLogs = Array.isArray(logs) ? logs.filter(log => {
   const matchesSearch = log.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
     log.activity.toLowerCase().includes(searchTerm.toLowerCase());
@@ -39,7 +39,8 @@ export const LearningLogs: React.FC = () => {
 const matchesClass = !selectedClass || students.some(s => s.name === log.studentName);
 
   return matchesSearch && matchesSubject && matchesClass;
-});
+}) : [];
+
 
 useEffect(() => {
   fetch('http://localhost:5000/api/classes', { headers: authHeader })
@@ -52,21 +53,41 @@ useEffect(() => {
   setSelectedClass(className);
   setNewLog({ ...newLog, studentId: '', studentName: '' });
 
-  fetch(`http://localhost:5000/api/students?class=${className}`, { headers: authHeader })
-  .then(res => res.json())
-  .then(setStudents);
+  // Find the actual class object from the classList by name
+  const selected = classList.find(cls => cls.name === className);
 
+  if (!selected) {
+    console.error('Class not found');
+    return;
+  }
+
+  const classId = selected.id;
+
+  fetch(`http://localhost:5000/api/students/class/${classId}`, {
+    headers: authHeader
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (Array.isArray(data)) {
+        setStudents(data);
+      } else {
+        setStudents([]);
+      }
+    });
 };
 
+
 useEffect(() => {
-  if (selectedClass) {
-    fetch(`http://localhost:5000/api/learninglogs?class=${selectedClass}`, { headers: authHeader })
-  .then(res => res.json())
-  .then(data => setLogs(Array.isArray(data) ? data : []));
+  const selected = classList.find(cls => cls.name === selectedClass);
+  const classId = selected?.id;
 
-
+  if (classId) {
+    fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
+      .then(res => res.json())
+      .then(data => setLogs(Array.isArray(data) ? data : []));
   }
-}, [selectedClass]);
+}, [selectedClass, classList]);
+
 
 
   const handleStudentChange = (studentId) => {
@@ -77,21 +98,30 @@ useEffect(() => {
 
   const handleAddLog = () => {
   fetch('http://localhost:5000/api/learninglogs', {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    ...authHeader
-  },
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...authHeader
+    },
     body: JSON.stringify(newLog)
   }).then(() => {
     setShowAddForm(false);
     setNewLog({ studentId: '', studentName: '', subject: '', activity: '', notes: '' });
-    // Re-fetch logs
-    fetch(`http://localhost:5000/api/learninglogs?class=${selectedClass}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.json()).then(setLogs);
+
+    const selected = classList.find(cls => cls.name === selectedClass);
+    const classId = selected?.id;
+
+    if (classId) {
+      fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(setLogs);
+    }
   });
-};
+}; 
+
+
 
 
   return (
@@ -138,24 +168,24 @@ useEffect(() => {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
                 >
                   <option value="">Select Student</option>
-                  {students.map(student => (
-  <option key={student.id} value={student.id}>{student.name}</option>
+                  {Array.isArray(students) && students.map(student => (
+  <option key={student.id} value={student.id}>{student.firstName} {student.lastName}
+</option>
 ))}
+
 
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Subject</label>
-                <select
-                  value={newLog.subject}
-                  onChange={(e) => setNewLog({...newLog, subject: e.target.value})}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map(subject => (
-                    <option key={subject} value={subject}>{subject}</option>
-                  ))}
-                </select>
+<Input
+  type="text"
+  value={newLog.subject}
+  onChange={(e) => setNewLog({ ...newLog, subject: e.target.value })}
+  placeholder="Enter subject name"
+  className="focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+/>
+
               </div>
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Activity</label>

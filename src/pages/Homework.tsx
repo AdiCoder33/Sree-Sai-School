@@ -261,7 +261,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
           <h1 className="text-3xl font-bold text-gray-900">Homework</h1>
           <p className="text-gray-600 mt-2">Manage daily homework assignments</p>
         </div>
-        <RoleGuard allowedRoles={['teacher', 'admin']}>
+        <RoleGuard allowedRoles={['teacher']}>
           <Button 
             onClick={() => setShowAddForm(true)}
             className="bg-indigo-600 hover:bg-indigo-700"
@@ -391,9 +391,8 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
         </Card>
       )}
 
-      <div className="flex items-center space-x-4 mb-6"
- 
-  <RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+      <div className="flex items-center space-x-4 mb-6">
+  <RoleGuard allowedRoles={['teacher', 'admin',]}>
     <select 
       value={selectedClass}
       onChange={(e) => setSelectedClass(e.target.value)}
@@ -432,7 +431,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
     ? new Date(hw.duedate).toLocaleDateString()
     : 'No Due Date'}
 </span>
-<RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+<RoleGuard allowedRoles={['teacher', 'admin']}>
   <div className="flex gap-2 mt-2">
     {/*<Button 
       variant="outline" 
@@ -474,7 +473,6 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                   <BookOpen className="h-4 w-4" />
                   <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
                 </div>
-
 
                 {/*<RoleGuard allowedRoles={['teacher', 'principal']}>
                   {hw.students.length > 0 && (

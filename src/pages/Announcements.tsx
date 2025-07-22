@@ -3,217 +3,158 @@ import { format } from 'date-fns';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Dialog } from '../components/ui/dialog';
-import { Badge } from '../components/ui/badge';
-import { 
-  Megaphone, 
-  Edit, 
-  Trash2 
-} from 'lucide-react';
+import { Megaphone, Edit, Trash2 } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 import { CreateAnnouncement } from '../components/modals/CreateAnnouncement';
 import { EditAnnouncement } from '../components/modals/EditAnnouncement';
+import toast, { Toaster } from 'react-hot-toast';
 
-interface Announcement {
-  id: string;
-  title: string;
-  content: string;
-  type: string;
-  priority: 'high' | 'normal';
-  targetAudience: string[];
-  author: string;
-  createdAt: string;
-}
-
-export const Announcements: React.FC = () => {
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+export const Announcements = () => {
+  const [announcements, setAnnouncements] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+
+  const token = localStorage.getItem('smartschool_token');
+
+  // 📦 Reusable fetch logic
+  const fetchAnnouncements = async () => {
+    try {
+      const res = await fetch('http://localhost:5000/api/announcements', {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) throw new Error('Failed to fetch announcements');
+      const data = await res.json();
+      setAnnouncements(data);
+    } catch (error) {
+      console.error(error);
+      toast.error('❌ Failed to fetch announcements');
+    }
+  };
 
   useEffect(() => {
-    // Mock data for announcements
-    const mockAnnouncements: Announcement[] = [
-      {
-        id: '1',
-        title: 'School Closure Alert',
-        content: 'Due to severe weather conditions, the school will be closed tomorrow. Stay safe!',
-        type: 'urgent',
-        priority: 'high',
-        targetAudience: ['students', 'parents', 'teachers'],
-        author: 'Principal',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '2',
-        title: 'Upcoming Science Fair',
-        content: 'Get ready for the annual science fair! All students are encouraged to participate.',
-        type: 'academic',
-        priority: 'normal',
-        targetAudience: ['students', 'teachers'],
-        author: 'Science Department',
-        createdAt: new Date().toISOString(),
-      },
-      {
-        id: '3',
-        title: 'PTA Meeting Scheduled',
-        content: 'The next PTA meeting will be held on July 20th at 6 PM in the school auditorium.',
-        type: 'general',
-        priority: 'normal',
-        targetAudience: ['parents', 'teachers'],
-        author: 'PTA President',
-        createdAt: new Date().toISOString(),
-      },
-    ];
-    setAnnouncements(mockAnnouncements);
-  }, []);
+    if (token) fetchAnnouncements();
+  }, [token]);
 
-  const filteredAnnouncements = announcements.filter((announcement) => {
-    const searchTermMatch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                              announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const filterTypeMatch = filterType === 'all' || announcement.type === filterType;
-    return searchTermMatch && filterTypeMatch;
-  });
-
-  const handleDelete = (id: string) => {
-    setAnnouncements(announcements.filter(announcement => announcement.id !== id));
+  // ✅ Just trigger refetch instead of local mutation
+  const handleCreateSuccess = () => {
+    setIsCreateModalOpen(false);
+    fetchAnnouncements();
+    toast.success('✅ Announcement Created Successfully!');
   };
+
+  const handleEditSuccess = () => {
+    setIsEditModalOpen(false);
+    fetchAnnouncements();
+    toast.success('✏️ Announcement Updated Successfully!');
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      await fetch(`http://localhost:5000/api/announcements/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      // ✅ Refresh after deletion
+      fetchAnnouncements();
+      toast.success('🗑️ Announcement Deleted Successfully!');
+    } catch (error) {
+      console.error(error);
+      toast.error('❌ Failed to delete announcement');
+    }
+  };
+
+  const filteredAnnouncements = announcements.filter(a =>
+    a.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (a.content || '').toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <Toaster position="top-right" reverseOrder={false} />
+
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Announcements</h1>
-          <p className="text-sm md:text-base text-gray-600 mt-1">
+          <h1 className="text-2xl md:text-3xl font-bold">Announcements</h1>
+          <p className="text-sm text-gray-600 mt-1">
             Manage school announcements and communications
           </p>
         </div>
-
-        <RoleGuard allowedRoles={['principal', 'teacher']}>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
-            <Megaphone className="mr-2 h-4 w-4" />
-            Create Announcement
+        <RoleGuard allowedRoles={['admin', 'teacher']}>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Megaphone className="mr-2 h-4 w-4" /> Create Announcement
           </Button>
         </RoleGuard>
       </div>
 
-      {/* Filters */}
       <Card className="p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <Input
-              placeholder="Search announcements..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Types</SelectItem>
-              <SelectItem value="general">General</SelectItem>
-              <SelectItem value="academic">Academic</SelectItem>
-              <SelectItem value="event">Event</SelectItem>
-              <SelectItem value="urgent">Urgent</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <Input
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder="Search announcements..."
+        />
       </Card>
 
-      {/* Announcements List */}
       <div className="space-y-4">
-        {filteredAnnouncements.map((announcement) => (
-          <Card key={announcement.id} className="p-4 md:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
-                  <h3 className="text-lg font-semibold text-gray-900 break-words">
-                    {announcement.title}
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      variant={announcement.priority === 'high' ? 'destructive' : 'secondary'}
-                      className="text-xs"
-                    >
-                      {announcement.type}
-                    </Badge>
-                    {announcement.priority === 'high' && (
-                      <Badge variant="destructive" className="text-xs">
-                        Urgent
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                
-                <p className="text-gray-600 mb-3 break-words">
-                  {announcement.content}
+        {filteredAnnouncements.map(a => (
+          <Card key={a.id} className="p-4 md:p-6">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold">{a.title}</h3>
+                <p className="text-sm text-gray-500 mb-1">Priority: {a.priority || 'Not set'}</p>
+                <p className="text-gray-600 mb-2">{a.content}</p>
+                <p className="text-sm text-gray-500">
+                  By {a.creatorFirstName} {a.creatorLastName} • {format(new Date(a.created_at || a.createdAt), 'PPP')}
                 </p>
-                
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm text-gray-500">
-                  <span>By {announcement.author}</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>{format(new Date(announcement.createdAt), 'PPP')}</span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>Target: {announcement.targetAudience.join(', ')}</span>
-                </div>
               </div>
-
-              <RoleGuard allowedRoles={['principal', 'teacher']}>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedAnnouncement(announcement);
-                      setIsEditModalOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-1">Edit</span>
+              <div className="flex gap-2">
+                <RoleGuard allowedRoles={['admin', 'teacher']}>
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setSelectedAnnouncement(a);
+                    setIsEditModalOpen(true);
+                  }}>
+                    <Edit className="h-4 w-4" /> Edit
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDelete(announcement.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="hidden sm:inline ml-1">Delete</span>
+                </RoleGuard>
+                <RoleGuard allowedRoles={['admin']}>
+                  <Button variant="outline" size="sm" onClick={() => handleDelete(a.id)}>
+                    <Trash2 className="h-4 w-4" /> Delete
                   </Button>
-                </div>
-              </RoleGuard>
+                </RoleGuard>
+              </div>
             </div>
           </Card>
         ))}
       </div>
 
-      {/* Create Modal */}
-      <RoleGuard allowedRoles={['principal', 'teacher']}>
+      <RoleGuard allowedRoles={['admin', 'teacher']}>
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <CreateAnnouncement 
-            isOpen={isCreateModalOpen} 
-            onClose={() => setIsCreateModalOpen(false)} 
-            setAnnouncements={setAnnouncements}
-            announcements={announcements}
+          <CreateAnnouncement
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onSuccess={handleCreateSuccess}
           />
         </Dialog>
       </RoleGuard>
 
-      {/* Edit Modal */}
-      <RoleGuard allowedRoles={['principal', 'teacher']}>
+      <RoleGuard allowedRoles={['admin', 'teacher']}>
         <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
           <EditAnnouncement
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            announcement={selectedAnnouncement}
-            setAnnouncements={setAnnouncements}
-            announcements={announcements}
-          />
+  isOpen={isEditModalOpen}
+  onClose={() => setIsEditModalOpen(false)}
+  announcement={selectedAnnouncement}
+  setAnnouncements={setAnnouncements}      // ✅ FIX: Pass this
+  announcements={announcements}            // ✅ Optional: Pass this if you use it (you have it in props)
+  onSuccess={handleEditSuccess}
+/>
+
         </Dialog>
       </RoleGuard>
     </div>

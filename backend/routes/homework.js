@@ -5,25 +5,33 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Get homework by class
 router.get('/class/:classId', authenticateToken, async (req, res) => {
   try {
     const { classId } = req.params;
     const pool = await poolPromise;
+    const request = pool.request().input('classId', sql.VarChar, classId);
 
-    const homeworkResult = await pool.request()
-      .input('classId', sql.VarChar, classId)
-      .query(`
-        SELECT h.*, u.firstName as teacherFirstName, u.lastName as teacherLastName
-        FROM homework h
-        JOIN users u ON h.teacher_id = u.id
-        WHERE h.class_id = @classId
-        ORDER BY h.date DESC
-      `);
+    let homeworkQuery = `
+      SELECT h.*, u.firstName as teacherFirstName, u.lastName as teacherLastName
+      FROM homework h
+      JOIN users u ON h.teacher_id = u.id
+      WHERE h.class_id = @classId
+    `;
 
+    if (req.query.date) {
+      const filterDate = new Date(req.query.date);
+      request.input('filterDate', sql.Date, filterDate);
+      homeworkQuery += ` AND CAST(h.created_at AS DATE) = CAST(@filterDate AS DATE)`;
+    } else {
+      homeworkQuery += ` AND h.created_at >= CAST(GETDATE() - 2 AS DATE)`;
+    }
+
+    homeworkQuery += ` ORDER BY h.duedate DESC`;
+
+    const homeworkResult = await request.query(homeworkQuery);
     const homework = homeworkResult.recordset;
 
-    for (let hw of homework) {
+    for (const hw of homework) {
       const completionsResult = await pool.request()
         .input('homeworkId', sql.VarChar, hw.id)
         .query(`
@@ -32,17 +40,37 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
           JOIN students s ON hc.student_id = s.id
           WHERE hc.homework_id = @homeworkId
         `);
-
       hw.students = completionsResult.recordset;
     }
 
-    res.json(homework);
+    if (req.query.date) {
+      // When specific date is selected, return flat array
+      return res.json({ results: homework });
+    } else {
+      // Group into today/yesterday/dayBefore
+      const today = new Date().toDateString();
+      const yesterday = new Date(Date.now() - 86400000).toDateString();
+      const dayBefore = new Date(Date.now() - 2 * 86400000).toDateString();
+
+      const grouped = { today: [], yesterday: [], dayBefore: [] };
+      for (const hw of homework) {
+        const hwDate = new Date(hw.created_at).toDateString();
+        if (hwDate === today) grouped.today.push(hw);
+        else if (hwDate === yesterday) grouped.yesterday.push(hw);
+        else if (hwDate === dayBefore) grouped.dayBefore.push(hw);
+      }
+
+      return res.json(grouped);
+    }
   } catch (error) {
     console.error('❌ Get homework error:', error.message);
     console.error(error.stack);
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+
+  
 
 // Create homework
 router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {
@@ -53,27 +81,27 @@ router.post('/', authenticateToken, authorizeRoles('admin', 'teacher'), async (r
     const pool = await poolPromise;
 
     await pool.request()
-      .input('id', sql.VarChar, homeworkId)
-      .input('class_id', sql.VarChar, class_id)
+      .input('id', sql.UniqueIdentifier, homeworkId)
+      .input('class_id', sql.UniqueIdentifier, class_id)
       .input('subject', sql.VarChar, subject)
       .input('title', sql.VarChar, title)
       .input('description', sql.Text, description)
-      .input('date', sql.Date, date)
-      .input('teacher_id', sql.VarChar, req.user.id)
+      .input('duedate', sql.Date, date)
+      .input('teacher_id', sql.UniqueIdentifier, req.user.id)
       .query(`
-        INSERT INTO homework (id, class_id, subject, title, description, date, teacher_id)
-        VALUES (@id, @class_id, @subject, @title, @description, @date, @teacher_id)
+        INSERT INTO homework (id, class_id, subject, title, description, duedate, teacher_id)
+        VALUES (@id, @class_id, @subject, @title, @description, @duedate, @teacher_id)
       `);
 
     const studentsResult = await pool.request()
-      .input('class_id', sql.VarChar, class_id)
+      .input('class_id', sql.UniqueIdentifier, class_id)
       .query('SELECT id FROM students WHERE class_id = @class_id');
 
     for (const student of studentsResult.recordset) {
       await pool.request()
-        .input('id', sql.VarChar, uuidv4())
-        .input('homework_id', sql.VarChar, homeworkId)
-        .input('student_id', sql.VarChar, student.id)
+        .input('id', sql.UniqueIdentifier, uuidv4())
+        .input('homework_id', sql.UniqueIdentifier, homeworkId)
+        .input('student_id', sql.UniqueIdentifier, student.id)
         .query(`
           INSERT INTO homework_completion (id, homework_id, student_id)
           VALUES (@id, @homework_id, @student_id)
@@ -138,6 +166,57 @@ router.put('/completion/bulk', authenticateToken, authorizeRoles('admin', 'teach
     res.json({ message: 'Bulk homework status updated successfully' });
   } catch (error) {
     console.error('❌ Bulk update homework error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Update homework
+router.put('/:id', authenticateToken, authorizeRoles('admin', 'teacher'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { class_id, subject, title, description } = req.body;
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .input('class_id', sql.UniqueIdentifier, class_id)
+      .input('subject', sql.VarChar, subject)
+      .input('title', sql.VarChar, title)
+      .input('description', sql.Text, description)
+      .query(`
+        UPDATE homework
+        SET class_id = @class_id,
+            subject = @subject,
+            title = @title,
+            description = @description
+        WHERE id = @id
+      `);
+
+    res.json({ message: 'Homework updated successfully' });
+  } catch (error) {
+    console.error('❌ Update homework error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+// Delete homework
+router.delete('/:id', authenticateToken, authorizeRoles('admin', 'teacher','principal'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    // Delete completions first to maintain foreign key integrity
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .query(`
+        DELETE FROM homework_completion WHERE homework_id = @id;
+        DELETE FROM homework WHERE id = @id;
+      `);
+
+    res.json({ message: 'Homework deleted successfully' });
+  } catch (error) {
+    console.error('❌ Delete homework error:', error.message);
     console.error(error.stack);
     res.status(500).json({ error: 'Server error' });
   }

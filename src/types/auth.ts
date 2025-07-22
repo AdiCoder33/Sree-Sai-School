@@ -19,6 +19,7 @@ export interface User {
   occupation?: string;
   status?: string;
   created_at?: string;
+  token: string;
 }
 
 export interface Student {

@@ -2,9 +2,99 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
+const { sql, poolPromise } = require('../config/database');
+
 
 
 const router = express.Router();
+// Get student by ID
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pool = await db.poolPromise;
+    const result = await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .query(`
+        SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName
+        FROM students s
+        LEFT JOIN classes c ON s.class_id = c.id
+        LEFT JOIN users u ON s.parent_id = u.id
+        WHERE s.id = @id
+      `);
+
+    if (result.recordset.length === 0) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    res.json(result.recordset[0]);
+  } catch (error) {
+    console.error('❌ Get student by ID error:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+// Update student by ID
+router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      firstName,
+      lastName,
+      gender,
+      class_id,
+      section,
+      rollNumber,
+      parent_id,
+      dateOfBirth,
+      address,
+      phone,
+      bloodGroup,
+      medicalConditions,
+      emergencyContact
+    } = req.body;
+
+    const pool = await db.poolPromise;
+    await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .input('firstName', db.sql.VarChar, firstName)
+      .input('lastName', db.sql.VarChar, lastName)
+      .input('gender', db.sql.VarChar, gender)
+      .input('class_id', db.sql.UniqueIdentifier, class_id)
+      .input('section', db.sql.VarChar, section)
+      .input('rollNumber', db.sql.VarChar, rollNumber)
+      .input('parent_id', db.sql.UniqueIdentifier, parent_id)
+      .input('dateOfBirth', db.sql.Date, dateOfBirth)
+      .input('address', db.sql.VarChar, address)
+      .input('phone', db.sql.VarChar, phone)
+      .input('bloodGroup', db.sql.VarChar, bloodGroup)
+      .input('medicalConditions', db.sql.VarChar, medicalConditions)
+      .input('emergencyContact', db.sql.VarChar, emergencyContact)
+      .query(`
+        UPDATE students SET
+          firstName = @firstName,
+          lastName = @lastName,
+          gender = @gender,
+          class_id = @class_id,
+          section = @section,
+          rollNumber = @rollNumber,
+          parent_id = @parent_id,
+          dateOfBirth = @dateOfBirth,
+          address = @address,
+          phone = @phone,
+          bloodGroup = @bloodGroup,
+          medicalConditions = @medicalConditions,
+          emergencyContact = @emergencyContact
+        WHERE id = @id
+      `);
+
+    res.status(200).json({ message: 'Student updated successfully' });
+  } catch (error) {
+    console.error('❌ Update student error:', error.message);
+    res.status(500).json({ error: 'Failed to update student' });
+  }
+});
+
+
 
 // Get all students
 router.get('/', authenticateToken, async (req, res) => {
@@ -73,23 +163,36 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
 
 
 // Promote students
-router.post('/promote', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// promote students from one class to another
+// In routes/studentRoutes.js or similar
+router.post('/promote', authenticateToken, async (req, res) => {
+  const { studentIds, fromClassId, toClassId } = req.body;
+
+  if (!studentIds || !Array.isArray(studentIds) || !fromClassId || !toClassId) {
+    return res.status(400).json({ error: 'Missing or invalid parameters' });
+  }
+
   try {
-    const { studentIds, fromClassId, toClassId } = req.body;
-    
+    const pool = await poolPromise;
+    const transaction = new sql.Transaction(pool);
+    await transaction.begin();
+
     for (const studentId of studentIds) {
-      await db.execute(
-        'UPDATE students SET class_id = ? WHERE id = ? AND class_id = ?',
-        [toClassId, studentId, fromClassId]
-      );
+      await transaction.request()
+        .input('studentId', sql.UniqueIdentifier, studentId)
+        .input('toClassId', sql.UniqueIdentifier, toClassId)
+        .query(`UPDATE students SET class_id = @toClassId WHERE id = @studentId`);
     }
 
-    res.json({ message: 'Students promoted successfully' });
-  } catch (error) {
-    console.error('Student promotion error:', error);
-    res.status(500).json({ error: 'Server error' });
+    await transaction.commit();
+    res.status(200).json({ message: 'Students promoted successfully' });
+  } catch (err) {
+    console.error('❌ Promotion error:', err.message);
+    res.status(500).json({ error: 'Promotion failed' });
   }
 });
+
+
 
 // Create student with comprehensive details
 // Create student with only required fields from frontend
@@ -159,6 +262,24 @@ await pool.request()
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// Delete student by ID
+router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pool = await db.poolPromise;
+    await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .query('DELETE FROM students WHERE id = @id');
+
+    res.status(200).json({ message: 'Student deleted successfully' });
+  } catch (error) {
+    console.error('❌ Student deletion error:', error.message);
+    res.status(500).json({ error: 'Failed to delete student' });
+  }
+});
+
 
 
 

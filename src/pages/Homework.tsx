@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState,useEffect} from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -6,86 +6,226 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Dialog } from '../components/ui/dialog';
 import { Plus, BookOpen, Calendar, CheckSquare, X, Users } from 'lucide-react';
+import axios from 'axios';
+
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
 
-const mockHomework = [
-  {
-    id: '1',
-    class: 'Class 1',
-    subject: 'Mathematics',
-    title: 'Solve multiplication problems',
-    description: 'Complete exercises 1-10 from page 45',
-    date: '2024-01-15',
-    teacherId: '2',
-    teacherName: 'Ms. Sarah Johnson',
-    students: [
-      { id: '1', name: 'Emma Johnson', completed: true },
-      { id: '2', name: 'Liam Smith', completed: false },
-      { id: '3', name: 'Sophia Brown', completed: true }
-    ]
-  },
-  {
-    id: '2',
-    class: 'Class 1',
-    subject: 'English',
-    title: 'Write a short story',
-    description: 'Write a 200-word story about your favorite animal',
-    date: '2024-01-15',
-    teacherId: '2',
-    teacherName: 'Ms. Sarah Johnson',
-    students: [
-      { id: '1', name: 'Emma Johnson', completed: true },
-      { id: '2', name: 'Liam Smith', completed: true },
-      { id: '3', name: 'Sophia Brown', completed: false }
-    ]
-  }
-];
 
-const classList = [
-  'Class 1', 'Class 2', 'Class 3', 'Class 4', 'Class 5',
-  'Class 6', 'Class 7', 'Class 8', 'Class 9', 'Class 10'
-];
+
+
+
 
 export const Homework: React.FC = () => {
   const { user } = useAuth();
-  const [homework, setHomework] = useState(mockHomework);
+  const [homework, setHomework] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [selectedClass, setSelectedClass] = useState('Class 1');
+  const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
   const [bulkMode, setBulkMode] = useState<{[homeworkId: string]: boolean}>({});
+  const [currentEditId, setCurrentEditId] = useState('');
+  const [selectedDate, setSelectedDate] = useState(() => {
+  const today = new Date().toISOString().split('T')[0];
+  return today;
+});
+
   const [newHomework, setNewHomework] = useState({
-    class: 'Class 1',
-    subject: '',
-    title: '',
-    description: ''
-  });
+  class_id: '', subject: '', title: '', description: ''
+});
+
+
+
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  
 
-  const handleAddHomework = () => {
-    const teacherName = user ? `${user.firstName} ${user.lastName}` : 'Teacher';
-    const newHw = {
-      id: Date.now().toString(),
-      ...newHomework,
-      date: new Date().toISOString().split('T')[0],
-      teacherId: user?.id || '2',
-      teacherName,
-      students: [] // Would be populated based on class
-    };
-    setHomework(prev => [newHw, ...prev]);
+useEffect(() => {
+  const fetchHomework = async () => {
+    try {
+      const token = localStorage.getItem('smartschool_token');
+      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const todayStr = new Date().toDateString();
+const selectedStr = new Date(selectedDate).toDateString();
+let combined;
+
+if (selectedStr === todayStr) {
+  combined = [
+    ...(res.data.today || []),
+    ...(res.data.yesterday || []),
+    ...(res.data.dayBefore || [])
+  ];
+} else if (res.data.results) {
+  combined = res.data.results;
+} else {
+  combined = [];
+}
+
+
+      setHomework(combined);
+      console.log("Fetched homework response:", res.data);
+
+      const selectedClassName = classList.find(c => c.id === selectedClass)?.name || 'Selected Class';
+      const formattedDate = new Date(selectedDate).toLocaleDateString();
+      toast.success(`📚 Homework for ${selectedClassName} on ${formattedDate} loaded successfully`);
+    } catch (error: any) {
+      console.error('❌ Failed to fetch homework:', error.message);
+      toast.error("Failed to fetch homework");
+    }
+  };
+
+  if (selectedClass) fetchHomework();
+}, [selectedClass, selectedDate]);
+
+
+const handleEditHomework = async () => {
+  try {
+    await axios.put(`http://localhost:5000/api/homework/${currentEditId}`, {
+      ...newHomework
+    }, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    setIsEditModalOpen(false);
+    setNewHomework({ class_id: '', subject: '', title: '', description: '' });
+    setCurrentEditId('');
+
+    // Refresh
+    const refreshed = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    setHomework(refreshed.data.results);
+    toast.success("Homework updated successfully");
+  } catch (err) {
+    console.error("❌ Edit failed:", err.message);
+    toast.error("Failed to edit homework");
+  }
+};
+
+const handleDeleteHomework = async (homeworkId: string) => {
+  const confirm = window.confirm("Are you sure you want to delete this homework?");
+  if (!confirm) return;
+
+  try {
+    await axios.delete(`http://localhost:5000/api/homework/${homeworkId}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('smartschool_token')}`,
+      },
+    });
+
+    // 🔁 Live update: Remove from local state
+    setHomework(prev => prev.filter(hw => hw.id !== homeworkId));
+
+    toast.success('Homework deleted successfully');
+  } catch (error) {
+    console.error('❌ Delete failed:', error);
+    toast.error('Delete failed');
+  }
+};
+
+
+
+  const handleAddHomework = async () => {
+  try {
+    if (!newHomework.class_id) {
+      alert("Please select a class before submitting homework.");
+      return;
+    }
+
+    const res = await axios.post('http://localhost:5000/api/homework', {
+      class_id: newHomework.class_id,
+      subject: newHomework.subject,
+      title: newHomework.title,
+      description: newHomework.description,
+    }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+    });
+
+    // Fetch latest homework again
+    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+  headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+});
+const combined = [
+  ...(updatedHomework.data.today || []),
+  ...(updatedHomework.data.yesterday || []),
+  ...(updatedHomework.data.dayBefore || [])
+];
+setHomework(combined);
+
+
+    
+
     setShowAddForm(false);
-    setNewHomework({ class: 'Class 1', subject: '', title: '', description: '' });
-  };
+    setNewHomework({ class_id: selectedClass, subject: '', title: '', description: '' });
+  } catch (error) {
+    console.error('❌ Failed to add homework:', error.message);
+  }
+};
 
-  const toggleStudentSelection = (homeworkId: string, studentId: string) => {
-    setSelectedStudents(prev => ({
-      ...prev,
-      [homeworkId]: prev[homeworkId]?.includes(studentId) 
-        ? prev[homeworkId].filter(id => id !== studentId)
-        : [...(prev[homeworkId] || []), studentId]
-    }));
-  };
+const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
+
+
+const fetchClasses = async () => {
+  try {
+    const token = localStorage.getItem('smartschool_token');
+const res = await axios.get('http://localhost:5000/api/classes', {
+  headers: { Authorization: `Bearer ${token}` }
+});
+
+    setClassList(res.data);
+  } catch (error: any) {
+    console.error('❌ Failed to fetch classes:', error.message);
+  }
+};
+
+useEffect(() => {
+  fetchClasses();
+}, []);
+
+
+
+
+
+  const toggleStudentCompletion = async (homeworkId: string, studentId: string) => {
+  if (bulkMode[homeworkId]) {
+    toggleStudentSelection(homeworkId, studentId);
+    return;
+  }
+
+  const hw = homework.find(h => h.id === homeworkId);
+  const student = hw?.students.find(s => s.id === studentId);
+  const newStatus = student?.completed ? 'incomplete' : 'completed';
+
+  try {
+    await axios.put(`http://localhost:5000/api/homework/completion/${homeworkId}/${studentId}`, {
+      status: newStatus
+    }, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+
+    // Refresh homework
+    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+  headers: { Authorization: `Bearer ${user.token}` }
+});
+
+    setHomework(updated.data);
+  } catch (error) {
+    console.error('❌ Failed to update completion:', error.message);
+  }
+};
+
+const toggleStudentSelection = (homeworkId: string, studentId: string) => {
+  setSelectedStudents(prev => ({
+    ...prev,
+    [homeworkId]: prev[homeworkId]?.includes(studentId)
+      ? prev[homeworkId].filter(id => id !== studentId)
+      : [...(prev[homeworkId] || []), studentId]
+  }));
+};
+
 
   const markSelectedStudents = (homeworkId: string, status: boolean) => {
     const selectedIds = selectedStudents[homeworkId] || [];
@@ -108,29 +248,11 @@ export const Homework: React.FC = () => {
     setBulkMode(prev => ({ ...prev, [homeworkId]: false }));
   };
 
-  const toggleStudentCompletion = (homeworkId: string, studentId: string) => {
-    if (bulkMode[homeworkId]) {
-      toggleStudentSelection(homeworkId, studentId);
-      return;
-    }
-
-    setHomework(prev => prev.map(hw => 
-      hw.id === homeworkId 
-        ? {
-            ...hw,
-            students: hw.students.map(student => 
-              student.id === studentId 
-                ? { ...student, completed: !student.completed }
-                : student
-            )
-          }
-        : hw
-    ));
-  };
-
-  const filteredHomework = user?.role === 'parent' 
-    ? homework.filter(hw => hw.class === 'Class 1') // Parent sees their child's class
-    : homework.filter(hw => hw.class === selectedClass);
+  const filteredHomework = ['teacher', 'admin'].includes(user?.role)
+  ? homework.filter(hw => hw.class_id === selectedClass)
+  : user?.role === 'parent'
+    ? homework.filter(hw => hw.class === 'Class 1')
+    : [];
 
   return (
     <div className="space-y-6">
@@ -161,15 +283,76 @@ export const Homework: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
                 <select 
-                  value={newHomework.class}
-                  onChange={(e) => setNewHomework({...newHomework, class: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {classList.map(cls => (
-                    <option key={cls} value={cls}>{cls}</option>
-                  ))}
-                </select>
+  value={newHomework.class_id}
+  onChange={(e) => setNewHomework({ ...newHomework, class_id: e.target.value })}
+>
+    <option value="">Select Class</option>
+
+  {classList.map(cls => (
+    <option key={cls.id} value={cls.id}>{cls.name}</option>
+  ))}
+</select>
+
+
+
               </div>
+             {/*} {isEditModalOpen && (
+  <Card>
+    <CardHeader>
+      <CardTitle>Edit Homework</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Class</label>
+          <select 
+            value={newHomework.class_id}
+            onChange={(e) => setNewHomework({ ...newHomework, class_id: e.target.value })}
+            className="w-full border px-3 py-2 rounded"
+          >
+            <option value="">Select Class</option>
+            {classList.map(cls => (
+              <option key={cls.id} value={cls.id}>{cls.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+          <Input
+            value={newHomework.subject}
+            onChange={(e) => setNewHomework({ ...newHomework, subject: e.target.value })}
+            placeholder="Enter subject"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+          <Input
+            value={newHomework.title}
+            onChange={(e) => setNewHomework({ ...newHomework, title: e.target.value })}
+            placeholder="Homework title"
+          />
+        </div>
+        <div className="md:col-span-2">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+          <Textarea
+            value={newHomework.description}
+            onChange={(e) => setNewHomework({ ...newHomework, description: e.target.value })}
+            placeholder="Detailed homework instructions"
+            rows={3}
+          />
+        </div>
+      </div>
+      <div className="flex justify-end space-x-3 mt-6">
+        <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+          Cancel
+        </Button>
+        <Button onClick={handleEditHomework}>
+          Update Homework
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+             )}*/}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
                 <Input
@@ -208,25 +391,30 @@ export const Homework: React.FC = () => {
         </Card>
       )}
 
-      <div className="flex items-center space-x-4 mb-6">
-        <RoleGuard allowedRoles={['teacher', 'admin']}>
-          <select 
-            value={selectedClass}
-            onChange={(e) => setSelectedClass(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            {classList.map(cls => (
-              <option key={cls} value={cls}>{cls}</option>
-            ))}
-          </select>
-        </RoleGuard>
-        <RoleGuard allowedRoles={['admin', 'teacher']}>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="w-full sm:w-auto">
-            <BookOpen className="mr-2 h-4 w-4" />
-            Create Homework
-          </Button>
-        </RoleGuard>
-      </div>
+      <div className="flex items-center space-x-4 mb-6"
+ 
+  <RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+    <select 
+      value={selectedClass}
+      onChange={(e) => setSelectedClass(e.target.value)}
+      className="border px-3 py-2 rounded"
+    >
+      <option value="">Select Class</option>
+      {classList.map(cls => (
+        <option key={cls.id} value={cls.id}>{cls.name}</option>
+      ))}
+    </select>
+  </RoleGuard>
+
+  <input
+    type="date"
+    value={selectedDate}
+    onChange={(e) => setSelectedDate(e.target.value)}
+    className="border px-3 py-2 rounded"
+    max={new Date().toISOString().split('T')[0]}
+  />
+</div>
+
 
       <div className="space-y-4">
         {filteredHomework.map((hw) => (
@@ -235,11 +423,44 @@ export const Homework: React.FC = () => {
               <div className="flex justify-between items-start mb-4">
                 <div className="flex items-center space-x-4">
                   <Badge variant="secondary">{hw.subject}</Badge>
-                  <span className="text-sm text-gray-500">{hw.class}</span>
+                  <span className="text-sm text-gray-500">{classList.find(c => c.id === hw.class_id)?.name}</span>
                 </div>
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <Calendar className="h-4 w-4" />
-                  <span>{new Date(hw.date).toLocaleDateString()}</span>
+                  <span>
+  {hw.duedate && !isNaN(Date.parse(hw.duedate))
+    ? new Date(hw.duedate).toLocaleDateString()
+    : 'No Due Date'}
+</span>
+<RoleGuard allowedRoles={['teacher', 'admin', 'principal']}>
+  <div className="flex gap-2 mt-2">
+    {/*<Button 
+      variant="outline" 
+      size="sm"
+      onClick={() => {
+        setIsEditModalOpen(true);
+        setNewHomework({
+          class_id: hw.class_id,
+          subject: hw.subject,
+          title: hw.title,
+          description: hw.description
+        });
+        setCurrentEditId(hw.id);
+      }}
+    >
+      Edit
+    </Button>*/}
+    <Button 
+      variant="destructive" 
+      size="sm"
+      onClick={() => handleDeleteHomework(hw.id)}
+    >
+      Delete
+    </Button>
+  </div>
+</RoleGuard>
+
+
                 </div>
               </div>
               
@@ -251,10 +472,11 @@ export const Homework: React.FC = () => {
                 
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <BookOpen className="h-4 w-4" />
-                  <span>Assigned by {hw.teacherName}</span>
+                  <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
                 </div>
 
-                <RoleGuard allowedRoles={['teacher', 'admin']}>
+
+                {/*<RoleGuard allowedRoles={['teacher', 'principal']}>
                   {hw.students.length > 0 && (
                     <div className="mt-4">
                       <div className="flex justify-between items-center mb-3">
@@ -307,7 +529,7 @@ export const Homework: React.FC = () => {
                               }`}
                               onClick={() => toggleStudentCompletion(hw.id, student.id)}
                             >
-                              <span className="text-sm">{student.name}</span>
+                              <span className="text-sm">{student.firstName} {student.lastName}</span>
                               <div className="flex items-center space-x-2">
                                 {bulkMode[hw.id] && (
                                   <div className={`w-4 h-4 border-2 rounded ${
@@ -317,9 +539,11 @@ export const Homework: React.FC = () => {
                                   }`} />
                                 )}
                                 <div className={`p-1 rounded ${
-                                  student.completed ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'
+                                  student.status === 'completed'
+ ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'
                                 }`}>
-                                  {student.completed ? <CheckSquare className="h-4 w-4" /> : <X className="h-4 w-4" />}
+                                  {student.status === 'completed'
+? <CheckSquare className="h-4 w-4" /> : <X className="h-4 w-4" />}
                                 </div>
                               </div>
                             </div>
@@ -328,7 +552,7 @@ export const Homework: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </RoleGuard>
+                </RoleGuard>*/}
               </div>
             </CardContent>
           </Card>

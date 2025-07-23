@@ -74,6 +74,25 @@ useEffect(() => {
     .then(data => setLogs(Array.isArray(data) ? data : []));
 };
 
+const handleDeleteLog = (id: string) => {
+  if (!window.confirm('Are you sure you want to delete this log?')) return;
+
+  fetch(`http://localhost:5000/api/learninglogs/${id}`, {
+    method: 'DELETE',
+    headers: authHeader,
+  })
+    .then((res) => {
+      if (res.ok) {
+        setLogs((prev) => prev.filter((log) => log.id !== id));
+      } else {
+        alert('Failed to delete log');
+      }
+    })
+    .catch((err) => {
+      console.error('Delete error:', err);
+      alert('Server error');
+    });
+};
 
 
 useEffect(() => {
@@ -281,6 +300,23 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                       <span>{new Date(log.date).toLocaleDateString()}</span>
                     </div>
                   </div>
+                  <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
+  <span>Logged by {log.teacherName}</span>
+  <div className="flex items-center space-x-4">
+    <span>{new Date(log.date).toLocaleDateString('en-US', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    })}</span>
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={() => handleDeleteLog(log.id)}
+      className="text-xs"
+    >
+      Delete
+    </Button>
+  </div>
+</div>
+
                   
                   <div className="space-y-4">
                     <div className="bg-gray-50 p-4 rounded-lg">

@@ -61,4 +61,55 @@ ORDER BY l.date DESC
 });
 
 
+// DELETE /api/learninglogs/:id
+router.delete('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .query('DELETE FROM learninglogs WHERE id = @id');
+
+    res.json({ message: 'Log deleted successfully' });
+  } catch (err) {
+    console.error('DELETE log error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+// PUT /api/learninglogs/:id
+router.put('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { studentId, studentName, subject, activity, notes } = req.body;
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, id)
+      .input('studentId', sql.UniqueIdentifier, studentId)
+      .input('studentName', sql.NVarChar, studentName)
+      .input('subject', sql.NVarChar, subject)
+      .input('activity', sql.NVarChar, activity)
+      .input('notes', sql.NVarChar, notes)
+      .query(`
+        UPDATE learninglogs
+        SET studentId = @studentId,
+            studentName = @studentName,
+            subject = @subject,
+            activity = @activity,
+            notes = @notes
+        WHERE id = @id
+      `);
+
+    res.json({ message: 'Log updated successfully' });
+  } catch (err) {
+    console.error('PUT log error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+
+
 module.exports = router;

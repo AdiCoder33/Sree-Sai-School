@@ -25,21 +25,33 @@ export const LearningLogs: React.FC = () => {
     studentName: '',
     subject: '',
     activity: '',
-    notes: ''
+    notes: '',
+    classId: ''
   });
 
   const subjects = ['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art', 'Physical Education'];
 
-  const filteredLogs = Array.isArray(logs) ? logs.filter(log => {
-  const matchesSearch = log.studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.activity.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredLogs = Array.isArray(logs)
+  ? logs.filter(log => {
+      const studentName = typeof log.studentName === 'string' ? log.studentName : '';
+      const subject = typeof log.subject === 'string' ? log.subject : '';
+      const activity = typeof log.activity === 'string' ? log.activity : '';
 
-  const matchesSubject = !selectedSubject || log.subject === selectedSubject;
-const matchesClass = !selectedClass || students.some(s => s.name === log.studentName);
+      const matchesSearch =
+        studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        activity.toLowerCase().includes(searchTerm.toLowerCase());
 
-  return matchesSearch && matchesSubject && matchesClass;
-}) : [];
+      const matchesSubject = !selectedSubject || subject === selectedSubject;
+      const matchesClass =
+        !selectedClass ||
+        students.some(s => `${s.firstName} ${s.lastName}` === studentName);
+
+      return matchesSearch && matchesSubject && matchesClass;
+    })
+  : [];
+
+
 
 
 useEffect(() => {
@@ -51,7 +63,8 @@ useEffect(() => {
 
   const handleClassChange = (className) => {
   setSelectedClass(className);
-  setNewLog({ ...newLog, studentId: '', studentName: '' });
+  setNewLog(prev => ({ ...prev, classId: selected.id }));
+
 
   // Find the actual class object from the classList by name
   const selected = classList.find(cls => cls.name === className);
@@ -78,21 +91,28 @@ useEffect(() => {
 
 
 useEffect(() => {
-  const selected = classList.find(cls => cls.name === selectedClass);
-  const classId = selected?.id;
+  if (!classList.length) return; // wait for classList to load
 
-  if (classId) {
-    fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
-      .then(res => res.json())
-      .then(data => setLogs(Array.isArray(data) ? data : []));
-  }
+  const selected = classList.find(cls => cls.name === selectedClass);
+  if (!selected) return;
+
+  const classId = selected.id;
+
+  fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+    headers: authHeader
+  })
+    .then(res => res.json())
+    .then(data => setLogs(Array.isArray(data) ? data : []));
 }, [selectedClass, classList]);
+
 
 
 
   const handleStudentChange = (studentId) => {
   const student = students.find(s => s.id === studentId);
-  setNewLog({ ...newLog, studentId, studentName: student?.name || '' });
+  const fullName = `${student?.firstName || ''} ${student?.lastName || ''}`.trim();
+setNewLog({ ...newLog, studentId, studentName: fullName });
+
 };
 ;
 
@@ -106,7 +126,7 @@ useEffect(() => {
     body: JSON.stringify(newLog)
   }).then(() => {
     setShowAddForm(false);
-    setNewLog({ studentId: '', studentName: '', subject: '', activity: '', notes: '' });
+    setNewLog({ studentId: '', studentName: '', subject: '', activity: '', notes: '',classId: '' });
 
     const selected = classList.find(cls => cls.name === selectedClass);
     const classId = selected?.id;

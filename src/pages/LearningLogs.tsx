@@ -31,25 +31,21 @@ export const LearningLogs: React.FC = () => {
 
   const subjects = ['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art', 'Physical Education'];
 
-  const filteredLogs = Array.isArray(logs)
-  ? logs.filter(log => {
-      const studentName = typeof log.studentName === 'string' ? log.studentName : '';
-      const subject = typeof log.subject === 'string' ? log.subject : '';
-      const activity = typeof log.activity === 'string' ? log.activity : '';
+  const filteredLogs = logs.filter(log => {
+  const studentName = Array.isArray(log.studentName)
+    ? log.studentName.join(' ').trim()
+    : (log.studentName || '').toString().trim();
 
-      const matchesSearch =
-        studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        activity.toLowerCase().includes(searchTerm.toLowerCase());
+  const subject = (log.subject || '').toString();
+  const activity = (log.activity || '').toString();
 
-      const matchesSubject = !selectedSubject || subject === selectedSubject;
-      const matchesClass =
-        !selectedClass ||
-        students.some(s => `${s.firstName} ${s.lastName}` === studentName);
+  return (
+    studentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    activity.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+});
 
-      return matchesSearch && matchesSubject && matchesClass;
-    })
-  : [];
 
 
 
@@ -63,31 +59,21 @@ useEffect(() => {
 
   const handleClassChange = (className) => {
   setSelectedClass(className);
-  setNewLog(prev => ({ ...prev, classId: selected.id }));
-
-
-  // Find the actual class object from the classList by name
   const selected = classList.find(cls => cls.name === className);
-
-  if (!selected) {
-    console.error('Class not found');
-    return;
-  }
+  if (!selected) return;
 
   const classId = selected.id;
+  setNewLog(prev => ({ ...prev, classId }));
 
-  fetch(`http://localhost:5000/api/students/class/${classId}`, {
-    headers: authHeader
-  })
+  fetch(`http://localhost:5000/api/students/class/${classId}`, { headers: authHeader })
     .then(res => res.json())
-    .then(data => {
-      if (Array.isArray(data)) {
-        setStudents(data);
-      } else {
-        setStudents([]);
-      }
-    });
+    .then(data => setStudents(Array.isArray(data) ? data : []));
+
+  fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
+    .then(res => res.json())
+    .then(data => setLogs(Array.isArray(data) ? data : []));
 };
+
 
 
 useEffect(() => {
@@ -278,7 +264,13 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                     <div className="flex flex-wrap items-center gap-4">
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4 text-gray-500" />
-                        <span className="font-semibold text-gray-900">{log.studentName}</span>
+                        <span className="font-semibold text-gray-900">
+  {Array.isArray(log.studentName)
+  ? log.studentName.join(' ').trim()
+  : log.studentName?.toString().trim() || ''}
+
+</span>
+
                       </div>
                       <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
                         {log.subject}

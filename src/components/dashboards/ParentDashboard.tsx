@@ -6,6 +6,10 @@ import { Badge } from '../ui/badge';
 import { User, UserCheck, UserX, Clock, CheckCircle, XCircle, Book, DollarSign, BookOpen, CheckSquare, X, Calendar } from 'lucide-react';
 import { Student } from '../../types/auth';
 
+// This dashboard now supports parents with multiple children. On mount,
+// it fetches all children for the logged-in parent and displays a
+// selection screen when more than one child is returned.
+
 export const ParentDashboard: React.FC = () => {
   const { user } = useAuth();
   const [children, setChildren] = useState<Student[]>([]);
@@ -175,25 +179,28 @@ export const ParentDashboard: React.FC = () => {
   if (!selectedChild) {
     return (
       <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900">Select Child</h1>
-        {children.map(child => (
-          <button
-            key={child.id}
-            onClick={() => setSelectedChild(child)}
-            className="p-4 border rounded-lg flex items-center space-x-3 w-full text-left hover:bg-gray-50"
-          >
-            <Avatar className="h-10 w-10">
-              {child.avatar && <AvatarImage src={child.avatar} alt={child.firstName} />}
-              <AvatarFallback>
-                {child.firstName[0]}
-                {child.lastName[0]}
-              </AvatarFallback>
-            </Avatar>
-            <span className="font-medium">
-              {child.firstName} {child.lastName} - {child.class}
-            </span>
-          </button>
-        ))}
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Child</h1>
+        <div className="flex space-x-4 overflow-x-auto">
+          {children.map(child => (
+            <button
+              key={child.id}
+              onClick={() => setSelectedChild(child)}
+              className="flex-shrink-0 w-40 p-4 border rounded-lg flex flex-col items-center hover:bg-gray-50"
+            >
+              <Avatar className="h-16 w-16 mb-2">
+                {child.avatar && <AvatarImage src={child.avatar} alt={child.firstName} />}
+                <AvatarFallback>
+                  {child.firstName[0]}
+                  {child.lastName[0]}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-medium text-center">
+                {child.firstName} {child.lastName}
+              </span>
+              <span className="text-sm text-gray-500">{child.class}</span>
+            </button>
+          ))}
+        </div>
       </div>
     );
   }

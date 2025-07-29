@@ -26,35 +26,13 @@ import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../type
 
 export const ParentDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { selectedStudent: selectedChild, setSelectedStudent } = useStudent();
-  const [children, setChildren] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    selectedStudent: selectedChild,
+    setSelectedStudent,
+    children,
+    loading
+  } = useStudent();
 
-  useEffect(() => {
-    const fetchChildren = async () => {
-      const token = localStorage.getItem('smartschool_token');
-      try {
-        const res = await fetch(`http://localhost:5000/api/students/parent/${user?.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setChildren(data);
-          if (data.length === 1) {
-            setSelectedStudent(data[0]);
-          }
-        }
-      } catch (err) {
-        console.error('❌ Error fetching children:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchChildren();
-    }
-  }, [user]);
 
   // Records fetched from backend
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);

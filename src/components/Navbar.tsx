@@ -2,7 +2,7 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationDropdown } from './NotificationDropdown';
-import { Bell, Settings, LogOut, User, Menu } from 'lucide-react';
+import { Bell, Settings, LogOut, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { SidebarTrigger } from './ui/sidebar';
@@ -29,6 +29,7 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden">
             <SidebarTrigger />
           </div>
+          {/* Mobile-only sidebar trigger end */}
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">

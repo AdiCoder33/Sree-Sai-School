@@ -5,6 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import {
   User,
   UserCheck,
   UserX,
@@ -26,35 +33,13 @@ import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../type
 
 export const ParentDashboard: React.FC = () => {
   const { user } = useAuth();
-  const { selectedStudent: selectedChild, setSelectedStudent } = useStudent();
-  const [children, setChildren] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    selectedStudent: selectedChild,
+    setSelectedStudent,
+    children,
+    loading
+  } = useStudent();
 
-  useEffect(() => {
-    const fetchChildren = async () => {
-      const token = localStorage.getItem('smartschool_token');
-      try {
-        const res = await fetch(`http://localhost:5000/api/students/parent/${user?.id}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setChildren(data);
-          if (data.length === 1) {
-            setSelectedStudent(data[0]);
-          }
-        }
-      } catch (err) {
-        console.error('❌ Error fetching children:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchChildren();
-    }
-  }, [user]);
 
   // Records fetched from backend
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
@@ -211,9 +196,27 @@ export const ParentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
-        <p className="text-gray-600 mt-2">Stay connected with your child's learning journey.</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
+          <p className="text-gray-600 mt-2">Stay connected with your child's learning journey.</p>
+        </div>
+        {children.length > 1 && selectedChild && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {selectedChild.firstName} {selectedChild.lastName}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {children.map(child => (
+                <DropdownMenuItem key={child.id} onClick={() => setSelectedStudent(child)}>
+                  {child.firstName} {child.lastName}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

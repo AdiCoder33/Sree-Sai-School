@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useStudent } from '../context/StudentContext';
 import { NotificationDropdown } from './NotificationDropdown';
 import { Bell, Settings, LogOut, User } from 'lucide-react';
 import { Button } from './ui/button';
@@ -19,7 +18,6 @@ import {
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const { children: childList, selectedStudent, setSelectedStudent } = useStudent();
 
   if (!user) return null;
 
@@ -31,22 +29,7 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden">
             <SidebarTrigger />
           </div>
-          {user.role === 'parent' && childList.length > 1 && selectedStudent && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  {selectedStudent.firstName} {selectedStudent.lastName}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                {childList.map(child => (
-                  <DropdownMenuItem key={child.id} onClick={() => setSelectedStudent(child)}>
-                    {child.firstName} {child.lastName}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {/* Mobile-only sidebar trigger end */}
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">

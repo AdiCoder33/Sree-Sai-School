@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { CheckCircle, XCircle, Calendar, Users, Download, UserCheck, UserX, Clock } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
@@ -17,16 +18,18 @@ import axios from 'axios';
 
 export const Attendance: React.FC = () => {
   const { user } = useAuth();
+  const { selectedStudent } = useStudent();
   const [selectedClass, setSelectedClass] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'unmarked'>>({});
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [mockChildAttendance, setMockChildAttendance] = useState([]);
   const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
-
-
-
   const [studentsInClass, setStudentsInClass] = useState([]);
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view attendance.</div>;
+  }
 useEffect(() => {
   const token = localStorage.getItem('smartschool_token');
   axios.get('http://localhost:5000/api/classes', {
@@ -89,14 +92,17 @@ useEffect(() => {
 };
 useEffect(() => {
   if (user?.role === 'parent') {
+    if (!selectedStudent) return;
     const token = localStorage.getItem('smartschool_token');
-    axios.get(`http://localhost:5000/api/attendance/parent/${user.id}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    }).then(res => {
-      setMockChildAttendance(res.data);
-    });
+    axios
+      .get(`http://localhost:5000/api/attendance/student/${selectedStudent.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => {
+        setMockChildAttendance(res.data);
+      });
   }
-}, [user]);
+}, [user, selectedStudent]);
 
 
 

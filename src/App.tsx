@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
+import { StudentProvider } from './context/StudentContext';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -26,9 +27,10 @@ function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <Router>
-          <Layout>
-            <Routes>
+        <StudentProvider>
+          <Router>
+            <Layout>
+              <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -45,9 +47,10 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </Router>
+              </Routes>
+            </Layout>
+          </Router>
+        </StudentProvider>
         <Toaster />
       </NotificationProvider>
     </AuthProvider>

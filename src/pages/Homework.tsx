@@ -10,6 +10,7 @@ import axios from 'axios';
 
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
 
 
@@ -19,6 +20,7 @@ import { toast } from 'sonner';
 
 export const Homework: React.FC = () => {
   const { user } = useAuth();
+  const { selectedStudent } = useStudent();
   const [homework, setHomework] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
@@ -38,6 +40,22 @@ export const Homework: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view homework.</div>;
+  }
+
+  useEffect(() => {
+    if (user?.role === 'parent' && selectedStudent) {
+      const classId =
+        (selectedStudent as any).class_id ||
+        (selectedStudent as any).classId ||
+        (selectedStudent as any).class;
+      if (classId) {
+        setSelectedClass(classId);
+      }
+    }
+  }, [user, selectedStudent]);
   
 
 useEffect(() => {
@@ -249,10 +267,10 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
   };
 
   const filteredHomework = ['teacher', 'admin'].includes(user?.role)
-  ? homework.filter(hw => hw.class_id === selectedClass)
-  : user?.role === 'parent'
-    ? homework.filter(hw => hw.class === 'Class 1')
-    : [];
+    ? homework.filter(hw => hw.class_id === selectedClass)
+    : user?.role === 'parent'
+      ? homework
+      : [];
 
   return (
     <div className="space-y-6">

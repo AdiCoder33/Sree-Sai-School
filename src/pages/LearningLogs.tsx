@@ -6,8 +6,12 @@ import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
 import { Plus, BookOpen, Calendar, User, Search, Users, Filter } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
+import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 
 export const LearningLogs: React.FC = () => {
+  const { user } = useAuth();
+  const { selectedStudent } = useStudent();
   const [classList, setClassList] = useState([]);
   const [students, setStudents] = useState([]);
   const [logs, setLogs] = useState<any[]>([]); // 👈 ensures logs is always an array
@@ -28,6 +32,10 @@ export const LearningLogs: React.FC = () => {
     notes: '',
     classId: ''
   });
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view learning logs.</div>;
+  }
 
   const subjects = ['Mathematics', 'English', 'Science', 'History', 'Geography', 'Art', 'Physical Education'];
 
@@ -55,6 +63,22 @@ useEffect(() => {
   .then(res => res.json())
   .then(setClassList);
 }, []);
+
+useEffect(() => {
+  if (user?.role === 'parent') {
+    if (!selectedStudent) return;
+    const classId =
+      (selectedStudent as any).class_id ||
+      (selectedStudent as any).classId ||
+      (selectedStudent as any).class;
+    fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
+      .then(res => res.json())
+      .then(data => {
+        const arr = Array.isArray(data) ? data : [];
+        setLogs(arr.filter(log => log.studentId === selectedStudent.id));
+      });
+  }
+}, [user, selectedStudent]);
 
 
   const handleClassChange = (className) => {
@@ -96,6 +120,7 @@ const handleDeleteLog = (id: string) => {
 
 
 useEffect(() => {
+  if (user?.role === 'parent') return;
   if (!classList.length) return; // wait for classList to load
 
   const selected = classList.find(cls => cls.name === selectedClass);
@@ -108,7 +133,7 @@ useEffect(() => {
   })
     .then(res => res.json())
     .then(data => setLogs(Array.isArray(data) ? data : []));
-}, [selectedClass, classList]);
+}, [selectedClass, classList, user]);
 
 
 

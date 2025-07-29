@@ -1,4 +1,4 @@
-import React, { useState,useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -11,11 +11,6 @@ import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
 
-
-
-
-
-
 export const Attendance: React.FC = () => {
   const { user } = useAuth();
   const { selectedStudent } = useStudent();
@@ -25,84 +20,88 @@ export const Attendance: React.FC = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [mockChildAttendance, setMockChildAttendance] = useState([]);
   const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
-
-
-
   const [studentsInClass, setStudentsInClass] = useState([]);
-useEffect(() => {
-  const token = localStorage.getItem('smartschool_token');
-  axios.get('http://localhost:5000/api/classes', {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  .then(res => {
-    setClassList(res.data);
-    if (res.data.length > 0 && !selectedClass) {
-  setSelectedClass(res.data[0].id);
-}
 
-  })
-  .catch(err => {
-    console.error('❌ Error fetching class list:', err);
-  });
-}, []);
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view attendance.</div>;
+  }
 
-useEffect(() => {
-  if (!selectedClass) return; // 🛡️ Prevent calling API with empty classId
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    axios
+      .get('http://localhost:5000/api/classes', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(res => {
+        setClassList(res.data);
+        if (res.data.length > 0 && !selectedClass) {
+          setSelectedClass(res.data[0].id);
+        }
+      })
+      .catch(err => {
+        console.error('❌ Error fetching class list:', err);
+      });
+  }, []);
 
-  const token = localStorage.getItem('smartschool_token');
-  axios.get(`http://localhost:5000/api/students/class/${selectedClass}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  })
-  .then(res => {
-    setStudentsInClass(res.data);
-  })
-  .catch(err => {
-    console.error('❌ Error fetching students:', err);
-  });
-}, [selectedClass]);
+  useEffect(() => {
+    if (!selectedClass) return;
 
+    const token = localStorage.getItem('smartschool_token');
+    axios
+      .get(`http://localhost:5000/api/students/class/${selectedClass}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(res => {
+        setStudentsInClass(res.data);
+      })
+      .catch(err => {
+        console.error('❌ Error fetching students:', err);
+      });
+  }, [selectedClass]);
 
-  
   const getAttendanceStatus = (studentId: string) => {
     return attendance[studentId] || 'unmarked';
   };
 
   const markAttendance = async (studentId: string, status: 'present' | 'absent') => {
-  setAttendance(prev => ({
-    ...prev,
-    [studentId]: status
-  }));
+    setAttendance(prev => ({
+      ...prev,
+      [studentId]: status,
+    }));
 
-  try {
-    const token = localStorage.getItem('smartschool_token');
-    await axios.post('http://localhost:5000/api/attendance', {
-      student_id: studentId,
-      date: selectedDate,
-      status,
-      remarks: ''
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    toast.success('Attendance marked!');
-  } catch (error) {
-    toast.error('Failed to mark attendance');
-    console.error(error);
-  }
-};
-useEffect(() => {
-  if (user?.role === 'parent' && selectedStudent) {
-    const token = localStorage.getItem('smartschool_token');
-    axios
-      .get(`http://localhost:5000/api/attendance/student/${selectedStudent.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then(res => {
-        setMockChildAttendance(res.data);
-      });
-  }
-}, [user, selectedStudent]);
+    try {
+      const token = localStorage.getItem('smartschool_token');
+      await axios.post(
+        'http://localhost:5000/api/attendance',
+        {
+          student_id: studentId,
+          date: selectedDate,
+          status,
+          remarks: '',
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      toast.success('Attendance marked!');
+    } catch (error) {
+      toast.error('Failed to mark attendance');
+      console.error(error);
+    }
+  };
 
-
+  useEffect(() => {
+    if (user?.role === 'parent' && selectedStudent) {
+      const token = localStorage.getItem('smartschool_token');
+      axios
+        .get(`http://localhost:5000/api/attendance/student/${selectedStudent.id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then(res => {
+          setMockChildAttendance(res.data);
+        });
+    }
+  }, [user, selectedStudent]);
 
   const markAllPresent = () => {
     const newAttendance = { ...attendance };
@@ -114,41 +113,42 @@ useEffect(() => {
   };
 
   const bulkMarkSelected = async (status: 'present' | 'absent') => {
-  if (selectedStudents.length === 0) {
-    toast.error('Please select students first');
-    return;
-  }
+    if (selectedStudents.length === 0) {
+      toast.error('Please select students first');
+      return;
+    }
 
-  setAttendance(prev => {
-    const updated = { ...prev };
-    selectedStudents.forEach(id => updated[id] = status);
-    return updated;
-  });
-
-  try {
-    const token = localStorage.getItem('smartschool_token');
-    await axios.post('http://localhost:5000/api/attendance/bulk', {
-      students: selectedStudents,
-      date: selectedDate,
-      status
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
+    setAttendance(prev => {
+      const updated = { ...prev };
+      selectedStudents.forEach(id => (updated[id] = status));
+      return updated;
     });
-    toast.success('Bulk attendance updated');
-  } catch (err) {
-    toast.error('Bulk update failed');
-    console.error(err);
-  }
 
-  setSelectedStudents([]);
-};
+    try {
+      const token = localStorage.getItem('smartschool_token');
+      await axios.post(
+        'http://localhost:5000/api/attendance/bulk',
+        {
+          students: selectedStudents,
+          date: selectedDate,
+          status,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      toast.success('Bulk attendance updated');
+    } catch (err) {
+      toast.error('Bulk update failed');
+      console.error(err);
+    }
 
+    setSelectedStudents([]);
+  };
 
   const toggleStudentSelection = (studentId: string) => {
-    setSelectedStudents(prev => 
-      prev.includes(studentId) 
-        ? prev.filter(id => id !== studentId)
-        : [...prev, studentId]
+    setSelectedStudents(prev =>
+      prev.includes(studentId) ? prev.filter(id => id !== studentId) : [...prev, studentId],
     );
   };
 
@@ -157,17 +157,17 @@ useEffect(() => {
       const reportData = studentsInClass.map(student => ({
         'Student Name': student.name,
         'Roll Number': student.rollNumber,
-        'Class': student.class,
-        'Date': selectedDate,
-        'Status': getAttendanceStatus(student.id)
+        Class: student.class,
+        Date: selectedDate,
+        Status: getAttendanceStatus(student.id),
       }));
 
       const ws = XLSX.utils.json_to_sheet(reportData);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
-      
+
       const className = classList.find(cls => cls.id === selectedClass)?.name || selectedClass;
-XLSX.writeFile(wb, `attendance_${className}_${selectedDate}.xlsx`);
+      XLSX.writeFile(wb, `attendance_${className}_${selectedDate}.xlsx`);
 
       toast.success('Attendance report downloaded successfully!');
     } catch (error) {
@@ -177,41 +177,48 @@ XLSX.writeFile(wb, `attendance_${className}_${selectedDate}.xlsx`);
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'present': return 'text-green-600 bg-green-50 border-green-200';
-      case 'absent': return 'text-red-600 bg-red-50 border-red-200';
-      case 'late': return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-      default: return 'text-gray-600 bg-gray-50 border-gray-200';
+      case 'present':
+        return 'text-green-600 bg-green-50 border-green-200';
+      case 'absent':
+        return 'text-red-600 bg-red-50 border-red-200';
+      case 'late':
+        return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'present': return <CheckCircle className="h-5 w-5 text-green-600" />;
-      case 'absent': return <XCircle className="h-5 w-5 text-red-600" />;
-      case 'late': return <Clock className="h-5 w-5 text-yellow-600" />;
-      default: return <div className="h-5 w-5 bg-gray-300 rounded-full" />;
+      case 'present':
+        return <CheckCircle className="h-5 w-5 text-green-600" />;
+      case 'absent':
+        return <XCircle className="h-5 w-5 text-red-600" />;
+      case 'late':
+        return <Clock className="h-5 w-5 text-yellow-600" />;
+      default:
+        return <div className="h-5 w-5 bg-gray-300 rounded-full" />;
     }
   };
-  
 
-useEffect(() => {
-  const token = localStorage.getItem('smartschool_token');
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
 
-  axios.get(`http://localhost:5000/api/attendance/${selectedDate}/${selectedClass}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  })
-  .then(res => {
-    const fetched = res.data.reduce((acc: any, curr: any) => {
-      acc[curr.student_id] = curr.status;
-      return acc;
-    }, {});
-    setAttendance(fetched);
-  })
-  .catch(err => {
-    console.error("❌ Error fetching attendance:", err);
-  });
-}, [selectedClass, selectedDate]);
-
+    axios
+      .get(`http://localhost:5000/api/attendance/${selectedDate}/${selectedClass}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then(res => {
+        const fetched = res.data.reduce((acc: any, curr: any) => {
+          acc[curr.student_id] = curr.status;
+          return acc;
+        }, {});
+        setAttendance(fetched);
+      })
+      .catch(err => {
+        console.error('❌ Error fetching attendance:', err);
+      });
+  }, [selectedClass, selectedDate]);
 
   // Parent view - show only their child's attendance records
   if (user?.role === 'parent') {
@@ -287,15 +294,20 @@ useEffect(() => {
           <CardContent>
             <div className="space-y-3 max-h-96 overflow-y-auto">
               {mockChildAttendance.map((record, index) => (
-                <div key={index} className={`flex items-center justify-between p-4 border rounded-lg ${getStatusColor(record.status)}`}>
+                <div
+                  key={index}
+                  className={`flex items-center justify-between p-4 border rounded-lg ${getStatusColor(
+                    record.status,
+                  )}`}
+                >
                   <div className="flex items-center space-x-3">
                     {getStatusIcon(record.status)}
                     <span className="font-medium">
-                      {new Date(record.date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                      {new Date(record.date).toLocaleDateString('en-US', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
                       })}
                     </span>
                   </div>
@@ -331,17 +343,17 @@ useEffect(() => {
       <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium text-gray-700">Class:</label>
-          <select 
-  value={selectedClass}
-  onChange={(e) => setSelectedClass(e.target.value)}
-  className="..."
->
-  {classList.map(cls => (
-    <option key={cls.id} value={cls.id}>{cls.name}</option>
-  ))}
-</select>
-
-
+          <select
+            value={selectedClass}
+            onChange={e => setSelectedClass(e.target.value)}
+            className="..."
+          >
+            {classList.map(cls => (
+              <option key={cls.id} value={cls.id}>
+                {cls.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="flex items-center space-x-2">
@@ -349,7 +361,7 @@ useEffect(() => {
           <input
             type="date"
             value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
+            onChange={e => setSelectedDate(e.target.value)}
             className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
           />
         </div>
@@ -360,15 +372,15 @@ useEffect(() => {
           <UserCheck className="mr-2 h-4 w-4" />
           Mark All Present
         </Button>
-        <Button 
-          onClick={() => bulkMarkSelected('present')} 
+        <Button
+          onClick={() => bulkMarkSelected('present')}
           variant="outline"
           className="border-green-600 text-green-600 hover:bg-green-50"
         >
           Mark Selected Present
         </Button>
-        <Button 
-          onClick={() => bulkMarkSelected('absent')} 
+        <Button
+          onClick={() => bulkMarkSelected('absent')}
           variant="outline"
           className="border-red-600 text-red-600 hover:bg-red-50"
         >
@@ -382,33 +394,30 @@ useEffect(() => {
           <CardTitle className="flex items-center space-x-2 text-lg md:text-xl">
             <Users className="h-5 w-5" />
             <span>
-  Student Attendance - {
-    classList.find(cls => cls.id === selectedClass)?.name || 'Unknown Class'
-  }
-</span>
-
+              Student Attendance - {classList.find(cls => cls.id === selectedClass)?.name || 'Unknown Class'}
+            </span>
           </CardTitle>
           <CardDescription className="text-sm md:text-base">
-            {new Date(selectedDate).toLocaleDateString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
+            {new Date(selectedDate).toLocaleDateString('en-US', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
             })}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 gap-3">
-            {studentsInClass.map((student) => {
+            {studentsInClass.map(student => {
               const status = getAttendanceStatus(student.id);
               const isSelected = selectedStudents.includes(student.id);
-              
+
               return (
-                <div 
-                  key={student.id} 
-                  className={`flex items-center justify-between p-3 md:p-4 border rounded-lg ${getStatusColor(status)} ${
-                    isSelected ? 'ring-2 ring-indigo-500' : ''
-                  }`}
+                <div
+                  key={student.id}
+                  className={`flex items-center justify-between p-3 md:p-4 border rounded-lg ${getStatusColor(
+                    status,
+                  )} ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}
                 >
                   <div className="flex items-center space-x-3 md:space-x-4">
                     <input
@@ -420,20 +429,17 @@ useEffect(() => {
                     <Avatar className="h-8 w-8 md:h-10 md:w-10">
                       <AvatarImage src={student.avatar} alt={student.name} />
                       <AvatarFallback className="text-xs md:text-sm">
-  {`${student.firstName?.[0] ?? ''}${student.lastName?.[0] ?? ''}`}
-</AvatarFallback>
-
-
+                        {`${student.firstName?.[0] ?? ''}${student.lastName?.[0] ?? ''}`}
+                      </AvatarFallback>
                     </Avatar>
                     <div>
                       <p className="font-medium text-gray-900 text-sm md:text-base">
-  {student.name || `${student.firstName ?? ''} ${student.lastName ?? ''}`}
-</p>
-
+                        {student.name || `${student.firstName ?? ''} ${student.lastName ?? ''}`}
+                      </p>
                       <p className="text-xs md:text-sm text-gray-500">Roll No: {student.rollNumber}</p>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center space-x-2 md:space-x-3">
                     <div className="flex space-x-2">
                       <Button

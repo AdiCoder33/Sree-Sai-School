@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationDropdown } from './NotificationDropdown';
@@ -34,7 +33,7 @@ export const Navbar: React.FC = () => {
 
         <div className="flex items-center space-x-2 md:space-x-4">
           <NotificationDropdown />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -75,12 +74,11 @@ export const Navbar: React.FC = () => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-  onClick={() => {
-    logout();
-    window.location.href = '/';
-  }}
->
-
+                onClick={() => {
+                  logout();
+                  window.location.href = '/';
+                }}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

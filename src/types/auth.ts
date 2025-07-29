@@ -27,7 +27,6 @@ export interface Student {
   firstName: string;
   lastName: string;
   class: string;
-  class_id?: string;
   section: string;
   rollNumber: string;
   parentId: string;

@@ -427,7 +427,7 @@ export const ParentDashboard: React.FC = () => {
                     <span className="text-sm text-gray-500">{activity.date}</span>
                   </div>
                   <p className="text-gray-700 mb-2">{activity.activity}</p>
-                  <p className="text-sm text-gray-500">Teacher: {activity.teacher}</p>
+                  <p className="text-sm text-gray-500">Teacher: {activity.teacherId}</p>
                 </div>
               ))}
             </div>

@@ -106,7 +106,9 @@ export const Timetable: React.FC = () => {
           subject: entry.subject,
           teacher_id: entry.teacher_id,
         };
+
       });
+      console.log(res.data);
       setGrid(newGrid);
     } catch {
       toast({ title: 'Error', description: 'Failed to fetch timetable' });

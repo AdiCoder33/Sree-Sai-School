@@ -3,8 +3,21 @@ import { useAuth } from '../../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
-import { User, UserCheck, UserX, Clock, CheckCircle, XCircle, Book, DollarSign, BookOpen, CheckSquare, X, Calendar } from 'lucide-react';
-import { Student } from '../../types/auth';
+import {
+  User,
+  UserCheck,
+  UserX,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Book,
+  DollarSign,
+  BookOpen,
+  CheckSquare,
+  X,
+  Calendar
+} from 'lucide-react';
+import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../types/auth';
 
 // This dashboard now supports parents with multiple children. On mount,
 // it fetches all children for the logged-in parent and displays a
@@ -42,65 +55,61 @@ export const ParentDashboard: React.FC = () => {
     }
   }, [user]);
 
-  // Static demo data for the dashboard
-  const attendanceRecords = [
-    { date: '2024-01-15', status: 'present' },
-    { date: '2024-01-14', status: 'present' },
-    { date: '2024-01-13', status: 'absent' },
-    { date: '2024-01-12', status: 'present' },
-    { date: '2024-01-11', status: 'present' },
-    { date: '2024-01-10', status: 'present' },
-    { date: '2024-01-09', status: 'late' },
-    { date: '2024-01-08', status: 'present' }
-  ];
+  // Records fetched from backend
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [homework, setHomework] = useState<HomeworkItem[]>([]);
+  const [learningLogs, setLearningLogs] = useState<LearningLog[]>([]);
 
-  const recentActivities = [
-    {
-      date: '2024-01-15',
-      subject: 'Mathematics',
-      activity: 'Learned multiplication tables and solved word problems',
-      teacher: 'Ms. Sarah Johnson'
-    },
-    {
-      date: '2024-01-14',
-      subject: 'Science',
-      activity: 'Conducted experiment on plant growth and photosynthesis',
-      teacher: 'Ms. Sarah Johnson'
-    },
-    {
-      date: '2024-01-13',
-      subject: 'English',
-      activity: 'Read chapter 5 of "Charlotte\'s Web" and wrote summary',
-      teacher: 'Ms. Sarah Johnson'
-    }
-  ];
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!selectedChild) return;
 
-  const todayHomework = [
-    {
-      id: '1',
-      subject: 'Mathematics',
-      title: 'Solve multiplication problems',
-      description: 'Complete exercises 1-10 from page 45',
-      completed: true,
-      teacher: 'Ms. Sarah Johnson'
-    },
-    {
-      id: '2',
-      subject: 'English',
-      title: 'Write a short story',
-      description: 'Write a 200-word story about your favorite animal',
-      completed: false,
-      teacher: 'Ms. Sarah Johnson'
-    },
-    {
-      id: '3',
-      subject: 'Science',
-      title: 'Draw plant parts',
-      description: 'Draw and label different parts of a plant',
-      completed: true,
-      teacher: 'Ms. Sarah Johnson'
-    }
-  ];
+      const token = localStorage.getItem('smartschool_token');
+      const classId =
+        (selectedChild as any).class_id ||
+        (selectedChild as any).classId ||
+        (selectedChild as any).class;
+
+      try {
+        const [attRes, hwRes, logRes] = await Promise.all([
+          fetch(`http://localhost:5000/api/attendance/student/${selectedChild.id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:5000/api/homework/class/${classId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+
+        if (attRes.ok) {
+          const records: AttendanceRecord[] = await attRes.json();
+          setAttendanceRecords(records);
+        }
+        if (hwRes.ok) {
+          const hwData: any = await hwRes.json();
+          const combined: HomeworkItem[] = Array.isArray(hwData)
+            ? hwData
+            : [
+                ...(hwData.today || []),
+                ...(hwData.yesterday || []),
+                ...(hwData.dayBefore || []),
+                ...(hwData.results || [])
+              ];
+          setHomework(combined);
+        }
+        if (logRes.ok) {
+          const logs: LearningLog[] = await logRes.json();
+          setLearningLogs(logs.filter(l => l.studentId === selectedChild.id));
+        }
+      } catch (err) {
+        console.error('❌ Error fetching dashboard data:', err);
+      }
+    };
+
+    fetchData();
+  }, [selectedChild]);
 
   const upcomingEvents = [
     {
@@ -178,8 +187,8 @@ export const ParentDashboard: React.FC = () => {
 
   if (!selectedChild) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Child</h1>
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 space-y-4">
+        <h1 className="text-3xl font-bold text-gray-900">Select Child</h1>
         <div className="flex space-x-4 overflow-x-auto">
           {children.map(child => (
             <button
@@ -371,10 +380,12 @@ export const ParentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {todayHomework.map(hw => (
+              {homework.map(hw => (
                 <div
                   key={hw.id}
-                  className={`p-4 border rounded-lg ${hw.completed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+                  className={`p-4 border rounded-lg ${
+                    hw.completed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
@@ -386,7 +397,9 @@ export const ParentDashboard: React.FC = () => {
                       )}
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${hw.completed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                      className={`text-xs px-2 py-1 rounded ${
+                        hw.completed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}
                     >
                       {hw.completed ? 'Completed' : 'Pending'}
                     </span>
@@ -410,7 +423,7 @@ export const ParentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentActivities.map((activity, index) => (
+              {learningLogs.map((activity, index) => (
                 <div key={index} className="p-4 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-medium text-indigo-600">{activity.subject}</span>

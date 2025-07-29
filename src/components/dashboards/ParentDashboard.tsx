@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useStudent } from '../../context/StudentContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
@@ -25,8 +26,8 @@ import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../type
 
 export const ParentDashboard: React.FC = () => {
   const { user } = useAuth();
+  const { selectedStudent: selectedChild, setSelectedStudent } = useStudent();
   const [children, setChildren] = useState<Student[]>([]);
-  const [selectedChild, setSelectedChild] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +41,7 @@ export const ParentDashboard: React.FC = () => {
           const data = await res.json();
           setChildren(data);
           if (data.length === 1) {
-            setSelectedChild(data[0]);
+            setSelectedStudent(data[0]);
           }
         }
       } catch (err) {
@@ -71,7 +72,7 @@ export const ParentDashboard: React.FC = () => {
         (selectedChild as any).class;
 
       try {
-        const [attRes, hwRes, logRes] = await Promise.all([
+        const [attRes, hwRes, logRes, eventRes] = await Promise.all([
           fetch(`http://localhost:5000/api/attendance/student/${selectedChild.id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
@@ -79,6 +80,9 @@ export const ParentDashboard: React.FC = () => {
             headers: { Authorization: `Bearer ${token}` }
           }),
           fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          fetch(`http://localhost:5000/api/events`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);
@@ -103,6 +107,10 @@ export const ParentDashboard: React.FC = () => {
           const logs: LearningLog[] = await logRes.json();
           setLearningLogs(logs.filter(l => l.studentId === selectedChild.id));
         }
+        if (eventRes.ok) {
+          const eventData: EventItem[] = await eventRes.json();
+          setEvents(eventData);
+        }
       } catch (err) {
         console.error('❌ Error fetching dashboard data:', err);
       }
@@ -111,32 +119,17 @@ export const ParentDashboard: React.FC = () => {
     fetchData();
   }, [selectedChild]);
 
-  const upcomingEvents = [
-    {
-      id: '1',
-      title: 'Parent-Teacher Meeting',
-      date: '2024-01-25',
-      time: '10:00 AM',
-      type: 'meeting',
-      description: 'Quarterly parent-teacher conference'
-    },
-    {
-      id: '2',
-      title: 'Science Fair',
-      date: '2024-01-30',
-      time: '2:00 PM',
-      type: 'academic',
-      description: 'Annual school science exhibition'
-    },
-    {
-      id: '3',
-      title: 'Sports Day',
-      date: '2024-02-05',
-      time: '9:00 AM',
-      type: 'sports',
-      description: 'Annual sports competition and fun activities'
-    }
-  ];
+  interface EventItem {
+    id: string;
+    title: string;
+    description: string;
+    startDate: string;
+    endDate: string;
+    location: string;
+    type: string;
+  }
+
+  const [events, setEvents] = useState<EventItem[]>([]);
 
   const getEventTypeColor = (type: string) => {
     switch (type) {
@@ -193,7 +186,7 @@ export const ParentDashboard: React.FC = () => {
           {children.map(child => (
             <button
               key={child.id}
-              onClick={() => setSelectedChild(child)}
+              onClick={() => setSelectedStudent(child)}
               className="flex-shrink-0 w-40 p-4 border rounded-lg flex flex-col items-center hover:bg-gray-50"
             >
               <Avatar className="h-16 w-16 mb-2">
@@ -351,7 +344,7 @@ export const ParentDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {upcomingEvents.map(event => (
+              {events.map(event => (
                 <div key={event.id} className="p-3 border rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <h4 className="font-medium text-gray-900">{event.title}</h4>
@@ -359,8 +352,9 @@ export const ParentDashboard: React.FC = () => {
                   </div>
                   <p className="text-sm text-gray-600 mb-2">{event.description}</p>
                   <div className="flex items-center space-x-4 text-xs text-gray-500">
-                    <span>{event.date}</span>
-                    <span>{event.time}</span>
+                    <span>{event.startDate}</span>
+                    {event.endDate && <span>- {event.endDate}</span>}
+                    <span>{event.location}</span>
                   </div>
                 </div>
               ))}

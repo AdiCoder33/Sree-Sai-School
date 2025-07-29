@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { api } from '../lib/api';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -65,7 +65,7 @@ export const Timetable: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/classes', config);
+      const res = await api.get('/classes', config);
       const classList = Array.isArray(res.data) ? res.data : [];
       setClasses(classList);
       if (!selectedClass && classList.length) {
@@ -78,7 +78,7 @@ export const Timetable: React.FC = () => {
 
   const fetchTeachers = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/users?role=teacher', config);
+      const res = await api.get('/users?role=teacher', config);
       const onlyTeachers = res.data.filter((u: any) => u.role === 'teacher');
       setTeachers(onlyTeachers);
       if (!selectedTeacher && onlyTeachers.length) {
@@ -93,10 +93,10 @@ export const Timetable: React.FC = () => {
     try {
       const endpoint =
         viewMode === 'class'
-          ? `http://localhost:5000/api/timetable/class/${selectedClass}`
-          : `http://localhost:5000/api/timetable/teacher/${selectedTeacher}`;
+          ? `/timetable/class/${selectedClass}`
+          : `/timetable/teacher/${selectedTeacher}`;
 
-      const res = await axios.get(endpoint, config);
+      const res = await api.get(endpoint, config);
       const newGrid: Record<string, Record<string, CellEntry>> = {};
       defaultDays.forEach((day) => (newGrid[day] = {}));
       res.data.forEach((entry: any) => {
@@ -146,9 +146,9 @@ export const Timetable: React.FC = () => {
 
     try {
       if (cell.id) {
-        await axios.put(`http://localhost:5000/api/timetable/${cell.id}`, payload, config);
+        await api.put(`/timetable/${cell.id}`, payload, config);
       } else {
-        await axios.post('http://localhost:5000/api/timetable', payload, config);
+        await api.post('/timetable', payload, config);
       }
       toast({ title: 'Success', description: 'Saved successfully' });
       fetchTimetable();
@@ -161,7 +161,7 @@ export const Timetable: React.FC = () => {
   const handleDelete = async (id?: string) => {
     if (!id) return;
     try {
-      await axios.delete(`http://localhost:5000/api/timetable/${id}`, config);
+      await api.delete(`/timetable/${id}`, config);
       toast({ title: 'Success', description: 'Deleted successfully' });
       fetchTimetable();
     } catch {

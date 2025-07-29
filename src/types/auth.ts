@@ -27,6 +27,7 @@ export interface Student {
   firstName: string;
   lastName: string;
   class: string;
+  class_id?: string;
   section: string;
   rollNumber: string;
   parentId: string;
@@ -53,4 +54,17 @@ export interface LearningLog {
   activity: string;
   notes: string;
   teacherId: string;
+}
+
+export interface HomeworkItem {
+  id: string;
+  class_id?: string;
+  subject: string;
+  title: string;
+  description: string;
+  duedate?: string;
+  teacherFirstName?: string;
+  teacherLastName?: string;
+  completed?: boolean;
+  teacher?: string;
 }

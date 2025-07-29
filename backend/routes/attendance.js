@@ -5,6 +5,24 @@ const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Get attendance for a student
+router.get('/student/:studentId', authenticateToken, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input('studentId', sql.VarChar, studentId)
+      .query('SELECT * FROM attendance WHERE student_id = @studentId ORDER BY date DESC');
+
+    res.json(result.recordset);
+  } catch (error) {
+    console.error('❌ Get attendance by student error:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // Get attendance by date and class
 router.get('/:date/:classId', authenticateToken, async (req, res) => {
   try {

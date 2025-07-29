@@ -1,111 +1,120 @@
 const express = require('express');
+const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const { sql, poolPromise } = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-const router = express.Router();
-
-// Map weekdays to enforce custom order
-const weekdayOrder = {
-  'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
-  'Thursday': 4, 'Friday': 5
-};
-
-// Get timetable by class
+// GET timetable by class
 router.get('/class/:classId', authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .input('classId', sql.VarChar, req.params.classId)
+      .input('class_id', sql.UniqueIdentifier, req.params.classId)
       .query(`
-        SELECT t.*, u.firstName as teacherFirstName, u.lastName as teacherLastName, c.name as className
-        FROM timetable t
-        JOIN users u ON t.teacher_id = u.id
-        JOIN classes c ON t.class_id = c.id
-        WHERE t.class_id = @classId
+        SELECT id, class_id, dayOfWeek, startTime, endTime, subject, teacher_id
+        FROM timetable
+        WHERE class_id = @class_id
+        ORDER BY dayOfWeek, startTime
       `);
-
-    // Sort manually by weekday order and time_slot
-    const sorted = result.recordset.sort((a, b) => {
-      const dayA = weekdayOrder[a.day] || 99;
-      const dayB = weekdayOrder[b.day] || 99;
-      if (dayA === dayB) return a.time_slot.localeCompare(b.time_slot);
-      return dayA - dayB;
-    });
-
-    res.json(sorted);
-  } catch (error) {
-    console.error('❌ Get timetable by class error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching timetable:', err);
+    res.status(500).json({ message: 'Error fetching timetable' });
   }
 });
 
-// Get timetable by teacher
+// ✅ GET timetable by teacher
 router.get('/teacher/:teacherId', authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-      .input('teacherId', sql.VarChar, req.params.teacherId)
+      .input('teacher_id', sql.UniqueIdentifier, req.params.teacherId)
       .query(`
-        SELECT t.*, c.name as className
-        FROM timetable t
-        JOIN classes c ON t.class_id = c.id
-        WHERE t.teacher_id = @teacherId
+        SELECT id, class_id, dayOfWeek, startTime, endTime, subject, teacher_id
+        FROM timetable
+        WHERE teacher_id = @teacher_id
+        ORDER BY dayOfWeek, startTime
       `);
-
-    // Sort manually
-    const sorted = result.recordset.sort((a, b) => {
-      const dayA = weekdayOrder[a.day] || 99;
-      const dayB = weekdayOrder[b.day] || 99;
-      if (dayA === dayB) return a.time_slot.localeCompare(b.time_slot);
-      return dayA - dayB;
-    });
-
-    res.json(sorted);
-  } catch (error) {
-    console.error('❌ Get timetable by teacher error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('Error fetching teacher timetable:', err);
+    res.status(500).json({ message: 'Error fetching teacher timetable' });
   }
 });
 
-// Create timetable entry
+// POST create timetable entry
 router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const { class_id, dayOfWeek, startTime, endTime, subject, teacher_id } = req.body;
+  if (!class_id || !dayOfWeek || !startTime || !endTime || !subject || !teacher_id) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
   try {
-    const { class_id, day, time_slot, subject, teacher_id } = req.body;
-    const timetableId = uuidv4();
     const pool = await poolPromise;
-
+    const newId = uuidv4();
     await pool.request()
-      .input('id', sql.VarChar, timetableId)
-      .input('class_id', sql.VarChar, class_id)
-      .input('day', sql.VarChar, day)
-      .input('time_slot', sql.VarChar, time_slot)
+      .input('id', sql.UniqueIdentifier, newId)
+      .input('class_id', sql.UniqueIdentifier, class_id)
+      .input('dayOfWeek', sql.VarChar, dayOfWeek)
+      .input('startTime', sql.VarChar, startTime)
+      .input('endTime', sql.VarChar, endTime)
       .input('subject', sql.VarChar, subject)
-      .input('teacher_id', sql.VarChar, teacher_id)
+      .input('teacher_id', sql.UniqueIdentifier, teacher_id)
       .query(`
-        INSERT INTO timetable (id, class_id, day, time_slot, subject, teacher_id)
-        VALUES (@id, @class_id, @day, @time_slot, @subject, @teacher_id)
+        INSERT INTO timetable
+        (id, class_id, dayOfWeek, startTime, endTime, subject, teacher_id, created_at, updated_at)
+        VALUES (@id, @class_id, @dayOfWeek, @startTime, @endTime, @subject, @teacher_id, GETDATE(), GETDATE())
       `);
-
-    res.status(201).json({ message: 'Timetable entry created successfully', id: timetableId });
-  } catch (error) {
-    console.error('❌ Create timetable error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    res.status(201).json({ message: 'Created', id: newId });
+  } catch (err) {
+    console.error('Error creating timetable entry:', err);
+    res.status(500).json({ message: 'Error creating entry' });
   }
 });
 
-// Delete timetable entry
+// PUT update timetable entry
+router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const { class_id, dayOfWeek, startTime, endTime, subject, teacher_id } = req.body;
+  if (!class_id || !dayOfWeek || !startTime || !endTime || !subject || !teacher_id) {
+    return res.status(400).json({ message: 'Missing required fields' });
+  }
+
+  try {
+    const pool = await poolPromise;
+    await pool.request()
+      .input('id', sql.UniqueIdentifier, req.params.id)
+      .input('class_id', sql.UniqueIdentifier, class_id)
+      .input('dayOfWeek', sql.VarChar, dayOfWeek)
+      .input('startTime', sql.VarChar, startTime)
+      .input('endTime', sql.VarChar, endTime)
+      .input('subject', sql.VarChar, subject)
+      .input('teacher_id', sql.UniqueIdentifier, teacher_id)
+      .query(`
+        UPDATE timetable
+        SET class_id=@class_id, dayOfWeek=@dayOfWeek,
+            startTime=@startTime, endTime=@endTime,
+            subject=@subject, teacher_id=@teacher_id,
+            updated_at=GETDATE()
+        WHERE id=@id
+      `);
+    res.json({ message: 'Updated' });
+  } catch (err) {
+    console.error('Error updating entry:', err);
+    res.status(500).json({ message: 'Error updating entry' });
+  }
+});
+
+// DELETE entry
 router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const pool = await poolPromise;
     await pool.request()
-      .input('id', sql.VarChar, req.params.id)
+      .input('id', sql.UniqueIdentifier, req.params.id)
       .query('DELETE FROM timetable WHERE id = @id');
-
-    res.json({ message: 'Timetable entry deleted successfully' });
-  } catch (error) {
-    console.error('❌ Delete timetable error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    res.json({ message: 'Deleted' });
+  } catch (err) {
+    console.error('Error deleting entry:', err);
+    res.status(500).json({ message: 'Error deleting entry' });
   }
 });
 

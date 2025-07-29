@@ -54,3 +54,16 @@ export interface LearningLog {
   notes: string;
   teacherId: string;
 }
+
+export interface HomeworkItem {
+  id: string;
+  class_id?: string;
+  subject: string;
+  title: string;
+  description: string;
+  duedate?: string;
+  teacherFirstName?: string;
+  teacherLastName?: string;
+  completed?: boolean;
+  teacher?: string;
+}

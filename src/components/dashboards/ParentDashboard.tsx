@@ -3,8 +3,21 @@ import { useAuth } from '../../context/AuthContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
-import { User, UserCheck, UserX, Clock, CheckCircle, XCircle, Book, DollarSign, BookOpen, CheckSquare, X, Calendar } from 'lucide-react';
-import { Student } from '../../types/auth';
+import {
+  User,
+  UserCheck,
+  UserX,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Book,
+  DollarSign,
+  BookOpen,
+  CheckSquare,
+  X,
+  Calendar
+} from 'lucide-react';
+import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../types/auth';
 
 // This dashboard now supports parents with multiple children. On mount,
 // it fetches all children for the logged-in parent and displays a
@@ -43,16 +56,19 @@ export const ParentDashboard: React.FC = () => {
   }, [user]);
 
   // Records fetched from backend
-  const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
-  const [homework, setHomework] = useState<any[]>([]);
-  const [learningLogs, setLearningLogs] = useState<any[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [homework, setHomework] = useState<HomeworkItem[]>([]);
+  const [learningLogs, setLearningLogs] = useState<LearningLog[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       if (!selectedChild) return;
 
       const token = localStorage.getItem('smartschool_token');
-      const classId = (selectedChild as any).class_id || (selectedChild as any).classId || (selectedChild as any).class;
+      const classId =
+        (selectedChild as any).class_id ||
+        (selectedChild as any).classId ||
+        (selectedChild as any).class;
 
       try {
         const [attRes, hwRes, logRes] = await Promise.all([
@@ -68,18 +84,24 @@ export const ParentDashboard: React.FC = () => {
         ]);
 
         if (attRes.ok) {
-          setAttendanceRecords(await attRes.json());
+          const records: AttendanceRecord[] = await attRes.json();
+          setAttendanceRecords(records);
         }
         if (hwRes.ok) {
-          const hwData = await hwRes.json();
-          const combined = Array.isArray(hwData)
+          const hwData: any = await hwRes.json();
+          const combined: HomeworkItem[] = Array.isArray(hwData)
             ? hwData
-            : [...(hwData.today || []), ...(hwData.yesterday || []), ...(hwData.dayBefore || []), ...(hwData.results || [])];
+            : [
+                ...(hwData.today || []),
+                ...(hwData.yesterday || []),
+                ...(hwData.dayBefore || []),
+                ...(hwData.results || [])
+              ];
           setHomework(combined);
         }
         if (logRes.ok) {
-          const logs = await logRes.json();
-          setLearningLogs(logs.filter((l: any) => l.studentId === selectedChild.id));
+          const logs: LearningLog[] = await logRes.json();
+          setLearningLogs(logs.filter(l => l.studentId === selectedChild.id));
         }
       } catch (err) {
         console.error('❌ Error fetching dashboard data:', err);
@@ -236,7 +258,9 @@ export const ParentDashboard: React.FC = () => {
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-sm">Attendance</span>
-                <span className="text-green-600 font-medium">{presentDays}/{totalDays} days</span>
+                <span className="text-green-600 font-medium">
+                  {presentDays}/{totalDays} days
+                </span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm">Assignments</span>
@@ -359,7 +383,9 @@ export const ParentDashboard: React.FC = () => {
               {homework.map(hw => (
                 <div
                   key={hw.id}
-                  className={`p-4 border rounded-lg ${hw.completed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}
+                  className={`p-4 border rounded-lg ${
+                    hw.completed ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+                  }`}
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex items-center space-x-2">
@@ -371,7 +397,9 @@ export const ParentDashboard: React.FC = () => {
                       )}
                     </div>
                     <span
-                      className={`text-xs px-2 py-1 rounded ${hw.completed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}
+                      className={`text-xs px-2 py-1 rounded ${
+                        hw.completed ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}
                     >
                       {hw.completed ? 'Completed' : 'Pending'}
                     </span>

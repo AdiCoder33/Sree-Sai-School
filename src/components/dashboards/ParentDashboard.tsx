@@ -178,8 +178,8 @@ export const ParentDashboard: React.FC = () => {
 
   if (!selectedChild) {
     return (
-      <div className="space-y-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Select Child</h1>
+      <div className="fixed inset-0 z-50 bg-white flex flex-col items-center justify-center p-6 space-y-4">
+        <h1 className="text-3xl font-bold text-gray-900">Select Child</h1>
         <div className="flex space-x-4 overflow-x-auto">
           {children.map(child => (
             <button

@@ -5,6 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { Badge } from '../ui/badge';
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import {
   User,
   UserCheck,
   UserX,
@@ -189,9 +196,27 @@ export const ParentDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
-        <p className="text-gray-600 mt-2">Stay connected with your child's learning journey.</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
+          <p className="text-gray-600 mt-2">Stay connected with your child's learning journey.</p>
+        </div>
+        {children.length > 1 && selectedChild && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                {selectedChild.firstName} {selectedChild.lastName}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {children.map(child => (
+                <DropdownMenuItem key={child.id} onClick={() => setSelectedStudent(child)}>
+                  {child.firstName} {child.lastName}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -19,6 +19,7 @@ const notificationRoutes = require('./routes/notifications');
 const feeRoutes = require('./routes/fees');
 const settingsRoutes = require('./routes/settings');
 const learningLogsRoutes = require('./routes/learninglogs');
+const systemRoutes = require('./routes/system');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,6 +51,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/fees', feeRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/learninglogs', learningLogsRoutes);
+app.use('/api/system', systemRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

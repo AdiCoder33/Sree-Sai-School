@@ -34,6 +34,20 @@ interface Fee {
   datePaid?: string;
 }
 
+interface SchoolClass {
+  id: string
+  name?: string
+  studentCount?: number
+}
+
+interface BasicUser {
+  role?: string
+}
+
+interface AttendanceRecord {
+  status: string
+}
+
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
@@ -72,26 +86,26 @@ export const AdminDashboard: React.FC = () => {
           fetch(`${API_BASE}/fees`, { headers })
         ]);
 
-        let filteredClasses: any[] = [];
+        let filteredClasses: SchoolClass[] = [];
 
         if (classesRes.ok) {
-          const classes = await classesRes.json();
-          filteredClasses = classes.filter((cls: any) => {
+          const classes: SchoolClass[] = await classesRes.json();
+          filteredClasses = classes.filter((cls: SchoolClass) => {
             const match = cls.name?.match(/(\d+)/);
             const number = match ? parseInt(match[1], 10) : NaN;
             return number >= 1 && number <= 10;
           });
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
           setTotalStudents(studentTotal);
         }
 
         if (usersRes.ok) {
-          const users = await usersRes.json();
-          const teachers = users.filter((u: any) => u.role === 'teacher');
+          const users: BasicUser[] = await usersRes.json();
+          const teachers = users.filter((u: BasicUser) => u.role === 'teacher');
           setTeacherCount(teachers.length);
         }
 
@@ -123,13 +137,13 @@ export const AdminDashboard: React.FC = () => {
 
           for (const res of attendanceResponses) {
             if (res.ok) {
-              const records = await res.json();
-              presentCount += records.filter((r: any) => r.status === 'present').length;
+              const records: AttendanceRecord[] = await res.json();
+              presentCount += records.filter((r: AttendanceRecord) => r.status === 'present').length;
             }
           }
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
 
@@ -138,7 +152,8 @@ export const AdminDashboard: React.FC = () => {
           );
         }
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        const error = err as Error
+        console.error('Error fetching dashboard stats:', error)
       }
     };
 
@@ -177,9 +192,10 @@ export const AdminDashboard: React.FC = () => {
             setStatusError(prev => prev || 'Failed to fetch route status');
           }
         }
-      } catch (err: any) {
+      } catch (err) {
+        const error = err as Error
         setBackendStatus('Offline');
-        setStatusError(err.message);
+        setStatusError(error.message);
       }
     };
 

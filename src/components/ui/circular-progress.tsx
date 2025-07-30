@@ -52,7 +52,7 @@ const CircularProgress: React.FC<CircularProgressProps> = ({
           y="50%"
           dominantBaseline="middle"
           textAnchor="middle"
-          className="text-xs font-medium"
+          className="text-sm font-medium"
         >
           {label}
         </text>

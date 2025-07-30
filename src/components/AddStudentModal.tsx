@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -59,7 +60,7 @@ const [showParentModal, setShowParentModal] = useState(false);
   const fetchClasses = async () => {
   try {
     const token = localStorage.getItem('smartschool_token');
-    const response = await fetch('http://localhost:5000/api/classes', {
+    const response = await fetch(`${API_BASE}/classes`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }
@@ -85,7 +86,7 @@ const [showParentModal, setShowParentModal] = useState(false);
   try {
     const token = localStorage.getItem('smartschool_token');
 
-    const studentResponse = await fetch('http://localhost:5000/api/students', {
+    const studentResponse = await fetch(`${API_BASE}/students`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

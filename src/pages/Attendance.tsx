@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -29,7 +30,7 @@ export const Attendance: React.FC = () => {
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
     axios
-      .get('http://localhost:5000/api/classes', {
+      .get(`${API_BASE}/classes`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
@@ -48,7 +49,7 @@ export const Attendance: React.FC = () => {
 
     const token = localStorage.getItem('smartschool_token');
     axios
-      .get(`http://localhost:5000/api/students/class/${selectedClass}`, {
+      .get(`${API_BASE}/students/class/${selectedClass}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
@@ -72,7 +73,7 @@ export const Attendance: React.FC = () => {
     try {
       const token = localStorage.getItem('smartschool_token');
       await axios.post(
-        'http://localhost:5000/api/attendance',
+        `${API_BASE}/attendance`,
         {
           student_id: studentId,
           date: selectedDate,
@@ -94,7 +95,7 @@ export const Attendance: React.FC = () => {
     if (user?.role === 'parent' && selectedStudent) {
       const token = localStorage.getItem('smartschool_token');
       axios
-        .get(`http://localhost:5000/api/attendance/student/${selectedStudent.id}`, {
+        .get(`${API_BASE}/attendance/student/${selectedStudent.id}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(res => {
@@ -127,7 +128,7 @@ export const Attendance: React.FC = () => {
     try {
       const token = localStorage.getItem('smartschool_token');
       await axios.post(
-        'http://localhost:5000/api/attendance/bulk',
+        `${API_BASE}/attendance/bulk`,
         {
           students: selectedStudents,
           date: selectedDate,
@@ -205,7 +206,7 @@ export const Attendance: React.FC = () => {
     const token = localStorage.getItem('smartschool_token');
 
     axios
-      .get(`http://localhost:5000/api/attendance/${selectedDate}/${selectedClass}`, {
+      .get(`${API_BASE}/attendance/${selectedDate}/${selectedClass}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {

@@ -1,4 +1,5 @@
 import React, { useState,useEffect} from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -62,7 +63,7 @@ useEffect(() => {
   const fetchHomework = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+      const res = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -100,7 +101,7 @@ useEffect(() => {
 
 const handleEditHomework = async () => {
   try {
-    await axios.put(`http://localhost:5000/api/homework/${currentEditId}`, {
+    await axios.put(`${API_BASE}/homework/${currentEditId}`, {
       ...newHomework
     }, {
       headers: { Authorization: `Bearer ${user.token}` }
@@ -111,7 +112,7 @@ const handleEditHomework = async () => {
     setCurrentEditId('');
 
     // Refresh
-    const refreshed = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+    const refreshed = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     let combined;
@@ -143,7 +144,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
   if (!confirm) return;
 
   try {
-    await axios.delete(`http://localhost:5000/api/homework/${homeworkId}`, {
+    await axios.delete(`${API_BASE}/homework/${homeworkId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('smartschool_token')}`,
       },
@@ -168,7 +169,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
       return;
     }
 
-    const res = await axios.post('http://localhost:5000/api/homework', {
+    const res = await axios.post(`${API_BASE}/homework`, {
       class_id: newHomework.class_id,
       subject: newHomework.subject,
       title: newHomework.title,
@@ -178,7 +179,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
     });
 
     // Fetch latest homework again
-    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+    const updatedHomework = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
     });
     let combined;
@@ -215,7 +216,7 @@ const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 const fetchClasses = async () => {
   try {
     const token = localStorage.getItem('smartschool_token');
-const res = await axios.get('http://localhost:5000/api/classes', {
+const res = await axios.get(`${API_BASE}/classes`, {
   headers: { Authorization: `Bearer ${token}` }
 });
 
@@ -244,14 +245,14 @@ useEffect(() => {
   const newStatus = student?.completed ? 'incomplete' : 'completed';
 
   try {
-    await axios.put(`http://localhost:5000/api/homework/completion/${homeworkId}/${studentId}`, {
+    await axios.put(`${API_BASE}/homework/completion/${homeworkId}/${studentId}`, {
       status: newStatus
     }, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
     // Refresh homework
-    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+    const updated = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
     let combined;

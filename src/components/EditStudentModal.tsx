@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 import {
   Dialog,
   DialogContent,
@@ -35,7 +36,7 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
 
   const fetchStudent = async () => {
     const token = localStorage.getItem('smartschool_token');
-    const res = await fetch(`http://localhost:5000/api/students/${studentId}`, {
+    const res = await fetch(`${API_BASE}/students/${studentId}`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -47,7 +48,7 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
 
   const fetchClasses = async () => {
     const token = localStorage.getItem('smartschool_token');
-    const res = await fetch(`http://localhost:5000/api/classes`, {
+    const res = await fetch(`${API_BASE}/classes`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const data = await res.json();
@@ -60,7 +61,7 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
     const token = localStorage.getItem('smartschool_token');
 
     try {
-      const res = await fetch(`http://localhost:5000/api/students/${studentId}`, {
+      const res = await fetch(`${API_BASE}/students/${studentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

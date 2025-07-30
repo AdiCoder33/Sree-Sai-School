@@ -1,5 +1,6 @@
 
 import React, { useState,useEffect } from 'react';
+import { API_BASE } from '../../lib/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -53,7 +54,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenCh
   const token = localStorage.getItem('smartschool_token');
 
   if (mode === 'edit' && student?.id) {
-    await fetch(`http://localhost:5000/api/students/${student.id}`, {
+    await fetch(`${API_BASE}/students/${student.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -62,7 +63,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ open, onOpenCh
       body: JSON.stringify(formData)
     });
   } else {
-    await fetch('http://localhost:5000/api/students', {
+    await fetch(`${API_BASE}/students`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

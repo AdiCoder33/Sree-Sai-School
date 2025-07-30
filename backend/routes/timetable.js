@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 const { sql, poolPromise } = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
-// 📌 Helper function to format time
+// 📌 Helper to format time (optional, unused here)
 const formatTime = (time) => {
   const d = new Date(time);
   const hours = d.getHours().toString().padStart(2, '0');
@@ -17,40 +17,27 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
     const result = await pool.request()
-  .input('class_id', sql.UniqueIdentifier, req.params.classId)
-  .query(`
-    SELECT 
-      id, class_id, dayOfWeek,
-      startTime,
-      endTime,
-      subject, teacher_id
-    FROM timetable
-    WHERE class_id = @class_id
-    ORDER BY dayOfWeek, startTime
-  `);
+      .input('class_id', sql.UniqueIdentifier, req.params.classId)
+      .query(`
+        SELECT 
+          t.id,
+          t.class_id,
+          c.name AS className,
+          t.dayOfWeek,
+          t.startTime,
+          t.endTime,
+          t.subject,
+          t.teacher_id
+        FROM timetable t
+        JOIN classes c ON t.class_id = c.id
+        WHERE t.class_id = @class_id
+        ORDER BY t.dayOfWeek, t.startTime
+      `);
 
-res.json(result.recordset);
-
+    res.json(result.recordset);
   } catch (err) {
     console.error('❌ Error fetching timetable by class:', err);
     res.status(500).json({ message: 'Error fetching timetable' });
-  }
-});
-
-// 📌 Get all teachers (for dropdowns)
-router.get('/teachers', authenticateToken, async (req, res) => {
-  try {
-    const pool = await poolPromise;
-    const result = await pool.request().query(`
-      SELECT id, firstName, lastName, role 
-      FROM users 
-      WHERE role = 'teacher'
-    `);
-
-    res.json(result.recordset);
-  } catch (error) {
-    console.error('❌ Get teachers error:', error.message);
-    res.status(500).json({ error: 'Failed to fetch teachers' });
   }
 });
 
@@ -61,19 +48,22 @@ router.get('/teacher/:teacherId', authenticateToken, async (req, res) => {
     const result = await pool.request()
       .input('teacher_id', sql.UniqueIdentifier, req.params.teacherId)
       .query(`
-       SELECT 
-      id, class_id, dayOfWeek,
-      startTime,
-      endTime,
-      subject, teacher_id
-    FROM timetable
-    WHERE teacher_id = @teacher_id
-    ORDER BY dayOfWeek, startTime
-
+        SELECT 
+          t.id,
+          t.class_id,
+          c.name AS className,
+          t.dayOfWeek,
+          t.startTime,
+          t.endTime,
+          t.subject,
+          t.teacher_id
+        FROM timetable t
+        JOIN classes c ON t.class_id = c.id
+        WHERE t.teacher_id = @teacher_id
+        ORDER BY t.dayOfWeek, t.startTime
       `);
-res.json(result.recordset); // Just like the class route
 
-
+    res.json(result.recordset);
   } catch (err) {
     console.error('❌ Error fetching timetable by teacher:', err);
     res.status(500).json({ message: 'Error fetching timetable' });
@@ -91,8 +81,8 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
   try {
     const pool = await poolPromise;
 
-    // 🔍 Check if an entry already exists for same class + day + time
-    const check = await pool.request()
+    // 1️⃣ Check if entry already exists for same class + day + time
+    const checkClass = await pool.request()
       .input('class_id', sql.UniqueIdentifier, class_id)
       .input('dayOfWeek', sql.VarChar, dayOfWeek)
       .input('startTime', sql.VarChar, startTime)
@@ -103,11 +93,27 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
         AND startTime = @startTime AND endTime = @endTime
       `);
 
-    if (check.recordset.length > 0) {
-      return res.status(409).json({ message: 'Duplicate entry exists for this time slot' });
+    if (checkClass.recordset.length > 0) {
+      return res.status(409).json({ message: 'Slot already taken for this class.' });
     }
 
-    // 🚀 Insert new entry if no conflict
+    // 2️⃣ Check if same teacher is assigned elsewhere at same day + time
+    const checkTeacher = await pool.request()
+      .input('teacher_id', sql.UniqueIdentifier, teacher_id)
+      .input('dayOfWeek', sql.VarChar, dayOfWeek)
+      .input('startTime', sql.VarChar, startTime)
+      .input('endTime', sql.VarChar, endTime)
+      .query(`
+        SELECT * FROM timetable 
+        WHERE teacher_id = @teacher_id AND dayOfWeek = @dayOfWeek 
+        AND startTime = @startTime AND endTime = @endTime
+      `);
+
+    if (checkTeacher.recordset.length > 0) {
+      return res.status(409).json({ message: 'This teacher is already assigned to another class at this time slot.' });
+    }
+
+    // 3️⃣ Insert entry
     const id = uuidv4();
     await pool.request()
       .input('id', sql.UniqueIdentifier, id)
@@ -123,7 +129,6 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
       `);
 
     res.status(201).json({ message: 'Created', id });
-
   } catch (err) {
     console.error('❌ Error creating timetable entry:', err);
     res.status(500).json({ message: 'Error creating entry' });
@@ -142,8 +147,8 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
   try {
     const pool = await poolPromise;
 
-    // 🔍 Check for duplicate in other records (excluding the one being updated)
-    const check = await pool.request()
+    // 1️⃣ Check for same slot in same class (excluding current entry)
+    const checkClass = await pool.request()
       .input('id', sql.UniqueIdentifier, timetableId)
       .input('class_id', sql.UniqueIdentifier, class_id)
       .input('dayOfWeek', sql.VarChar, dayOfWeek)
@@ -158,11 +163,31 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
         AND id != @id
       `);
 
-    if (check.recordset.length > 0) {
-      return res.status(409).json({ message: 'Another entry already exists for this time slot' });
+    if (checkClass.recordset.length > 0) {
+      return res.status(409).json({ message: 'Another entry already exists for this class at the same slot.' });
     }
 
-    // ✅ Proceed with update
+    // 2️⃣ Check teacher clash (excluding current entry)
+    const checkTeacher = await pool.request()
+      .input('id', sql.UniqueIdentifier, timetableId)
+      .input('teacher_id', sql.UniqueIdentifier, teacher_id)
+      .input('dayOfWeek', sql.VarChar, dayOfWeek)
+      .input('startTime', sql.VarChar, startTime)
+      .input('endTime', sql.VarChar, endTime)
+      .query(`
+        SELECT * FROM timetable 
+        WHERE teacher_id = @teacher_id 
+        AND dayOfWeek = @dayOfWeek 
+        AND startTime = @startTime 
+        AND endTime = @endTime 
+        AND id != @id
+      `);
+
+    if (checkTeacher.recordset.length > 0) {
+      return res.status(409).json({ message: 'This teacher is already assigned to another class at this time slot.' });
+    }
+
+    // 3️⃣ Proceed with update
     await pool.request()
       .input('id', sql.UniqueIdentifier, timetableId)
       .input('class_id', sql.UniqueIdentifier, class_id)
@@ -184,14 +209,13 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
       `);
 
     res.json({ message: 'Updated successfully' });
-
   } catch (err) {
     console.error('❌ Error updating timetable entry:', err);
     res.status(500).json({ message: 'Error updating entry' });
   }
 });
 
-// 📌 DELETE: Remove a timetable entry
+// 📌 DELETE
 router.delete('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
     const pool = await poolPromise;

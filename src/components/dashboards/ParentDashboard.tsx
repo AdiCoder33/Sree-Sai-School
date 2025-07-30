@@ -54,13 +54,14 @@ export const ParentDashboard: React.FC = () => {
         (selectedChild as any).class_id ||
         (selectedChild as any).classId ||
         (selectedChild as any).class;
+      const today = new Date().toISOString().split('T')[0];
 
       try {
         const [attRes, hwRes, logRes, eventRes] = await Promise.all([
           fetch(`http://localhost:5000/api/attendance/student/${selectedChild.id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/homework/class/${classId}`, {
+          fetch(`http://localhost:5000/api/homework/class/${classId}?date=${today}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
           fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {

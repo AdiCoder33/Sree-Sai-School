@@ -46,6 +46,8 @@ export const AdminDashboard: React.FC = () => {
   const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
   const [statusError, setStatusError] = useState('');
 
+  const DB_LIMIT_MB = 1024;
+
   const mockTrafficData = [
     { name: 'Mon', users: 40 },
     { name: 'Tue', users: 70 },
@@ -295,8 +297,8 @@ export const AdminDashboard: React.FC = () => {
                 <div className="flex justify-center sm:block">
                   {dbSizeMB !== null && (
                     <CircularProgress
-                      value={Math.min(100, (dbSizeMB / 1024) * 100)}
-                      label={`${dbSizeMB} MB`}
+                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
+                      label={`${dbSizeMB} / ${DB_LIMIT_MB} MB`}
                       className="text-indigo-600"
                     />
                   )}

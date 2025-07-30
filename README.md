@@ -15,6 +15,11 @@ SmartSchool is a full-stack, role-based school management platform built with **
 - ✅ Secure ASP.NET API with EF Core and JWT
 - ✅ GitHub Copilot / Codex support with embedded guidance
 
+## 🛠️ Setup
+
+1. Copy `.env.example` to `.env` in the project root.
+2. Update `VITE_API_URL` with your backend's base URL. It defaults to `http://localhost:5000/api`.
+
 ---
 
 ## 🧠 Tech Stack

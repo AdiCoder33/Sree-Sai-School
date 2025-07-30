@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { CalendarDays, Edit, Trash2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -64,6 +65,28 @@ export const Events: React.FC = () => {
       return token && token.split('.').length === 3;
     } catch {
       return false;
+    }
+  };
+
+  const getEventStatus = (event: Event): 'upcoming' | 'ongoing' | 'completed' => {
+    const now = new Date();
+    const start = new Date(event.startDate);
+    const end = new Date(event.endDate);
+    if (start > now) return 'upcoming';
+    if (start <= now && end >= now) return 'ongoing';
+    return 'completed';
+  };
+
+  const getStatusColor = (status: 'upcoming' | 'ongoing' | 'completed') => {
+    switch (status) {
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800';
+      case 'ongoing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -169,6 +192,16 @@ export const Events: React.FC = () => {
     return matchSearch && matchType;
   });
 
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    const order = { upcoming: 0, ongoing: 1, completed: 2 } as const;
+    const statusA = getEventStatus(a);
+    const statusB = getEventStatus(b);
+    if (statusA !== statusB) {
+      return order[statusA] - order[statusB];
+    }
+    return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+  });
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
@@ -212,12 +245,17 @@ export const Events: React.FC = () => {
       </Card>
 
       <div className="space-y-4">
-        {filteredEvents.map((event) => (
-          <Card key={event.id} className="p-4">
-            <div className="flex flex-col sm:flex-row justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold">{event.title}</h3>
-                <p className="text-gray-600 mt-2">{event.description}</p>
+        {sortedEvents.map((event) => {
+          const status = getEventStatus(event);
+          return (
+            <Card key={event.id} className="p-4">
+              <div className="flex flex-col sm:flex-row justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold flex items-center gap-2">
+                    {event.title}
+                    <Badge className={getStatusColor(status)}>{status}</Badge>
+                  </h3>
+                  <p className="text-gray-600 mt-2">{event.description}</p>
                 <div className="text-sm text-gray-500 mt-3">
                   <p>Start: {format(new Date(event.startDate), 'PPP')}</p>
                   <p>End: {format(new Date(event.endDate), 'PPP')}</p>

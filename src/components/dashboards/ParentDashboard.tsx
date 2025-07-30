@@ -86,7 +86,11 @@ export const ParentDashboard: React.FC = () => {
                 ...(hwData.dayBefore || []),
                 ...(hwData.results || [])
               ];
-          setHomework(combined);
+          const formatted = combined.map(hw => ({
+            ...hw,
+            teacher: `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+          }));
+          setHomework(formatted);
         }
         if (logRes.ok) {
           const logs: LearningLog[] = await logRes.json();

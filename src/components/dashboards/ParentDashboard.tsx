@@ -87,7 +87,9 @@ export const ParentDashboard: React.FC = () => {
               ];
           const formatted = combined.map(hw => ({
             ...hw,
-            teacher: `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+            teacher:
+              hw.teacher ??
+              `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
           }));
           setHomework(formatted);
         }

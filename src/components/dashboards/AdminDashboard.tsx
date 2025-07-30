@@ -32,6 +32,9 @@ export const AdminDashboard: React.FC = () => {
   const [teacherCount, setTeacherCount] = useState(0);
   const [revenue, setRevenue] = useState(0);
   const [attendanceRate, setAttendanceRate] = useState(0);
+  const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
+  const [statusError, setStatusError] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
@@ -118,6 +121,40 @@ export const AdminDashboard: React.FC = () => {
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    const statusHeaders: Record<string, string> = {};
+    if (token) {
+      statusHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    const fetchStatus = async () => {
+      try {
+        const healthRes = await fetch(`${API_BASE}/health`);
+        if (healthRes.ok) {
+          setBackendStatus('Online');
+        } else {
+          setBackendStatus('Offline');
+        }
+
+        if (token) {
+          const dbRes = await fetch(`${API_BASE}/system/db-size`, { headers: statusHeaders });
+          if (dbRes.ok) {
+            const { sizeKB } = await dbRes.json();
+            setDbSizeMB(Number((sizeKB / 1024).toFixed(2)));
+          } else {
+            setStatusError('Failed to fetch DB size');
+          }
+        }
+      } catch (err: any) {
+        setBackendStatus('Offline');
+        setStatusError(err.message);
+      }
+    };
+
+    fetchStatus();
   }, []);
 
   const stats = [
@@ -213,32 +250,25 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>Latest updates from your school</CardDescription>
+            <CardTitle>System Status</CardTitle>
+            <CardDescription>Frontend and backend health</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">New student enrolled</p>
-                  <p className="text-gray-600">Emma Johnson joined Grade 5A</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">Fee payment received</p>
-                  <p className="text-gray-600">$2,500 from Grade 3 parents</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">Teacher update</p>
-                  <p className="text-gray-600">Math curriculum updated for Grade 6</p>
-                </div>
-              </div>
+            <div className="space-y-2 text-sm">
+              <p>
+                <span className="font-medium">Backend:</span> {backendStatus}
+              </p>
+              <p>
+                <span className="font-medium">Frontend:</span> Online
+              </p>
+              {dbSizeMB !== null && (
+                <p>
+                  <span className="font-medium">DB Usage:</span> {dbSizeMB} MB
+                </p>
+              )}
+              {statusError && (
+                <p className="text-red-600">Error: {statusError}</p>
+              )}
             </div>
           </CardContent>
         </Card>

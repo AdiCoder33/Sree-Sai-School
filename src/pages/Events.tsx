@@ -282,10 +282,11 @@ export const Events: React.FC = () => {
                     <span className="ml-1 hidden sm:inline">Delete</span>
                   </Button>
                 </div>
-              </RoleGuard>
-            </div>
-          </Card>
-        ))}
+                      </RoleGuard>
+      </div>
+    </Card>
+  );
+})}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

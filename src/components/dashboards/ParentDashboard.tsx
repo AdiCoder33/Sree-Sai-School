@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useStudent } from '../../context/StudentContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -46,8 +46,7 @@ export const ParentDashboard: React.FC = () => {
   const [homework, setHomework] = useState<HomeworkItem[]>([]);
   const [learningLogs, setLearningLogs] = useState<LearningLog[]>([]);
 
-  useEffect(() => {
-    const fetchData = async () => {
+  const fetchData = useCallback(async () => {
       if (!selectedChild) return;
 
       const token = localStorage.getItem('smartschool_token');
@@ -103,10 +102,17 @@ export const ParentDashboard: React.FC = () => {
       } catch (err) {
         console.error('❌ Error fetching dashboard data:', err);
       }
-    };
+    }, [selectedChild]);
 
+  useEffect(() => {
     fetchData();
-  }, [selectedChild]);
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!selectedChild) return;
+    const interval = setInterval(fetchData, 300000);
+    return () => clearInterval(interval);
+  }, [selectedChild, fetchData]);
 
   interface EventItem {
     id: string;
@@ -205,22 +211,25 @@ export const ParentDashboard: React.FC = () => {
           <h1 className="text-3xl font-bold text-gray-900">Parent Dashboard</h1>
           <p className="text-gray-600 mt-2">Stay connected with your child's learning journey.</p>
         </div>
-        {children.length > 1 && selectedChild && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                {selectedChild.firstName} {selectedChild.lastName}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {children.map(child => (
-                <DropdownMenuItem key={child.id} onClick={() => setSelectedStudent(child)}>
-                  {child.firstName} {child.lastName}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex items-center space-x-2">
+          {children.length > 1 && selectedChild && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  {selectedChild.firstName} {selectedChild.lastName}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {children.map(child => (
+                  <DropdownMenuItem key={child.id} onClick={() => setSelectedStudent(child)}>
+                    {child.firstName} {child.lastName}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+          <Button variant="outline" size="sm" onClick={fetchData}>Refresh</Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

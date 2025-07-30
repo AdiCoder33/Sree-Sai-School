@@ -153,10 +153,26 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
     const result = await pool.request()
       .input('class_id', db.sql.UniqueIdentifier, classId)
       .query('SELECT * FROM students WHERE class_id = @class_id');
-    
+
     res.json(result.recordset);
   } catch (error) {
     console.error('❌ Get students by class error:', error.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Get students for a parent
+router.get('/parent/:parentId', authenticateToken, async (req, res) => {
+  try {
+    const { parentId } = req.params;
+    const pool = await db.poolPromise;
+    const result = await pool.request()
+      .input('parent_id', db.sql.UniqueIdentifier, parentId)
+      .query('SELECT * FROM students WHERE parent_id = @parent_id');
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('❌ Error fetching children:', err.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

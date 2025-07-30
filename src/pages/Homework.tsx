@@ -1,4 +1,5 @@
 import React, { useState,useEffect} from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -10,6 +11,7 @@ import axios from 'axios';
 
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
 
 
@@ -19,6 +21,7 @@ import { toast } from 'sonner';
 
 export const Homework: React.FC = () => {
   const { user } = useAuth();
+  const { selectedStudent } = useStudent();
   const [homework, setHomework] = useState([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
@@ -38,34 +41,49 @@ export const Homework: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view homework.</div>;
+  }
+
+  useEffect(() => {
+    if (user?.role === 'parent' && selectedStudent) {
+      const classId =
+        (selectedStudent as any).class_id ||
+        (selectedStudent as any).classId ||
+        (selectedStudent as any).class;
+      if (classId) {
+        setSelectedClass(classId);
+      }
+    }
+  }, [user, selectedStudent]);
   
 
 useEffect(() => {
   const fetchHomework = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-      const res = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+      const res = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const todayStr = new Date().toDateString();
-const selectedStr = new Date(selectedDate).toDateString();
-let combined;
-
-if (selectedStr === todayStr) {
-  combined = [
-    ...(res.data.today || []),
-    ...(res.data.yesterday || []),
-    ...(res.data.dayBefore || [])
-  ];
-} else if (res.data.results) {
-  combined = res.data.results;
-} else {
-  combined = [];
-}
-
-
-      setHomework(combined);
+      let combined;
+      if (res.data.results) {
+        combined = res.data.results;
+      } else {
+        combined = [
+          ...(res.data.today || []),
+          ...(res.data.yesterday || []),
+          ...(res.data.dayBefore || [])
+        ];
+      }
+      const formatted = combined.map(hw => ({
+        ...hw,
+        teacher:
+          hw.teacher ??
+          `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+      }));
+      setHomework(formatted);
       console.log("Fetched homework response:", res.data);
 
       const selectedClassName = classList.find(c => c.id === selectedClass)?.name || 'Selected Class';
@@ -83,7 +101,7 @@ if (selectedStr === todayStr) {
 
 const handleEditHomework = async () => {
   try {
-    await axios.put(`http://localhost:5000/api/homework/${currentEditId}`, {
+    await axios.put(`${API_BASE}/homework/${currentEditId}`, {
       ...newHomework
     }, {
       headers: { Authorization: `Bearer ${user.token}` }
@@ -94,10 +112,26 @@ const handleEditHomework = async () => {
     setCurrentEditId('');
 
     // Refresh
-    const refreshed = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
+    const refreshed = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
-    setHomework(refreshed.data.results);
+    let combined;
+    if (refreshed.data.results) {
+      combined = refreshed.data.results;
+    } else {
+      combined = [
+        ...(refreshed.data.today || []),
+        ...(refreshed.data.yesterday || []),
+        ...(refreshed.data.dayBefore || [])
+      ];
+    }
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ??
+        `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+    setHomework(formatted);
     toast.success("Homework updated successfully");
   } catch (err) {
     console.error("❌ Edit failed:", err.message);
@@ -110,7 +144,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
   if (!confirm) return;
 
   try {
-    await axios.delete(`http://localhost:5000/api/homework/${homeworkId}`, {
+    await axios.delete(`${API_BASE}/homework/${homeworkId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('smartschool_token')}`,
       },
@@ -135,7 +169,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
       return;
     }
 
-    const res = await axios.post('http://localhost:5000/api/homework', {
+    const res = await axios.post(`${API_BASE}/homework`, {
       class_id: newHomework.class_id,
       subject: newHomework.subject,
       title: newHomework.title,
@@ -145,15 +179,26 @@ const handleDeleteHomework = async (homeworkId: string) => {
     });
 
     // Fetch latest homework again
-    const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
-  headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
-});
-const combined = [
-  ...(updatedHomework.data.today || []),
-  ...(updatedHomework.data.yesterday || []),
-  ...(updatedHomework.data.dayBefore || [])
-];
-setHomework(combined);
+    const updatedHomework = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+    });
+    let combined;
+    if (updatedHomework.data.results) {
+      combined = updatedHomework.data.results;
+    } else {
+      combined = [
+        ...(updatedHomework.data.today || []),
+        ...(updatedHomework.data.yesterday || []),
+        ...(updatedHomework.data.dayBefore || [])
+      ];
+    }
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ??
+        `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+    setHomework(formatted);
 
 
     
@@ -171,7 +216,7 @@ const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 const fetchClasses = async () => {
   try {
     const token = localStorage.getItem('smartschool_token');
-const res = await axios.get('http://localhost:5000/api/classes', {
+const res = await axios.get(`${API_BASE}/classes`, {
   headers: { Authorization: `Bearer ${token}` }
 });
 
@@ -200,18 +245,34 @@ useEffect(() => {
   const newStatus = student?.completed ? 'incomplete' : 'completed';
 
   try {
-    await axios.put(`http://localhost:5000/api/homework/completion/${homeworkId}/${studentId}`, {
+    await axios.put(`${API_BASE}/homework/completion/${homeworkId}/${studentId}`, {
       status: newStatus
     }, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
 
     // Refresh homework
-    const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
-  headers: { Authorization: `Bearer ${user.token}` }
-});
+    const updated = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    let combined;
+    if (updated.data.results) {
+      combined = updated.data.results;
+    } else {
+      combined = [
+        ...(updated.data.today || []),
+        ...(updated.data.yesterday || []),
+        ...(updated.data.dayBefore || [])
+      ];
+    }
 
-    setHomework(updated.data);
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ?? `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+
+    setHomework(formatted);
   } catch (error) {
     console.error('❌ Failed to update completion:', error.message);
   }
@@ -249,10 +310,10 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
   };
 
   const filteredHomework = ['teacher', 'admin'].includes(user?.role)
-  ? homework.filter(hw => hw.class_id === selectedClass)
-  : user?.role === 'parent'
-    ? homework.filter(hw => hw.class === 'Class 1')
-    : [];
+    ? homework.filter(hw => hw.class_id === selectedClass)
+    : user?.role === 'parent'
+      ? homework
+      : [];
 
   return (
     <div className="space-y-6">
@@ -471,7 +532,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                 
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <BookOpen className="h-4 w-4" />
-                  <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
+                  <span>Assigned by {hw.teacher}</span>
                 </div>
 
                 {/*<RoleGuard allowedRoles={['teacher', 'principal']}>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
@@ -56,7 +57,7 @@ useEffect(() => {
   }
 
   try {
-    const res = await fetch('http://localhost:5000/api/users?role=teacher', {
+    const res = await fetch(`${API_BASE}/users?role=teacher`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -78,7 +79,7 @@ useEffect(() => {
 
   setLoading(true);
   try {
-    const res = await fetch(`http://localhost:5000/api/classes/${classId}/assign-teacher`, {
+    const res = await fetch(`${API_BASE}/classes/${classId}/assign-teacher`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

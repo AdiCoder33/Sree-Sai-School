@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../../lib/api';
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -47,7 +48,7 @@ export const EditAnnouncement: React.FC<EditAnnouncementProps> = ({
   if (!announcement) return onClose();
 
   try {
-    const res = await fetch(`http://localhost:5000/api/announcements/${announcement.id}`, {
+    const res = await fetch(`${API_BASE}/announcements/${announcement.id}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

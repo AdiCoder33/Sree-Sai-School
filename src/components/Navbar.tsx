@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import { NotificationDropdown } from './NotificationDropdown';
-import { Bell, Settings, LogOut, User, Menu } from 'lucide-react';
+import { Bell, Settings, LogOut, User } from 'lucide-react';
 import { Button } from './ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { SidebarTrigger } from './ui/sidebar';
@@ -29,11 +28,12 @@ export const Navbar: React.FC = () => {
           <div className="md:hidden">
             <SidebarTrigger />
           </div>
+          {/* Mobile-only sidebar trigger end */}
         </div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
           <NotificationDropdown />
-          
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -74,12 +74,11 @@ export const Navbar: React.FC = () => {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
-  onClick={() => {
-    logout();
-    window.location.href = '/';
-  }}
->
-
+                onClick={() => {
+                  logout();
+                  window.location.href = '/';
+                }}
+              >
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>

@@ -1,38 +1,150 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { API_BASE } from '../../lib/api';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Button } from '../ui/button';
-import { Users, GraduationCap, DollarSign, BookOpen, TrendingUp, Megaphone } from 'lucide-react';
+import {
+  Users,
+  GraduationCap,
+  DollarSign,
+  BookOpen,
+  TrendingUp,
+  Megaphone,
+} from 'lucide-react';
+
+interface Fee {
+  amount?: number;
+  paidDate?: string;
+  paymentDate?: string;
+  datePaid?: string;
+}
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [teacherCount, setTeacherCount] = useState(0);
+  const [revenue, setRevenue] = useState(0);
+  const [attendanceRate, setAttendanceRate] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    if (!token) return;
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const fetchData = async () => {
+      try {
+        const [classesRes, usersRes, feesRes] = await Promise.all([
+          fetch(`${API_BASE}/classes`, { headers }),
+          fetch(`${API_BASE}/users`, { headers }),
+          fetch(`${API_BASE}/fees`, { headers })
+        ]);
+
+        let filteredClasses: any[] = [];
+
+        if (classesRes.ok) {
+          const classes = await classesRes.json();
+          filteredClasses = classes.filter((cls: any) => {
+            const match = cls.name?.match(/(\d+)/);
+            const number = match ? parseInt(match[1], 10) : NaN;
+            return number >= 1 && number <= 10;
+          });
+
+          const studentTotal = filteredClasses.reduce(
+            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            0
+          );
+          setTotalStudents(studentTotal);
+        }
+
+        if (usersRes.ok) {
+          const users = await usersRes.json();
+          const teachers = users.filter((u: any) => u.role === 'teacher');
+          setTeacherCount(teachers.length);
+        }
+
+        if (feesRes.ok) {
+          const data: Fee[] = await feesRes.json();
+          const now = new Date();
+          const month = now.getMonth();
+          const year = now.getFullYear();
+          const total = data
+            .filter((fee: Fee) => {
+              const paid = fee.paidDate || fee.paymentDate || fee.datePaid;
+              if (!paid) return false;
+              const date = new Date(paid);
+              return date.getMonth() === month && date.getFullYear() === year;
+            })
+            .reduce((sum: number, fee: Fee) => sum + Number(fee.amount || 0), 0);
+          setRevenue(total);
+        }
+
+        if (filteredClasses.length > 0) {
+          const today = new Date().toISOString().split('T')[0];
+          const attendancePromises = filteredClasses.map(cls =>
+            fetch(`${API_BASE}/attendance/${today}/${cls.id}`, { headers })
+          );
+
+          const attendanceResponses = await Promise.all(attendancePromises);
+
+          let presentCount = 0;
+
+          for (const res of attendanceResponses) {
+            if (res.ok) {
+              const records = await res.json();
+              presentCount += records.filter((r: any) => r.status === 'present').length;
+            }
+          }
+
+          const studentTotal = filteredClasses.reduce(
+            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            0
+          );
+
+          setAttendanceRate(
+            studentTotal > 0 ? (presentCount / studentTotal) * 100 : 0
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const stats = [
     {
       title: 'Total Students',
-      value: '1,234',
+      value: totalStudents.toString(),
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Active Teachers',
-      value: '45',
+      value: teacherCount.toString(),
       icon: GraduationCap,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Monthly Revenue',
-      value: '$45,678',
+      value: `₹${revenue.toLocaleString()}`,
       icon: DollarSign,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
       title: 'Attendance Rate',
-      value: '94.5%',
+      value: `${attendanceRate.toFixed(1)}%`,
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'

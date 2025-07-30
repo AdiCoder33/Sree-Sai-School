@@ -2,6 +2,7 @@
 
 // (All imports remain unchanged)
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -55,7 +56,7 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
   const fetchUsers = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-      const response = await fetch('http://localhost:5000/api/users', {
+      const response = await fetch(`${API_BASE}/users`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -104,8 +105,8 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
   e.preventDefault();
   const token = localStorage.getItem('smartschool_token');
   const url = editMode
-    ? `http://localhost:5000/api/users/${editUserId}`
-    : 'http://localhost:5000/api/users';
+    ? `${API_BASE}/users/${editUserId}`
+    : `${API_BASE}/users`;
   const method = editMode ? 'PUT' : 'POST';
 
   try {
@@ -159,7 +160,7 @@ const resetForm = () => {
     if (!confirm('Are you sure you want to delete this user?')) return;
     try {
       const token = localStorage.getItem('smartschool_token');
-      const response = await fetch(`http://localhost:5000/api/users/${userId}`, {
+      const response = await fetch(`${API_BASE}/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`

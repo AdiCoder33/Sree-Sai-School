@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -30,7 +31,7 @@ const role = user.role;
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
 
-    axios.get(`http://localhost:5000/api/classes/${classId}`, {
+    axios.get(`${API_BASE}/classes/${classId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
       const teacherName = `${res.data.teacherFirstName} ${res.data.teacherLastName}`;
@@ -42,7 +43,7 @@ const role = user.role;
       });
     });
 
-    axios.get(`http://localhost:5000/api/students/class/${classId}`, {
+    axios.get(`${API_BASE}/students/class/${classId}`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(res => {
       const studentsArray = Array.isArray(res.data) ? res.data : [];
@@ -64,7 +65,7 @@ const role = user.role;
   const handleDelete = async () => {
     const token = localStorage.getItem('smartschool_token');
     for (const id of selectedStudents) {
-      await axios.delete(`http://localhost:5000/api/students/${id}`, {
+      await axios.delete(`${API_BASE}/students/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
     }
@@ -209,7 +210,7 @@ const role = user.role;
       setEditOpen(false);
       // Re-fetch students after update
       const token = localStorage.getItem('smartschool_token');
-      axios.get(`http://localhost:5000/api/students/class/${classId}`, {
+      axios.get(`${API_BASE}/students/class/${classId}`, {
         headers: { Authorization: `Bearer ${token}` },
       }).then(res => {
         const studentsArray = Array.isArray(res.data) ? res.data : [];

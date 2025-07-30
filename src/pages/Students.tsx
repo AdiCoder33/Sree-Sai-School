@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
+import { API_BASE } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Badge } from '../components/ui/badge';
@@ -44,7 +45,7 @@ const role = user.role;
   const fetchClasses = async () => {
     try {
       const token = localStorage.getItem('smartschool_token');
-      const response = await fetch('http://localhost:5000/api/classes', {
+      const response = await fetch(`${API_BASE}/classes`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

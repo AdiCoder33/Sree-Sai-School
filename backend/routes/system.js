@@ -1,5 +1,5 @@
 const express = require('express');
-const { poolPromise, sql } = require('../config/database');
+const { poolPromise } = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
@@ -14,8 +14,8 @@ router.get('/db-size', authenticateToken, authorizeRoles('admin'), async (req, r
   try {
     const pool = await poolPromise;
     const result = await pool.request().query(`
-      SELECT SUM(reserved_page_count) * 8 AS size_kb
-      FROM sys.dm_db_partition_stats
+      SELECT SUM(size) * 8 AS size_kb
+      FROM sys.database_files
     `);
     const sizeKB = result.recordset[0].size_kb || 0;
     res.json({ sizeKB });

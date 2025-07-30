@@ -9,6 +9,15 @@ import {
   CardTitle,
 } from '../ui/card';
 import { Button } from '../ui/button';
+import CircularProgress from '../ui/circular-progress';
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   Users,
   GraduationCap,
@@ -25,6 +34,20 @@ interface Fee {
   datePaid?: string;
 }
 
+interface SchoolClass {
+  id: string
+  name?: string
+  studentCount?: number
+}
+
+interface BasicUser {
+  role?: string
+}
+
+interface AttendanceRecord {
+  status: string
+}
+
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
@@ -36,6 +59,18 @@ export const AdminDashboard: React.FC = () => {
   const [routeStatuses, setRouteStatuses] = useState<Record<string, string>>({});
   const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
   const [statusError, setStatusError] = useState('');
+
+  const DB_LIMIT_MB = 1024;
+
+  const mockTrafficData = [
+    { name: 'Mon', users: 40 },
+    { name: 'Tue', users: 70 },
+    { name: 'Wed', users: 50 },
+    { name: 'Thu', users: 90 },
+    { name: 'Fri', users: 65 },
+    { name: 'Sat', users: 30 },
+    { name: 'Sun', users: 20 },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
@@ -51,26 +86,26 @@ export const AdminDashboard: React.FC = () => {
           fetch(`${API_BASE}/fees`, { headers })
         ]);
 
-        let filteredClasses: any[] = [];
+        let filteredClasses: SchoolClass[] = [];
 
         if (classesRes.ok) {
-          const classes = await classesRes.json();
-          filteredClasses = classes.filter((cls: any) => {
+          const classes: SchoolClass[] = await classesRes.json();
+          filteredClasses = classes.filter((cls: SchoolClass) => {
             const match = cls.name?.match(/(\d+)/);
             const number = match ? parseInt(match[1], 10) : NaN;
             return number >= 1 && number <= 10;
           });
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
           setTotalStudents(studentTotal);
         }
 
         if (usersRes.ok) {
-          const users = await usersRes.json();
-          const teachers = users.filter((u: any) => u.role === 'teacher');
+          const users: BasicUser[] = await usersRes.json();
+          const teachers = users.filter((u: BasicUser) => u.role === 'teacher');
           setTeacherCount(teachers.length);
         }
 
@@ -102,13 +137,13 @@ export const AdminDashboard: React.FC = () => {
 
           for (const res of attendanceResponses) {
             if (res.ok) {
-              const records = await res.json();
-              presentCount += records.filter((r: any) => r.status === 'present').length;
+              const records: AttendanceRecord[] = await res.json();
+              presentCount += records.filter((r: AttendanceRecord) => r.status === 'present').length;
             }
           }
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
 
@@ -117,7 +152,8 @@ export const AdminDashboard: React.FC = () => {
           );
         }
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        const error = err as Error
+        console.error('Error fetching dashboard stats:', error)
       }
     };
 
@@ -156,9 +192,10 @@ export const AdminDashboard: React.FC = () => {
             setStatusError(prev => prev || 'Failed to fetch route status');
           }
         }
-      } catch (err: any) {
+      } catch (err) {
+        const error = err as Error
         setBackendStatus('Offline');
-        setStatusError(err.message);
+        setStatusError(error.message);
       }
     };
 
@@ -267,30 +304,46 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
+            <CardTitle>System Health</CardTitle>
             <CardDescription>Frontend and backend health</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
-              <ul className="space-y-1">
-                {statusItems.map(({ name, status }) => {
-                  const online = status.toLowerCase().includes('online');
-                  return (
-                    <li key={name} className="flex items-center space-x-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
-                      />
-                      <span className="font-medium">{name}:</span>
-                      <span className={!online ? 'text-red-600' : ''}>{status}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              {dbSizeMB !== null && (
-                <p>
-                  <span className="font-medium">DB Usage:</span> {dbSizeMB} MB
-                </p>
-              )}
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+                <div className="flex justify-center sm:block">
+                  {dbSizeMB !== null && (
+                    <CircularProgress
+                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
+                      label={`${dbSizeMB} / ${DB_LIMIT_MB} MB`}
+                      className="text-indigo-600"
+                    />
+                  )}
+                </div>
+                <ul className="mt-4 sm:mt-0 space-y-1 flex-1">
+                  {statusItems.map(({ name, status }) => {
+                    const online = status.toLowerCase().includes('online');
+                    return (
+                      <li key={name} className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                        />
+                        <span className="font-medium">{name}:</span>
+                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={mockTrafficData} margin={{ left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" stroke="#64748b" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
               {statusError && (
                 <p className="text-red-600">Error: {statusError}</p>
               )}

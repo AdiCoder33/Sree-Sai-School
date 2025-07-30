@@ -60,7 +60,7 @@ export const AdminDashboard: React.FC = () => {
   const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
   const [statusError, setStatusError] = useState('');
 
-  const DB_LIMIT_MB = 1024;
+  const DB_LIMIT_MB = 4096;
 
   const mockTrafficData = [
     { name: 'Mon', users: 40 },
@@ -273,6 +273,10 @@ export const AdminDashboard: React.FC = () => {
     }))
   ];
 
+  const halfIndex = Math.ceil(statusItems.length / 2);
+  const firstHalf = statusItems.slice(0, halfIndex);
+  const secondHalf = statusItems.slice(halfIndex);
+
   return (
     <div className="space-y-6">
       <div>
@@ -309,18 +313,9 @@ export const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4 text-sm">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
-                <div className="flex justify-center sm:block">
-                  {dbSizeMB !== null && (
-                    <CircularProgress
-                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
-                      label={`${dbSizeMB} / ${DB_LIMIT_MB} MB`}
-                      className="text-indigo-600"
-                    />
-                  )}
-                </div>
-                <ul className="mt-4 sm:mt-0 space-y-1 flex-1">
-                  {statusItems.map(({ name, status }) => {
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <ul className="space-y-1">
+                  {firstHalf.map(({ name, status }) => {
                     const online = status.toLowerCase().includes('online');
                     return (
                       <li key={name} className="flex items-center space-x-2">
@@ -333,6 +328,29 @@ export const AdminDashboard: React.FC = () => {
                     );
                   })}
                 </ul>
+                <ul className="space-y-1">
+                  {secondHalf.map(({ name, status }) => {
+                    const online = status.toLowerCase().includes('online');
+                    return (
+                      <li key={name} className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                        />
+                        <span className="font-medium">{name}:</span>
+                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="flex justify-center">
+                  {dbSizeMB !== null && (
+                    <CircularProgress
+                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
+                      label={`${dbSizeMB} / ${DB_LIMIT_MB} MB`}
+                      className="text-indigo-600"
+                    />
+                  )}
+                </div>
               </div>
               <div className="h-32">
                 <ResponsiveContainer width="100%" height="100%">

@@ -76,7 +76,13 @@ useEffect(() => {
           ...(res.data.dayBefore || [])
         ];
       }
-      setHomework(combined);
+      const formatted = combined.map(hw => ({
+        ...hw,
+        teacher:
+          hw.teacher ??
+          `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+      }));
+      setHomework(formatted);
       console.log("Fetched homework response:", res.data);
 
       const selectedClassName = classList.find(c => c.id === selectedClass)?.name || 'Selected Class';
@@ -118,7 +124,13 @@ const handleEditHomework = async () => {
         ...(refreshed.data.dayBefore || [])
       ];
     }
-    setHomework(combined);
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ??
+        `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+    setHomework(formatted);
     toast.success("Homework updated successfully");
   } catch (err) {
     console.error("❌ Edit failed:", err.message);
@@ -179,7 +191,13 @@ const handleDeleteHomework = async (homeworkId: string) => {
         ...(updatedHomework.data.dayBefore || [])
       ];
     }
-    setHomework(combined);
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ??
+        `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+    setHomework(formatted);
 
 
     
@@ -247,7 +265,13 @@ useEffect(() => {
       ];
     }
 
-    setHomework(combined);
+    const formatted = combined.map(hw => ({
+      ...hw,
+      teacher:
+        hw.teacher ?? `${hw.teacherFirstName ?? ''} ${hw.teacherLastName ?? ''}`.trim()
+    }));
+
+    setHomework(formatted);
   } catch (error) {
     console.error('❌ Failed to update completion:', error.message);
   }
@@ -507,7 +531,7 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
                 
                 <div className="flex items-center space-x-2 text-sm text-gray-500">
                   <BookOpen className="h-4 w-4" />
-                  <span>Assigned by {hw.teacherFirstName} {hw.teacherLastName}</span>
+                  <span>Assigned by {hw.teacher}</span>
                 </div>
 
                 {/*<RoleGuard allowedRoles={['teacher', 'principal']}>

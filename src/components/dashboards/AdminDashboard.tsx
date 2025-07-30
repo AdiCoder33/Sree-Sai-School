@@ -1,38 +1,111 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { API_BASE } from '../../lib/api';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Button } from '../ui/button';
-import { Users, GraduationCap, DollarSign, BookOpen, TrendingUp, Megaphone } from 'lucide-react';
+import {
+  Users,
+  GraduationCap,
+  DollarSign,
+  BookOpen,
+  TrendingUp,
+  Megaphone,
+} from 'lucide-react';
+
+interface Fee {
+  amount?: number;
+  paidDate?: string;
+  paymentDate?: string;
+  datePaid?: string;
+}
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [teacherCount, setTeacherCount] = useState(0);
+  const [revenue, setRevenue] = useState(0);
+  const [attendanceRate, setAttendanceRate] = useState(0);
+
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    if (!token) return;
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const fetchData = async () => {
+      try {
+        const [studentsRes, teachersRes, feesRes] = await Promise.all([
+          fetch(`${API_BASE}/students`, { headers }),
+          fetch(`${API_BASE}/users?role=teacher`, { headers }),
+          fetch(`${API_BASE}/fees`, { headers })
+        ]);
+
+        if (studentsRes.ok) {
+          const data = await studentsRes.json();
+          setTotalStudents(data.length);
+        }
+
+        if (teachersRes.ok) {
+          const data = await teachersRes.json();
+          setTeacherCount(data.length);
+        }
+
+        if (feesRes.ok) {
+          const data: Fee[] = await feesRes.json();
+          const now = new Date();
+          const month = now.getMonth();
+          const year = now.getFullYear();
+          const total = data
+            .filter((fee: Fee) => {
+              const paid = fee.paidDate || fee.paymentDate || fee.datePaid;
+              if (!paid) return false;
+              const date = new Date(paid);
+              return date.getMonth() === month && date.getFullYear() === year;
+            })
+            .reduce((sum: number, fee: Fee) => sum + Number(fee.amount || 0), 0);
+          setRevenue(total);
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const stats = [
     {
       title: 'Total Students',
-      value: '1,234',
+      value: totalStudents.toString(),
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Active Teachers',
-      value: '45',
+      value: teacherCount.toString(),
       icon: GraduationCap,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Monthly Revenue',
-      value: '$45,678',
+      value: `₹${revenue.toLocaleString()}`,
       icon: DollarSign,
       color: 'text-yellow-600',
       bgColor: 'bg-yellow-50'
     },
     {
       title: 'Attendance Rate',
-      value: '94.5%',
+      value: `${attendanceRate.toFixed(1)}%`,
       icon: TrendingUp,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'

@@ -41,20 +41,33 @@ export const AdminDashboard: React.FC = () => {
 
     const fetchData = async () => {
       try {
-        const [studentsRes, teachersRes, feesRes] = await Promise.all([
-          fetch(`${API_BASE}/students`, { headers }),
-          fetch(`${API_BASE}/users?role=teacher`, { headers }),
+        const [classesRes, usersRes, feesRes] = await Promise.all([
+          fetch(`${API_BASE}/classes`, { headers }),
+          fetch(`${API_BASE}/users`, { headers }),
           fetch(`${API_BASE}/fees`, { headers })
         ]);
 
-        if (studentsRes.ok) {
-          const data = await studentsRes.json();
-          setTotalStudents(data.length);
+        let filteredClasses: any[] = [];
+
+        if (classesRes.ok) {
+          const classes = await classesRes.json();
+          filteredClasses = classes.filter((cls: any) => {
+            const match = cls.name?.match(/(\d+)/);
+            const number = match ? parseInt(match[1], 10) : NaN;
+            return number >= 1 && number <= 10;
+          });
+
+          const studentTotal = filteredClasses.reduce(
+            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            0
+          );
+          setTotalStudents(studentTotal);
         }
 
-        if (teachersRes.ok) {
-          const data = await teachersRes.json();
-          setTeacherCount(data.length);
+        if (usersRes.ok) {
+          const users = await usersRes.json();
+          const teachers = users.filter((u: any) => u.role === 'teacher');
+          setTeacherCount(teachers.length);
         }
 
         if (feesRes.ok) {
@@ -71,6 +84,33 @@ export const AdminDashboard: React.FC = () => {
             })
             .reduce((sum: number, fee: Fee) => sum + Number(fee.amount || 0), 0);
           setRevenue(total);
+        }
+
+        if (filteredClasses.length > 0) {
+          const today = new Date().toISOString().split('T')[0];
+          const attendancePromises = filteredClasses.map(cls =>
+            fetch(`${API_BASE}/attendance/${today}/${cls.id}`, { headers })
+          );
+
+          const attendanceResponses = await Promise.all(attendancePromises);
+
+          let presentCount = 0;
+
+          for (const res of attendanceResponses) {
+            if (res.ok) {
+              const records = await res.json();
+              presentCount += records.filter((r: any) => r.status === 'present').length;
+            }
+          }
+
+          const studentTotal = filteredClasses.reduce(
+            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            0
+          );
+
+          setAttendanceRate(
+            studentTotal > 0 ? (presentCount / studentTotal) * 100 : 0
+          );
         }
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);

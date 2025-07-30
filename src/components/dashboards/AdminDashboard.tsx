@@ -1,10 +1,29 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../../lib/api';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '../ui/card';
 import { Button } from '../ui/button';
-import { Users, GraduationCap, DollarSign, BookOpen, TrendingUp, Megaphone } from 'lucide-react';
+import {
+  Users,
+  GraduationCap,
+  DollarSign,
+  BookOpen,
+  TrendingUp,
+  Megaphone,
+} from 'lucide-react';
+
+interface Fee {
+  amount?: number;
+  paidDate?: string;
+  paymentDate?: string;
+  datePaid?: string;
+}
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -39,18 +58,18 @@ export const AdminDashboard: React.FC = () => {
         }
 
         if (feesRes.ok) {
-          const data = await feesRes.json();
+          const data: Fee[] = await feesRes.json();
           const now = new Date();
           const month = now.getMonth();
           const year = now.getFullYear();
           const total = data
-            .filter((fee: any) => {
+            .filter((fee: Fee) => {
               const paid = fee.paidDate || fee.paymentDate || fee.datePaid;
               if (!paid) return false;
               const date = new Date(paid);
               return date.getMonth() === month && date.getFullYear() === year;
             })
-            .reduce((sum: number, fee: any) => sum + Number(fee.amount || 0), 0);
+            .reduce((sum: number, fee: Fee) => sum + Number(fee.amount || 0), 0);
           setRevenue(total);
         }
       } catch (err) {

@@ -9,6 +9,15 @@ import {
   CardTitle,
 } from '../ui/card';
 import { Button } from '../ui/button';
+import CircularProgress from '../ui/circular-progress';
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   Users,
   GraduationCap,
@@ -36,6 +45,16 @@ export const AdminDashboard: React.FC = () => {
   const [routeStatuses, setRouteStatuses] = useState<Record<string, string>>({});
   const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
   const [statusError, setStatusError] = useState('');
+
+  const mockTrafficData = [
+    { name: 'Mon', users: 40 },
+    { name: 'Tue', users: 70 },
+    { name: 'Wed', users: 50 },
+    { name: 'Thu', users: 90 },
+    { name: 'Fri', users: 65 },
+    { name: 'Sat', users: 30 },
+    { name: 'Sun', users: 20 },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
@@ -267,30 +286,46 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>System Status</CardTitle>
+            <CardTitle>System Health</CardTitle>
             <CardDescription>Frontend and backend health</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2 text-sm">
-              <ul className="space-y-1">
-                {statusItems.map(({ name, status }) => {
-                  const online = status.toLowerCase().includes('online');
-                  return (
-                    <li key={name} className="flex items-center space-x-2">
-                      <div
-                        className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
-                      />
-                      <span className="font-medium">{name}:</span>
-                      <span className={!online ? 'text-red-600' : ''}>{status}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-              {dbSizeMB !== null && (
-                <p>
-                  <span className="font-medium">DB Usage:</span> {dbSizeMB} MB
-                </p>
-              )}
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4">
+                <div className="flex justify-center sm:block">
+                  {dbSizeMB !== null && (
+                    <CircularProgress
+                      value={Math.min(100, (dbSizeMB / 1024) * 100)}
+                      label={`${dbSizeMB} MB`}
+                      className="text-indigo-600"
+                    />
+                  )}
+                </div>
+                <ul className="mt-4 sm:mt-0 space-y-1 flex-1">
+                  {statusItems.map(({ name, status }) => {
+                    const online = status.toLowerCase().includes('online');
+                    return (
+                      <li key={name} className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                        />
+                        <span className="font-medium">{name}:</span>
+                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={mockTrafficData} margin={{ left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" stroke="#64748b" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
               {statusError && (
                 <p className="text-red-600">Error: {statusError}</p>
               )}

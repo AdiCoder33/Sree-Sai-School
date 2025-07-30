@@ -66,23 +66,16 @@ useEffect(() => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const todayStr = new Date().toDateString();
-const selectedStr = new Date(selectedDate).toDateString();
-let combined;
-
-if (selectedStr === todayStr) {
-  combined = [
-    ...(res.data.today || []),
-    ...(res.data.yesterday || []),
-    ...(res.data.dayBefore || [])
-  ];
-} else if (res.data.results) {
-  combined = res.data.results;
-} else {
-  combined = [];
-}
-
-
+      let combined;
+      if (res.data.results) {
+        combined = res.data.results;
+      } else {
+        combined = [
+          ...(res.data.today || []),
+          ...(res.data.yesterday || []),
+          ...(res.data.dayBefore || [])
+        ];
+      }
       setHomework(combined);
       console.log("Fetched homework response:", res.data);
 
@@ -115,7 +108,17 @@ const handleEditHomework = async () => {
     const refreshed = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
-    setHomework(refreshed.data.results);
+    let combined;
+    if (refreshed.data.results) {
+      combined = refreshed.data.results;
+    } else {
+      combined = [
+        ...(refreshed.data.today || []),
+        ...(refreshed.data.yesterday || []),
+        ...(refreshed.data.dayBefore || [])
+      ];
+    }
+    setHomework(combined);
     toast.success("Homework updated successfully");
   } catch (err) {
     console.error("❌ Edit failed:", err.message);
@@ -164,14 +167,19 @@ const handleDeleteHomework = async (homeworkId: string) => {
 
     // Fetch latest homework again
     const updatedHomework = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
-  headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
-});
-const combined = [
-  ...(updatedHomework.data.today || []),
-  ...(updatedHomework.data.yesterday || []),
-  ...(updatedHomework.data.dayBefore || [])
-];
-setHomework(combined);
+      headers: { Authorization: `Bearer ${localStorage.getItem('smartschool_token')}` }
+    });
+    let combined;
+    if (updatedHomework.data.results) {
+      combined = updatedHomework.data.results;
+    } else {
+      combined = [
+        ...(updatedHomework.data.today || []),
+        ...(updatedHomework.data.yesterday || []),
+        ...(updatedHomework.data.dayBefore || [])
+      ];
+    }
+    setHomework(combined);
 
 
     
@@ -226,10 +234,20 @@ useEffect(() => {
 
     // Refresh homework
     const updated = await axios.get(`http://localhost:5000/api/homework/class/${selectedClass}?date=${selectedDate}`, {
-  headers: { Authorization: `Bearer ${user.token}` }
-});
+      headers: { Authorization: `Bearer ${user.token}` }
+    });
+    let combined;
+    if (updated.data.results) {
+      combined = updated.data.results;
+    } else {
+      combined = [
+        ...(updated.data.today || []),
+        ...(updated.data.yesterday || []),
+        ...(updated.data.dayBefore || [])
+      ];
+    }
 
-    setHomework(updated.data);
+    setHomework(combined);
   } catch (error) {
     console.error('❌ Failed to update completion:', error.message);
   }

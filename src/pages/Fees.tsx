@@ -221,7 +221,14 @@ export const Fees: React.FC = () => {
   const totalAmount = feeRecords.reduce((sum, record) => sum + record.amount, 0);
   const paidAmount = feeRecords.filter(r => r.status === 'paid').reduce((sum, record) => sum + record.amount, 0);
   const pendingAmount = feeRecords.filter(r => r.status !== 'paid').reduce((sum, record) => sum + record.amount, 0);
+  return (
+    <div class="p-8 text-center">
+      <h1 class="text-2xl font-bold">Fee Management</h1>
+      <p class="mt-4 text-gray-600">This feature will be available soon.</p>
+    </div>
+  );
 
+  /*
   return (
     <div className="space-y-6">
       <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -361,4 +368,5 @@ export const Fees: React.FC = () => {
       </Card>
     </div>
   );
+ */
 };

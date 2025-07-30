@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
+import { API_BASE } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
 import { useStudent } from '../../context/StudentContext';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
@@ -58,16 +59,16 @@ export const ParentDashboard: React.FC = () => {
 
       try {
         const [attRes, hwRes, logRes, eventRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/attendance/student/${selectedChild.id}`, {
+          fetch(`${API_BASE}/attendance/student/${selectedChild.id}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/homework/class/${classId}?date=${today}`, {
+          fetch(`${API_BASE}/homework/class/${classId}?date=${today}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+          fetch(`${API_BASE}/learninglogs?classId=${classId}`, {
             headers: { Authorization: `Bearer ${token}` }
           }),
-          fetch(`http://localhost:5000/api/events`, {
+          fetch(`${API_BASE}/events`, {
             headers: { Authorization: `Bearer ${token}` }
           })
         ]);

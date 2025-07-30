@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
@@ -32,7 +33,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
     try {
       const token = localStorage.getItem('smartschool_token');
 
-      const response = await fetch('http://localhost:5000/api/classes', {
+      const response = await fetch(`${API_BASE}/classes`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -80,7 +81,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
         if (!nextClassName) continue;
 
         // Get all students from current class
-        const studentsResponse = await fetch(`http://localhost:5000/api/students/class/${cls.id}`, {
+        const studentsResponse = await fetch(`${API_BASE}/students/class/${cls.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -99,7 +100,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (!lastYearClass) {
                 // Create "Last Year Students" class
-                const createClassResponse = await fetch('http://localhost:5000/api/classes', {
+                const createClassResponse = await fetch(`${API_BASE}/classes`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -121,7 +122,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (targetClassId) {
                 // Move Class 10 students to Last Year Students
-                await fetch('http://localhost:5000/api/students/promote', {
+                await fetch(`${API_BASE}/students/promote`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -141,7 +142,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (!nextClass) {
                 // Create the next class
-                const createClassResponse = await fetch('http://localhost:5000/api/classes', {
+                const createClassResponse = await fetch(`${API_BASE}/classes`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -163,7 +164,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
               if (targetClassId) {
                 // Move students to next class
-                await fetch('http://localhost:5000/api/students/promote', {
+                await fetch(`${API_BASE}/students/promote`, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
@@ -184,7 +185,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
       // Handle Last Year Students (they graduate and are removed)
       const lastYearClass = classes.find(c => c.name === 'Last Year Students');
       if (lastYearClass && lastYearClass.studentCount > 0) {
-        const studentsResponse = await fetch(`http://localhost:5000/api/students/class/${lastYearClass.id}`, {
+        const studentsResponse = await fetch(`${API_BASE}/students/class/${lastYearClass.id}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -195,7 +196,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
           
           // Delete all last year students (they've graduated)
           for (const student of lastYearStudents) {
-            await fetch(`http://localhost:5000/api/students/${student.id}`, {
+            await fetch(`${API_BASE}/students/${student.id}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${token}`

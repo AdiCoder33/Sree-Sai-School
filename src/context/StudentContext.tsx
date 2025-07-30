@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Student } from '../types/auth';
 import { useAuth } from './AuthContext';
+import { API_BASE } from '../lib/api';
 
 interface StudentContextType {
   selectedStudent: Student | null;
@@ -48,7 +49,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       try {
         setLoading(true);
         const res = await fetch(
-          `http://localhost:5000/api/students/parent/${user.id}`,
+          `${API_BASE}/students/parent/${user.id}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE } from '../lib/api';
 import {
   Dialog,
   DialogContent,
@@ -47,7 +48,7 @@ export const SelectParentModal: React.FC<SelectParentModalProps> = ({
   setLoading(true);
   try {
     const token = localStorage.getItem('smartschool_token');
-    const res = await fetch('http://localhost:5000/api/users/parents', {
+    const res = await fetch(`${API_BASE}/users/parents`, {
       headers: { Authorization: `Bearer ${token}` }
     });
 

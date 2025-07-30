@@ -1,4 +1,5 @@
 import React, { useState,useEffect } from 'react';
+import { API_BASE } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -59,7 +60,7 @@ export const LearningLogs: React.FC = () => {
 
 
 useEffect(() => {
-  fetch('http://localhost:5000/api/classes', { headers: authHeader })
+  fetch(`${API_BASE}/classes`, { headers: authHeader })
   .then(res => res.json())
   .then(setClassList);
 }, []);
@@ -71,7 +72,7 @@ useEffect(() => {
       (selectedStudent as any).class_id ||
       (selectedStudent as any).classId ||
       (selectedStudent as any).class;
-    fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
+    fetch(`${API_BASE}/learninglogs?classId=${classId}`, { headers: authHeader })
       .then(res => res.json())
       .then(data => {
         const arr = Array.isArray(data) ? data : [];
@@ -89,11 +90,11 @@ useEffect(() => {
   const classId = selected.id;
   setNewLog(prev => ({ ...prev, classId }));
 
-  fetch(`http://localhost:5000/api/students/class/${classId}`, { headers: authHeader })
+  fetch(`${API_BASE}/students/class/${classId}`, { headers: authHeader })
     .then(res => res.json())
     .then(data => setStudents(Array.isArray(data) ? data : []));
 
-  fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, { headers: authHeader })
+  fetch(`${API_BASE}/learninglogs?classId=${classId}`, { headers: authHeader })
     .then(res => res.json())
     .then(data => setLogs(Array.isArray(data) ? data : []));
 };
@@ -101,7 +102,7 @@ useEffect(() => {
 const handleDeleteLog = (id: string) => {
   if (!window.confirm('Are you sure you want to delete this log?')) return;
 
-  fetch(`http://localhost:5000/api/learninglogs/${id}`, {
+  fetch(`${API_BASE}/learninglogs/${id}`, {
     method: 'DELETE',
     headers: authHeader,
   })
@@ -128,7 +129,7 @@ useEffect(() => {
 
   const classId = selected.id;
 
-  fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+  fetch(`${API_BASE}/learninglogs?classId=${classId}`, {
     headers: authHeader
   })
     .then(res => res.json())
@@ -147,7 +148,7 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
 ;
 
   const handleAddLog = () => {
-  fetch('http://localhost:5000/api/learninglogs', {
+  fetch(`${API_BASE}/learninglogs`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -162,7 +163,7 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
     const classId = selected?.id;
 
     if (classId) {
-      fetch(`http://localhost:5000/api/learninglogs?classId=${classId}`, {
+      fetch(`${API_BASE}/learninglogs?classId=${classId}`, {
         headers: { Authorization: `Bearer ${token}` }
       })
         .then(res => res.json())

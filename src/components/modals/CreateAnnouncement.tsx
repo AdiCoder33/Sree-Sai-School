@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE } from '../../lib/api';
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../ui/dialog';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -25,7 +26,7 @@ export const CreateAnnouncement = ({ onClose, onSuccess }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/api/announcements', {
+      const response = await fetch(`${API_BASE}/announcements`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

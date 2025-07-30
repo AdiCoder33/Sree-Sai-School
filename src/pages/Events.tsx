@@ -24,7 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RoleGuard } from '@/components/RoleGuard';
 
-const API_BASE = 'http://localhost:5000/api/events';
+const API_BASE = `${import.meta.env.VITE_API_URL}/events`;
 interface Event {
   id: string;
   title: string;

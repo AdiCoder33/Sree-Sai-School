@@ -33,6 +33,7 @@ export const AdminDashboard: React.FC = () => {
   const [revenue, setRevenue] = useState(0);
   const [attendanceRate, setAttendanceRate] = useState(0);
   const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [routeStatuses, setRouteStatuses] = useState<Record<string, string>>({});
   const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
   const [statusError, setStatusError] = useState('');
 
@@ -133,19 +134,26 @@ export const AdminDashboard: React.FC = () => {
     const fetchStatus = async () => {
       try {
         const healthRes = await fetch(`${API_BASE}/health`);
-        if (healthRes.ok) {
-          setBackendStatus('Online');
-        } else {
-          setBackendStatus('Offline');
-        }
+        setBackendStatus(healthRes.ok ? 'Online' : 'Offline');
 
         if (token) {
-          const dbRes = await fetch(`${API_BASE}/system/db-size`, { headers: statusHeaders });
+          const [dbRes, routeRes] = await Promise.all([
+            fetch(`${API_BASE}/system/db-size`, { headers: statusHeaders }),
+            fetch(`${API_BASE}/system/route-status`, { headers: statusHeaders })
+          ]);
+
           if (dbRes.ok) {
             const { sizeKB } = await dbRes.json();
             setDbSizeMB(Number((sizeKB / 1024).toFixed(2)));
           } else {
             setStatusError('Failed to fetch DB size');
+          }
+
+          if (routeRes.ok) {
+            const data = await routeRes.json();
+            setRouteStatuses(data);
+          } else {
+            setStatusError(prev => prev || 'Failed to fetch route status');
           }
         }
       } catch (err: any) {
@@ -219,6 +227,15 @@ export const AdminDashboard: React.FC = () => {
     }
   ];
 
+  const statusItems = [
+    { name: 'Backend', status: backendStatus },
+    { name: 'Frontend', status: 'Online' },
+    ...Object.entries(routeStatuses).map(([key, val]) => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      status: val
+    }))
+  ];
+
   return (
     <div className="space-y-6">
       <div>
@@ -255,12 +272,20 @@ export const AdminDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2 text-sm">
-              <p>
-                <span className="font-medium">Backend:</span> {backendStatus}
-              </p>
-              <p>
-                <span className="font-medium">Frontend:</span> Online
-              </p>
+              <ul className="space-y-1">
+                {statusItems.map(({ name, status }) => {
+                  const online = status.toLowerCase().includes('online');
+                  return (
+                    <li key={name} className="flex items-center space-x-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                      />
+                      <span className="font-medium">{name}:</span>
+                      <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                    </li>
+                  );
+                })}
+              </ul>
               {dbSizeMB !== null && (
                 <p>
                   <span className="font-medium">DB Usage:</span> {dbSizeMB} MB

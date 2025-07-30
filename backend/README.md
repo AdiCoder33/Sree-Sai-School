@@ -87,6 +87,11 @@ A Node.js backend API for the School Management System built with Express.js and
 - `PUT /api/events/:id` - Update event (Admin only)
 - `DELETE /api/events/:id` - Delete event (Admin only)
 
+### System
+- `GET /api/system/health` - Health check
+- `GET /api/system/db-size` - Database size (Admin only)
+- `GET /api/system/route-status` - Status of core routes (Admin only)
+
 ## Default Login
 
 - **Email:** admin@school.com

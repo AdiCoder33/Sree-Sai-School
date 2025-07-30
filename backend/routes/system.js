@@ -25,4 +25,34 @@ router.get('/db-size', authenticateToken, authorizeRoles('admin'), async (req, r
   }
 });
 
+// Check status of key routes
+router.get('/route-status', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const base = `${req.protocol}://${req.get('host')}/api`;
+  const authHeader = req.headers['authorization'] ? { Authorization: req.headers['authorization'] } : {};
+  const routes = [
+    'classes',
+    'students',
+    'users',
+    'announcements',
+    'events',
+    'fees',
+    'settings',
+    'notifications',
+    'learninglogs'
+  ];
+
+  const status = {};
+
+  await Promise.all(routes.map(async (r) => {
+    try {
+      const resHead = await fetch(`${base}/${r}`, { method: 'HEAD', headers: authHeader });
+      status[r] = resHead.ok ? 'online' : `error (${resHead.status})`;
+    } catch (err) {
+      status[r] = err.message;
+    }
+  }));
+
+  res.json(status);
+});
+
 module.exports = router;

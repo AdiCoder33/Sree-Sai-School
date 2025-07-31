@@ -129,6 +129,15 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
     }
   };
 
+  const parentName =
+    student.parentName ||
+    [student.parentFirstName, student.parentLastName]
+      .filter(Boolean)
+      .join(' ');
+  const parentInitials = parentName
+    ? parentName.split(' ').map(n => n[0]).join('')
+    : '';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -242,9 +251,9 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
               <div className="space-y-4">
                 <div className="text-center mb-6">
                   <div className="w-20 h-20 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                    {student.parentName.split(' ').map(n => n[0]).join('')}
+                    {parentInitials}
                   </div>
-                  <h3 className="text-lg font-semibold">{student.parentName}</h3>
+                  <h3 className="text-lg font-semibold">{parentName || 'N/A'}</h3>
                 </div>
                 
                 <div className="space-y-3">
@@ -252,7 +261,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <User className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{student.parentEmail}</p>
+                      <p className="font-medium">{student.parentEmail || 'N/A'}</p>
                     </div>
                   </div>
                   
@@ -260,7 +269,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <Phone className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{student.parentPhone}</p>
+                      <p className="font-medium">{student.parentPhone || 'N/A'}</p>
                     </div>
                   </div>
                 </div>

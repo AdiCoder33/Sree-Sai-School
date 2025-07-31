@@ -8,7 +8,7 @@ interface AuthContextType {
   logout: () => void;
   loading: boolean;
   isAuthenticated: boolean;
-  updateUser: (userData: Partial<User>) => void;
+  updateUser: (userData: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -56,11 +56,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.removeItem('smartschool_token');
   };
 
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      localStorage.setItem('smartschool_user', JSON.stringify(updatedUser));
+  const updateUser = async (userData: Partial<User>): Promise<boolean> => {
+    if (!user) return false;
+
+    const token = localStorage.getItem('smartschool_token');
+    try {
+      const res = await fetch(`${API_BASE}/users/${user.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(userData)
+      });
+
+      if (!res.ok) {
+        console.error('❌ Update user failed:', await res.text());
+        return false;
+      }
+
+      // Refresh user details from server
+      const meRes = await fetch(`${API_BASE}/users/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (meRes.ok) {
+        const updated = await meRes.json();
+        setUser(updated);
+        localStorage.setItem('smartschool_user', JSON.stringify(updated));
+      }
+
+      return true;
+    } catch (error) {
+      console.error('❌ Update user error:', error);
+      return false;
     }
   };
 

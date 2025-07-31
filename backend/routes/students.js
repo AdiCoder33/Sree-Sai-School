@@ -16,7 +16,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const result = await pool.request()
       .input('id', db.sql.UniqueIdentifier, id)
       .query(`
-        SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName
+        SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName,
+               u.email AS parentEmail, u.phone AS parentPhone
         FROM students s
         LEFT JOIN classes c ON s.class_id = c.id
         LEFT JOIN users u ON s.parent_id = u.id
@@ -100,7 +101,8 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName
+      SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName,
+             u.email AS parentEmail, u.phone AS parentPhone
       FROM students s
       LEFT JOIN classes c ON s.class_id = c.id
       LEFT JOIN users u ON s.parent_id = u.id
@@ -115,7 +117,8 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/unassigned', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, u.firstName as parentFirstName, u.lastName as parentLastName
+      SELECT s.*, u.firstName as parentFirstName, u.lastName as parentLastName,
+             u.email AS parentEmail, u.phone AS parentPhone
       FROM students s
       LEFT JOIN users u ON s.parent_id = u.id
       WHERE s.class_id IS NULL OR s.class_id = ''

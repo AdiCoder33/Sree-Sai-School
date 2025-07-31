@@ -60,6 +60,7 @@ A Node.js backend API for the School Management System built with Express.js and
 - `GET /api/students` - Get all students
 - `GET /api/students/class/:classId` - Get students by class
 - `POST /api/students` - Create student (Admin only)
+- `POST /api/students/:id/avatar` - Upload student avatar (Admin only)
 
 ### Classes
 - `GET /api/classes` - Get all classes

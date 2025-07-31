@@ -1,8 +1,19 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const path = require('path');
 const db = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { sql, poolPromise } = require('../config/database');
+
+// Multer configuration for avatar uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/avatars/'),
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
 
 
 
@@ -278,6 +289,28 @@ await pool.request()
     });
   } catch (error) {
     console.error('Student creation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Upload student avatar
+router.post('/:id/avatar', authenticateToken, authorizeRoles('admin'), upload.single('avatar'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    const pool = await db.poolPromise;
+    await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .input('avatar', db.sql.VarChar, avatarUrl)
+      .query('UPDATE students SET avatar = @avatar WHERE id = @id');
+
+    res.json({ avatarUrl, message: 'Avatar updated successfully' });
+  } catch (error) {
+    console.error('❌ Student avatar upload error:', error.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

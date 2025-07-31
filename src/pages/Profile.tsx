@@ -38,7 +38,12 @@ export const Profile: React.FC = () => {
     occupation: ''
   });
 
-  const { children: childrenList, selectedStudent } = useStudent();
+  const {
+    children: childrenList,
+    selectedStudent,
+    setSelectedStudent,
+    setChildren,
+  } = useStudent();
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -158,6 +163,16 @@ export const Profile: React.FC = () => {
       if (res.ok) {
         setStudentPhoto(data.avatarUrl);
         toast.success('Student photo uploaded successfully!');
+
+        // 🔄 Refresh selected student so new avatar shows everywhere
+        const updated = await fetch(`${API_BASE}/students/${child.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (updated.ok) {
+          const student = await updated.json();
+          setSelectedStudent(student);
+          setChildren(prev => prev.map(c => (c.id === student.id ? student : c)));
+        }
       } else {
         toast.error(data.error || 'Error uploading student photo');
       }

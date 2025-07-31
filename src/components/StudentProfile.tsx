@@ -5,7 +5,7 @@ import { Badge } from './ui/badge';
 import { ArrowLeft, User, Phone, MapPin, Calendar, CheckCircle, XCircle, Clock, BookOpen } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '../context/AuthContext';
-import { API_BASE } from '../lib/api';
+import { API_BASE, withBaseUrl } from '../lib/api';
 import { Student, AttendanceRecord, LearningLog } from '../types/auth';
 
 const fallbackStudent = {
@@ -70,7 +70,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
 
         if (stuRes.ok) {
           const data = await stuRes.json();
-          setStudent(data);
+          setStudent({ ...data, avatar: withBaseUrl(data.avatar) });
         } else {
           setStudent(fallbackStudent);
         }

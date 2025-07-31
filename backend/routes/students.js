@@ -24,11 +24,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     const pool = await db.poolPromise;
-    const result = await pool.request()
-      .input('id', db.sql.UniqueIdentifier, id)
-      .query(`
-        SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName,
-               u.email AS parentEmail, u.phone AS parentPhone
+      const result = await pool.request()
+        .input('id', db.sql.UniqueIdentifier, id)
+        .query(`
+        SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+               s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+               s.avatar, c.name as className, u.firstName as parentFirstName,
+               u.lastName as parentLastName, u.email AS parentEmail,
+               u.phone AS parentPhone
         FROM students s
         LEFT JOIN classes c ON s.class_id = c.id
         LEFT JOIN users u ON s.parent_id = u.id
@@ -112,8 +115,11 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName,
-             u.email AS parentEmail, u.phone AS parentPhone
+      SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+             s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+             s.avatar, c.name as className, u.firstName as parentFirstName,
+             u.lastName as parentLastName, u.email AS parentEmail,
+             u.phone AS parentPhone
       FROM students s
       LEFT JOIN classes c ON s.class_id = c.id
       LEFT JOIN users u ON s.parent_id = u.id
@@ -128,7 +134,9 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/unassigned', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, u.firstName as parentFirstName, u.lastName as parentLastName,
+      SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+             s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+             s.avatar, u.firstName as parentFirstName, u.lastName as parentLastName,
              u.email AS parentEmail, u.phone AS parentPhone
       FROM students s
       LEFT JOIN users u ON s.parent_id = u.id
@@ -166,7 +174,10 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
     const pool = await db.poolPromise;
     const result = await pool.request()
       .input('class_id', db.sql.UniqueIdentifier, classId)
-      .query('SELECT * FROM students WHERE class_id = @class_id');
+      .query(`
+        SELECT id, firstName, lastName, gender, class_id, section,
+               rollNumber, parent_id, dateOfBirth, address, phone, avatar
+        FROM students WHERE class_id = @class_id`);
 
     res.json(result.recordset);
   } catch (error) {
@@ -182,7 +193,10 @@ router.get('/parent/:parentId', authenticateToken, async (req, res) => {
     const pool = await db.poolPromise;
     const result = await pool.request()
       .input('parent_id', db.sql.UniqueIdentifier, parentId)
-      .query('SELECT * FROM students WHERE parent_id = @parent_id');
+      .query(`
+        SELECT id, firstName, lastName, gender, class_id, section,
+               rollNumber, parent_id, dateOfBirth, address, phone, avatar
+        FROM students WHERE parent_id = @parent_id`);
 
     res.json(result.recordset);
   } catch (err) {

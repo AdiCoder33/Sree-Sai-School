@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Plus, BookOpen, Calendar, User, Search, Users, Filter } from 'lucide-react';
+import { Plus, BookOpen, User, Search } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 import { useStudent } from '../context/StudentContext';
@@ -24,7 +24,6 @@ export const LearningLogs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState('Class 1');
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [newLog, setNewLog] = useState({
     studentId: '',
     studentName: '',

@@ -133,6 +133,12 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
+    // Fetch the user's current role to preserve it when no new role is supplied
+    const roleResult = await pool.request()
+      .input('id', id)
+      .query('SELECT role FROM users WHERE id = @id');
+    const currentRole = roleResult.recordset[0]?.role;
+
     const request = pool.request()
       .input('id', id)
       .input('firstName', firstName)
@@ -155,7 +161,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     let query;
     if (isAdmin) {
-      request.input('role', role).input('status', status);
+      const roleToUpdate = role !== undefined ? role : currentRole;
+      request.input('role', roleToUpdate).input('status', status);
       query = `
         UPDATE users SET
           firstName = @firstName, lastName = @lastName, role = @role, phone = @phone, address = @address,

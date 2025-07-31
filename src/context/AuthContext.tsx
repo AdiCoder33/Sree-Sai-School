@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types/auth';
-import { API_BASE } from '../lib/api';
+import { API_BASE, withBaseUrl } from '../lib/api';
 
 interface AuthContextType {
   user: User | null;
@@ -40,9 +40,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      localStorage.setItem('smartschool_user', JSON.stringify(data.user));
+      const normalizedUser = {
+        ...data.user,
+        avatar: withBaseUrl(data.user.avatar)
+      };
+      localStorage.setItem('smartschool_user', JSON.stringify(normalizedUser));
       localStorage.setItem('smartschool_token', data.token);
-      setUser(data.user);
+      setUser(normalizedUser);
       return true;
     } catch (error) {
       console.error('❌ Login error:', error);
@@ -84,8 +88,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (meRes.ok) {
         const updated = await meRes.json();
-        setUser(updated);
-        localStorage.setItem('smartschool_user', JSON.stringify(updated));
+        const normalized = { ...updated, avatar: withBaseUrl(updated.avatar) };
+        setUser(normalized);
+        localStorage.setItem('smartschool_user', JSON.stringify(normalized));
       }
 
       return true;

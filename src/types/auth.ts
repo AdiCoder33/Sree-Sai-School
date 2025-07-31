@@ -30,6 +30,11 @@ export interface Student {
   section: string;
   rollNumber: string;
   parentId: string;
+  parentFirstName?: string;
+  parentLastName?: string;
+  parentEmail?: string;
+  parentPhone?: string;
+  parentName?: string;
   dateOfBirth: string;
   address: string;
   phone: string;

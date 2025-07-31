@@ -41,10 +41,10 @@ router.get('/', async (req, res) => {
     const result = await pool.request()
       .input('classId', sql.UniqueIdentifier, classId)
       .query(`
-        SELECT
-  l.*,
-  COALESCE(s.firstName, '') + ' ' + COALESCE(s.lastName, '') AS studentName,
-  COALESCE(u.firstName, '') + ' ' + COALESCE(u.lastName, '') AS teacherName
+        SELECT 
+  l.*, 
+  s.firstName + ' ' + s.lastName AS studentName,
+  u.firstName + ' ' + u.lastName AS teacherName
 FROM learninglogs l
 JOIN students s ON l.studentId = s.id
 LEFT JOIN users u ON l.teacherId = u.id

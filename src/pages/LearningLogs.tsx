@@ -310,10 +310,10 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                         <User className="h-4 w-4 text-gray-500" />
                         <span className="font-semibold text-gray-900">
   {Array.isArray(log.studentName)
-  ? log.studentName.join(' ').trim()
-  : log.studentName?.toString().trim() || ''}
-
+    ? [...new Set(log.studentName)].join(' ').trim()
+    : log.studentName?.toString().trim() || ''}
 </span>
+
 
                       </div>
                       <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">

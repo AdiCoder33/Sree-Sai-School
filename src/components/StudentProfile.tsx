@@ -34,35 +34,6 @@ const fallbackAttendance: AttendanceRecord[] = [
   { date: '2024-01-09', status: 'present', remarks: '' }
 ];
 
-const fallbackLearningLogs: (LearningLog & { teacherName?: string })[] = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    subject: 'Mathematics',
-    activity: 'Basic addition and subtraction exercises',
-    notes: 'Emma showed excellent understanding of addition concepts. She completed all exercises correctly.',
-    teacherName: 'Ms. Sarah Johnson',
-    studentId: ''
-  },
-  {
-    id: '2',
-    date: '2024-01-14',
-    subject: 'English',
-    activity: 'Reading comprehension - Story about animals',
-    notes: 'Good reading skills. Emma participated actively in class discussion.',
-    teacherName: 'Ms. Sarah Johnson',
-    studentId: ''
-  },
-  {
-    id: '3',
-    date: '2024-01-13',
-    subject: 'Science',
-    activity: 'Learning about plants and their parts',
-    notes: 'Emma was curious about plant growth and asked thoughtful questions.',
-    teacherName: 'Ms. Sarah Johnson',
-    studentId: ''
-  }
-];
 
 interface StudentProfileProps {
   studentId: string;
@@ -75,7 +46,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
 
   const [student, setStudent] = useState<Student | any>(fallbackStudent);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(fallbackAttendance);
-  const [learningLogs, setLearningLogs] = useState<(LearningLog & { teacherName?: string })[]>(fallbackLearningLogs);
+  const [learningLogs, setLearningLogs] = useState<(LearningLog & { teacherName?: string })[]>([]);
 
   const attendanceStats = {
     total: attendance.length,
@@ -115,13 +86,13 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
           const data = await logRes.json();
           setLearningLogs(Array.isArray(data) ? data : []);
         } else {
-          setLearningLogs(fallbackLearningLogs);
+          setLearningLogs([]);
         }
       } catch (err) {
         console.error('❌ Error fetching student data:', err);
         setStudent(fallbackStudent);
         setAttendance(fallbackAttendance);
-        setLearningLogs(fallbackLearningLogs);
+        setLearningLogs([]);
       }
     };
 
@@ -381,37 +352,41 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {learningLogs.map((log) => (
-                  <Card key={log.id} className="border-l-4 border-l-indigo-500">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center space-x-2">
-                          <BookOpen className="h-4 w-4 text-indigo-600" />
-                          <Badge variant="secondary">{log.subject}</Badge>
+                {learningLogs.length > 0 ? (
+                  learningLogs.map((log) => (
+                    <Card key={log.id} className="border-l-4 border-l-indigo-500">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="h-4 w-4 text-indigo-600" />
+                            <Badge variant="secondary">{log.subject}</Badge>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(log.date).toLocaleDateString()}
+                          </span>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(log.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">Activity</h4>
-                          <p className="text-gray-700">{log.activity}</p>
+
+                        <div className="space-y-2">
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Activity</h4>
+                            <p className="text-gray-700">{log.activity}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Teacher's Notes</h4>
+                            <p className="text-gray-700">{log.notes}</p>
+                          </div>
+
+                          <div className="text-sm text-gray-500">
+                            <span>Logged by {log.teacherName}</span>
+                          </div>
                         </div>
-                        
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">Teacher's Notes</h4>
-                          <p className="text-gray-700">{log.notes}</p>
-                        </div>
-                        
-                        <div className="text-sm text-gray-500">
-                          <span>Logged by {log.teacherName}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No learning logs available.</p>
+                )}
               </div>
             </CardContent>
           </Card>

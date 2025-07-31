@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { API_BASE } from '../lib/api';
 
 export const Profile: React.FC = () => {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, refreshUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState<string>('');
   const [passwordData, setPasswordData] = useState({
@@ -132,7 +132,7 @@ export const Profile: React.FC = () => {
       const data = await res.json();
       if (res.ok) {
         toast.success('Avatar updated successfully!');
-        await updateUser({ avatar: data.avatarUrl });
+        await refreshUser();
       } else {
         toast.error(data.error || 'Error uploading avatar');
       }

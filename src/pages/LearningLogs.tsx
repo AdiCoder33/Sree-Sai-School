@@ -321,7 +321,27 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                         {log.subject}
                       </Badge>
                     </div>
+                    <div className="flex items-center space-x-2 text-sm text-gray-500">
+                      <Calendar className="h-4 w-4" />
+                      <span>{new Date(log.date).toLocaleDateString()}</span>
+                    </div>
                   </div>
+                  <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
+  <span>Logged by {log.teacherName}</span>
+  <div className="flex items-center space-x-4">
+    <span>{new Date(log.date).toLocaleDateString('en-US', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    })}</span>
+    <Button
+      variant="destructive"
+      size="sm"
+      onClick={() => handleDeleteLog(log.id)}
+      className="text-xs"
+    >
+      Delete
+    </Button>
+  </div>
+</div>
 
                   
                   <div className="space-y-4">
@@ -340,22 +360,12 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                     
                     <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
                       <span>Logged by {log.teacherName}</span>
-                      <div className="flex items-center space-x-4">
-                        <span>{new Date(log.date).toLocaleDateString('en-US', {
-                          weekday: 'long',
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric'
-                        })}</span>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="text-xs"
-                        >
-                          Delete
-                        </Button>
-                      </div>
+                      <span>{new Date(log.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })}</span>
                     </div>
                   </div>
                 </CardContent>

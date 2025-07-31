@@ -90,3 +90,5 @@ app.use('*', (req, res) => {
     process.exit(1);
   }
 })();
+
+module.exports = app;

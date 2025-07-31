@@ -75,6 +75,13 @@ A Node.js backend API for the School Management System built with Express.js and
 - `PUT /api/homework/completion/:homeworkId/:studentId` - Update completion status
 - `PUT /api/homework/completion/bulk` - Bulk update completion status
 
+### Learning Logs
+- `GET /api/learninglogs?classId=:classId` - Get logs by class
+- `GET /api/learninglogs/student/:studentId` - Get logs by student
+- `POST /api/learninglogs` - Create log
+- `PUT /api/learninglogs/:id` - Update log
+- `DELETE /api/learninglogs/:id` - Delete log
+
 ### Timetable
 - `GET /api/timetable/class/:classId` - Get timetable by class
 - `GET /api/timetable/teacher/:teacherId` - Get timetable by teacher

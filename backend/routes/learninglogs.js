@@ -60,6 +60,29 @@ ORDER BY l.date DESC
   }
 });
 
+// GET /api/learninglogs/student/:studentId
+router.get('/student/:studentId', authenticateToken, async (req, res) => {
+  try {
+    const { studentId } = req.params;
+    const pool = await poolPromise;
+
+    const result = await pool.request()
+      .input('studentId', sql.VarChar, studentId)
+      .query(`
+        SELECT l.*, u.firstName + ' ' + u.lastName AS teacherName
+        FROM learninglogs l
+        LEFT JOIN users u ON l.teacherId = u.id
+        WHERE l.studentId = @studentId
+        ORDER BY l.date DESC
+      `);
+
+    res.json(result.recordset);
+  } catch (err) {
+    console.error('GET logs by student error:', err.message);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 
 // DELETE /api/learninglogs/:id
 router.delete('/:id', authenticateToken, async (req, res) => {

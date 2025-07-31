@@ -308,21 +308,45 @@ await pool.request()
 });
 
 // Upload student avatar
-router.post('/:id/avatar', authenticateToken, authorizeRoles('admin'), upload.single('avatar'), async (req, res) => {
+router.post('/:id/avatar', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
+    const pool = await db.poolPromise;
+
+    // Validate student ownership before uploading
+    const result = await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .query('SELECT parent_id FROM students WHERE id = @id');
+
+    const student = result.recordset[0];
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
     }
 
-    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
-    const pool = await db.poolPromise;
-    await pool.request()
-      .input('id', db.sql.UniqueIdentifier, id)
-      .input('avatar', db.sql.VarChar, avatarUrl)
-      .query('UPDATE students SET avatar = @avatar WHERE id = @id');
+    const isAdmin = req.user.role === 'admin';
+    const isParentOwner = req.user.role === 'parent' && student.parent_id === req.user.id;
+    if (!isAdmin && !isParentOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
 
-    res.json({ avatarUrl, message: 'Avatar updated successfully' });
+    upload.single('avatar')(req, res, async err => {
+      if (err) {
+        console.error('❌ Multer error:', err);
+        return res.status(500).json({ error: 'File upload failed' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      await pool.request()
+        .input('id', db.sql.UniqueIdentifier, id)
+        .input('avatar', db.sql.VarChar, avatarUrl)
+        .query('UPDATE students SET avatar = @avatar WHERE id = @id');
+
+      res.json({ avatarUrl, message: 'Avatar updated successfully' });
+    });
   } catch (error) {
     console.error('❌ Student avatar upload error:', error.message);
     res.status(500).json({ error: 'Server error' });

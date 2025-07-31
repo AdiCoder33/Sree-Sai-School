@@ -9,6 +9,7 @@ interface AuthContextType {
   loading: boolean;
   isAuthenticated: boolean;
   updateUser: (userData: Partial<User>) => Promise<boolean>;
+  refreshUser: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -100,10 +101,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const refreshUser = async (): Promise<boolean> => {
+    const token = localStorage.getItem('smartschool_token');
+    if (!token) return false;
+    try {
+      const res = await fetch(`${API_BASE}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        console.error('❌ Refresh user failed:', await res.text());
+        return false;
+      }
+      const data = await res.json();
+      const normalized = { ...data, avatar: withBaseUrl(data.avatar) };
+      setUser(normalized);
+      localStorage.setItem('smartschool_user', JSON.stringify(normalized));
+      return true;
+    } catch (error) {
+      console.error('❌ Refresh user error:', error);
+      return false;
+    }
+  };
+
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated, updateUser }}>
+    <AuthContext.Provider value={{ user, login, logout, loading, isAuthenticated, updateUser, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

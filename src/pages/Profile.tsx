@@ -8,12 +8,19 @@ import { Textarea } from '../components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { User, Phone, MapPin, Mail, Calendar, Save, Upload, GraduationCap, Users, Briefcase } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
+import { API_BASE } from '../lib/api';
 
 export const Profile: React.FC = () => {
   const { user, updateUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [studentPhoto, setStudentPhoto] = useState<string>('');
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: ''
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -31,37 +38,70 @@ export const Profile: React.FC = () => {
     occupation: ''
   });
 
+  const { children: childrenList, selectedStudent } = useStudent();
+
   useEffect(() => {
-    if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        address: user.address || '',
-        dateOfBirth: user.dateOfBirth || '',
-        qualification: user.qualification || '',
-        experience: user.experience || '',
-        subject: user.subject || '',
-        dateOfJoining: user.dateOfJoining || '',
-        emergencyContact: user.emergencyContact || '',
-        childName: user.childName || '',
-        childClass: user.childClass || '',
-        occupation: user.occupation || ''
-      });
-    }
+    const fetchUser = async () => {
+      if (!user) return;
+      const token = localStorage.getItem('smartschool_token');
+      try {
+        const res = await fetch(`${API_BASE}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setFormData({
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            address: data.address || '',
+            dateOfBirth: data.dateOfBirth || '',
+            qualification: data.qualification || '',
+            experience: data.experience || '',
+            subject: data.subject || '',
+            dateOfJoining: data.dateOfJoining || '',
+            emergencyContact: data.emergencyContact || '',
+            childName: data.childName || '',
+            childClass: data.childClass || '',
+            occupation: data.occupation || ''
+          });
+        }
+      } catch (err) {
+        console.error('❌ Fetch profile error:', err);
+      }
+    };
+
+    fetchUser();
   }, [user]);
+
+  useEffect(() => {
+    if (user?.role === 'parent') {
+      const child = selectedStudent || childrenList[0];
+      if (child) {
+        setFormData((prev) => ({
+          ...prev,
+          childName: `${child.firstName} ${child.lastName}`,
+          childClass: child.class,
+        }));
+        if (child.avatar) {
+          setStudentPhoto(child.avatar);
+        }
+      }
+    }
+  }, [childrenList, selectedStudent, user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      // For demo purposes, we'll just update the local state
-      // In a real app, you'd make an API call here
-      const updatedUser = { ...user, ...formData };
-      updateUser(updatedUser);
-      toast.success('Profile updated successfully!');
+      const success = await updateUser(formData);
+      if (success) {
+        toast.success('Profile updated successfully!');
+      } else {
+        toast.error('Error updating profile');
+      }
     } catch (error) {
       console.error('Profile update error:', error);
       toast.error('Error updating profile');
@@ -72,24 +112,89 @@ export const Profile: React.FC = () => {
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !user) return;
 
-    // For demo purposes, we'll just show a success message
-    // In a real app, you'd upload the file and get a URL back
-    toast.success('Avatar updated successfully!');
+    const token = localStorage.getItem('smartschool_token');
+    const fd = new FormData();
+    fd.append('avatar', file);
+
+    try {
+      const res = await fetch(`${API_BASE}/users/${user.id}/avatar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (res.ok) {
+        toast.success('Avatar updated successfully!');
+        await updateUser({ avatar: data.avatarUrl });
+      } else {
+        toast.error(data.error || 'Error uploading avatar');
+      }
+    } catch (err) {
+      console.error('Avatar upload error:', err);
+      toast.error('Error uploading avatar');
+    }
   };
 
   const handleStudentPhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || user?.role !== 'parent') return;
 
-    // Create a preview URL for the uploaded image
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      setStudentPhoto(event.target?.result as string);
-      toast.success('Student photo uploaded successfully!');
-    };
-    reader.readAsDataURL(file);
+    const child = selectedStudent || childrenList[0];
+    if (!child) return;
+
+    const token = localStorage.getItem('smartschool_token');
+    const fd = new FormData();
+    fd.append('avatar', file);
+
+    try {
+      const res = await fetch(`${API_BASE}/students/${child.id}/avatar`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: fd
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStudentPhoto(data.avatarUrl);
+        toast.success('Student photo uploaded successfully!');
+      } else {
+        toast.error(data.error || 'Error uploading student photo');
+      }
+    } catch (err) {
+      console.error('Student photo upload error:', err);
+      toast.error('Error uploading student photo');
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+    setPasswordLoading(true);
+    const token = localStorage.getItem('smartschool_token');
+    try {
+      const res = await fetch(`${API_BASE}/users/${user.id}/password`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify(passwordData)
+      });
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : {};
+      if (res.ok) {
+        toast.success('Password updated successfully!');
+        setPasswordData({ currentPassword: '', newPassword: '' });
+      } else {
+        toast.error(data.error || 'Error updating password');
+      }
+    } catch (err) {
+      console.error('Password change error:', err);
+      toast.error('Error updating password');
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   if (!user) return null;
@@ -346,7 +451,7 @@ export const Profile: React.FC = () => {
                       <Input
                         id="childName"
                         value={formData.childName}
-                        onChange={(e) => setFormData({...formData, childName: e.target.value})}
+                        readOnly
                         className="mt-1"
                       />
                     </div>
@@ -355,7 +460,7 @@ export const Profile: React.FC = () => {
                       <Input
                         id="childClass"
                         value={formData.childClass}
-                        onChange={(e) => setFormData({...formData, childClass: e.target.value})}
+                        readOnly
                         className="mt-1"
                       />
                     </div>
@@ -421,6 +526,45 @@ export const Profile: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Change Password */}
+      <Card className="max-w-md mt-4">
+        <CardHeader>
+          <CardTitle className="text-lg">Change Password</CardTitle>
+          <CardDescription className="text-sm">Update your account password</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handlePasswordChange} className="space-y-4">
+            <div>
+              <Label htmlFor="currentPassword" className="text-sm font-medium">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                required
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="newPassword" className="text-sm font-medium">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                required
+                className="mt-1"
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={passwordLoading} className="w-full sm:w-auto">
+                {passwordLoading ? 'Updating...' : 'Change Password'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

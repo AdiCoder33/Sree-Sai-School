@@ -50,8 +50,10 @@ A Node.js backend API for the School Management System built with Express.js and
 
 ### Users
 - `GET /api/users` - Get all users (Admin only)
+- `GET /api/users/me` - Get current user's full record
 - `POST /api/users` - Create user (Admin only)
-- `PUT /api/users/:id` - Update user (Admin only)
+- `PUT /api/users/:id` - Update user (Admin or self)
+- `POST /api/users/:id/password` - Change password
 - `DELETE /api/users/:id` - Delete user (Admin only)
 
 ### Students

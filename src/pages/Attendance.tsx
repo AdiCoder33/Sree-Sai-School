@@ -107,13 +107,35 @@ export const Attendance: React.FC = () => {
     }
   }, [user, selectedStudent]);
 
-  const markAllPresent = () => {
-    const newAttendance = { ...attendance };
-    studentsInClass.forEach(student => {
-      newAttendance[student.id] = 'present';
+  const markAllPresent = async () => {
+    const ids = studentsInClass.map(student => student.id);
+
+    setAttendance(prev => {
+      const updated = { ...prev };
+      ids.forEach(id => {
+        updated[id] = 'present';
+      });
+      return updated;
     });
-    setAttendance(newAttendance);
-    toast.success('All students marked present!');
+
+    try {
+      const token = localStorage.getItem('smartschool_token');
+      await axios.post(
+        `${API_BASE}/attendance/bulk`,
+        {
+          students: ids,
+          date: selectedDate,
+          status: 'present',
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      toast.success('All students marked present!');
+    } catch (err) {
+      toast.error('Failed to mark all present');
+      console.error(err);
+    }
   };
 
   const bulkMarkSelected = async (status: 'present' | 'absent') => {

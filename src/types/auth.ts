@@ -27,6 +27,7 @@ export interface Student {
   id: string;
   firstName: string;
   lastName: string;
+  gender?: string;
   class: string;
   section: string;
   rollNumber: string;

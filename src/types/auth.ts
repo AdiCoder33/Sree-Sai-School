@@ -40,6 +40,9 @@ export interface Student {
   address: string;
   phone: string;
   avatar?: string;
+  bloodGroup?: string;
+  medicalConditions?: string;
+  emergencyContact?: string;
 }
 
 export interface AttendanceRecord {

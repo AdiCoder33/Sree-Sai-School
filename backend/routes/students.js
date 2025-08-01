@@ -29,6 +29,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         .query(`
         SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
                s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+               s.bloodGroup, s.medicalConditions, s.emergencyContact,
                s.avatar, c.name as className, u.firstName as parentFirstName,
                u.lastName as parentLastName, u.email AS parentEmail,
                u.phone AS parentPhone
@@ -117,6 +118,7 @@ router.get('/', authenticateToken, async (req, res) => {
     const [students] = await db.execute(`
       SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
              s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+             s.bloodGroup, s.medicalConditions, s.emergencyContact,
              s.avatar, c.name as className, u.firstName as parentFirstName,
              u.lastName as parentLastName, u.email AS parentEmail,
              u.phone AS parentPhone
@@ -176,7 +178,8 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
       .input('class_id', db.sql.UniqueIdentifier, classId)
       .query(`
         SELECT id, firstName, lastName, gender, class_id, section,
-               rollNumber, parent_id, dateOfBirth, address, phone, avatar
+               rollNumber, parent_id, dateOfBirth, address, phone,
+               bloodGroup, medicalConditions, emergencyContact, avatar
         FROM students WHERE class_id = @class_id`);
 
     res.json(result.recordset);

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { ArrowLeft, User, Phone, MapPin, Calendar, CheckCircle, XCircle, Clock, BookOpen } from 'lucide-react';
+import { ArrowLeft, User, Phone, MapPin, Calendar, CheckCircle, XCircle, Clock, BookOpen, Droplet, Activity } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE, withBaseUrl } from '../lib/api';
@@ -19,6 +19,9 @@ const fallbackStudent = {
   parentName: 'John Wilson',
   parentEmail: 'john.wilson@email.com',
   parentPhone: '+1-555-2001',
+  bloodGroup: 'O+',
+  medicalConditions: 'N/A',
+  emergencyContact: '+1-555-9999',
   status: 'Active',
   admissionDate: '2023-04-15',
   avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1'
@@ -236,6 +239,30 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <div>
                       <p className="text-sm text-gray-600">Address</p>
                       <p className="font-medium">{student.address}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Droplet className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Blood Group</p>
+                      <p className="font-medium">{student.bloodGroup || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Activity className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Medical Conditions/Disabilities</p>
+                      <p className="font-medium">{student.medicalConditions || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Emergency Contact</p>
+                      <p className="font-medium">{student.emergencyContact || 'N/A'}</p>
                     </div>
                   </div>
                 </div>

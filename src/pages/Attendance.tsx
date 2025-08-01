@@ -366,13 +366,13 @@ export const Attendance: React.FC = () => {
         </Button>
       </div>
 
-      <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-4">
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex items-center space-x-2">
           <label className="text-sm font-medium text-gray-700">Class:</label>
           <select
             value={selectedClass}
             onChange={e => setSelectedClass(e.target.value)}
-            className="..."
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full"
           >
             {classList.map(cls => (
               <option key={cls.id} value={cls.id}>
@@ -388,27 +388,27 @@ export const Attendance: React.FC = () => {
             type="date"
             value={selectedDate}
             onChange={e => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"
+            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm w-full"
           />
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-4">
-        <Button onClick={markAllPresent} className="bg-green-600 hover:bg-green-700">
+      <div className="grid grid-cols-2 gap-2 mb-4 sm:flex sm:flex-wrap">
+        <Button onClick={markAllPresent} className="bg-green-600 hover:bg-green-700 w-full sm:w-auto">
           <UserCheck className="mr-2 h-4 w-4" />
           Mark All Present
         </Button>
         <Button
           onClick={() => bulkMarkSelected('present')}
           variant="outline"
-          className="border-green-600 text-green-600 hover:bg-green-50"
+          className="border-green-600 text-green-600 hover:bg-green-50 w-full sm:w-auto"
         >
           Mark Selected Present
         </Button>
         <Button
           onClick={() => bulkMarkSelected('absent')}
           variant="outline"
-          className="border-red-600 text-red-600 hover:bg-red-50"
+          className="border-red-600 text-red-600 hover:bg-red-50 w-full sm:w-auto"
         >
           <UserX className="mr-2 h-4 w-4" />
           Mark Selected Absent

@@ -7,7 +7,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 // `threshold` determines the minimum swipe distance in pixels.
 // `startFraction` determines how far from the left edge the swipe must begin
 // (e.g. 0.5 means the swipe must start on the right half of the screen).
-export function useSwipeOpen(threshold = 50, startFraction = 0.5) {
+export function useSwipeOpen(threshold = 80, startFraction = 0.5) {
   const { setOpenMobile, openMobile } = useSidebar()
   const isMobile = useIsMobile()
 

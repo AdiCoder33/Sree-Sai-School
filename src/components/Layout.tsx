@@ -5,9 +5,15 @@ import { Sidebar } from './Sidebar';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from 'react-router-dom';
 import { SidebarProvider, SidebarInset } from './ui/sidebar';
+import { useSwipeOpen } from '../hooks/use-swipe-open';
 
 interface LayoutProps {
   children: React.ReactNode;
+}
+
+function SwipeListener() {
+  useSwipeOpen()
+  return null
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
@@ -27,6 +33,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <SidebarProvider>
+      <SwipeListener />
       <div className="min-h-screen bg-gray-50 flex w-full">
         {/* Sidebar - hidden on mobile, visible on desktop */}
         <div className="hidden md:block">

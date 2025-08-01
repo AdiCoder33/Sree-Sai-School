@@ -3,7 +3,11 @@ import * as React from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useSidebar } from "@/components/ui/sidebar"
 
-export function useSwipeOpen(threshold = 50, edge = 20) {
+// Detects a left-to-right swipe starting from the middle of the screen.
+// `threshold` determines the minimum swipe distance in pixels.
+// `startFraction` determines how far from the left edge the swipe must begin
+// (e.g. 0.5 means the swipe must start on the right half of the screen).
+export function useSwipeOpen(threshold = 50, startFraction = 0.5) {
   const { setOpenMobile, openMobile } = useSidebar()
   const isMobile = useIsMobile()
 
@@ -15,7 +19,8 @@ export function useSwipeOpen(threshold = 50, edge = 20) {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return
       const touch = e.touches[0]
-      startX = touch.clientX <= edge ? touch.clientX : null
+      const startZone = window.innerWidth * startFraction
+      startX = touch.clientX >= startZone ? touch.clientX : null
     }
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -34,5 +39,5 @@ export function useSwipeOpen(threshold = 50, edge = 20) {
       window.removeEventListener("touchstart", handleTouchStart)
       window.removeEventListener("touchend", handleTouchEnd)
     }
-  }, [isMobile, threshold, edge, setOpenMobile, openMobile])
+  }, [isMobile, threshold, startFraction, setOpenMobile, openMobile])
 }

@@ -50,14 +50,17 @@ A Node.js backend API for the School Management System built with Express.js and
 
 ### Users
 - `GET /api/users` - Get all users (Admin only)
+- `GET /api/users/me` - Get current user's full record
 - `POST /api/users` - Create user (Admin only)
-- `PUT /api/users/:id` - Update user (Admin only)
+- `PUT /api/users/:id` - Update user (Admin or self)
+- `POST /api/users/:id/password` - Change password
 - `DELETE /api/users/:id` - Delete user (Admin only)
 
 ### Students
 - `GET /api/students` - Get all students
 - `GET /api/students/class/:classId` - Get students by class
 - `POST /api/students` - Create student (Admin only)
+- `POST /api/students/:id/avatar` - Upload student avatar (Admin only)
 
 ### Classes
 - `GET /api/classes` - Get all classes
@@ -75,6 +78,13 @@ A Node.js backend API for the School Management System built with Express.js and
 - `PUT /api/homework/completion/:homeworkId/:studentId` - Update completion status
 - `PUT /api/homework/completion/bulk` - Bulk update completion status
 
+### Learning Logs
+- `GET /api/learninglogs?classId=:classId` - Get logs by class
+- `GET /api/learninglogs/student/:studentId` - Get logs by student
+- `POST /api/learninglogs` - Create log
+- `PUT /api/learninglogs/:id` - Update log
+- `DELETE /api/learninglogs/:id` - Delete log
+
 ### Timetable
 - `GET /api/timetable/class/:classId` - Get timetable by class
 - `GET /api/timetable/teacher/:teacherId` - Get timetable by teacher
@@ -86,6 +96,11 @@ A Node.js backend API for the School Management System built with Express.js and
 - `POST /api/events` - Create event (Admin only)
 - `PUT /api/events/:id` - Update event (Admin only)
 - `DELETE /api/events/:id` - Delete event (Admin only)
+
+### System
+- `GET /api/system/health` - Health check
+- `GET /api/system/db-size` - Database size (Admin only)
+- `GET /api/system/route-status` - Status of core routes (Admin only)
 
 ## Default Login
 

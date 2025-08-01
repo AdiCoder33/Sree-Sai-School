@@ -1,65 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ArrowLeft, User, Phone, MapPin, Calendar, CheckCircle, XCircle, Clock, BookOpen } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { useAuth } from '../context/AuthContext';
+import { API_BASE, withBaseUrl } from '../lib/api';
+import { Student, AttendanceRecord, LearningLog } from '../types/auth';
 
-const mockStudentData = {
-  '1': {
-    firstName: 'Emma',
-    lastName: 'Wilson',
-    rollNumber: '001',
-    class: 'Class 1',
-    dateOfBirth: '2018-03-15',
-    phone: '+1-555-1001',
-    address: '123 Oak St, City',
-    parentName: 'John Wilson',
-    parentEmail: 'john.wilson@email.com',
-    parentPhone: '+1-555-2001',
-    status: 'Active',
-    admissionDate: '2023-04-15',
-    avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1'
-  }
+const fallbackStudent = {
+  firstName: 'Emma',
+  lastName: 'Wilson',
+  rollNumber: '001',
+  class: 'Class 1',
+  dateOfBirth: '2018-03-15',
+  phone: '+1-555-1001',
+  address: '123 Oak St, City',
+  parentName: 'John Wilson',
+  parentEmail: 'john.wilson@email.com',
+  parentPhone: '+1-555-2001',
+  status: 'Active',
+  admissionDate: '2023-04-15',
+  avatar: 'https://images.unsplash.com/photo-1535268647677-300dbf3d78d1'
 };
 
-const mockAttendanceData = [
+const fallbackAttendance: AttendanceRecord[] = [
   { date: '2024-01-15', status: 'present', remarks: '' },
   { date: '2024-01-14', status: 'present', remarks: '' },
   { date: '2024-01-13', status: 'absent', remarks: 'Sick leave' },
   { date: '2024-01-12', status: 'present', remarks: '' },
   { date: '2024-01-11', status: 'late', remarks: 'Traffic delay' },
   { date: '2024-01-10', status: 'present', remarks: '' },
-  { date: '2024-01-09', status: 'present', remarks: '' },
+  { date: '2024-01-09', status: 'present', remarks: '' }
 ];
 
-const mockLearningLogs = [
-  {
-    id: '1',
-    date: '2024-01-15',
-    subject: 'Mathematics',
-    activity: 'Basic addition and subtraction exercises',
-    notes: 'Emma showed excellent understanding of addition concepts. She completed all exercises correctly.',
-    teacherName: 'Ms. Sarah Johnson'
-  },
-  {
-    id: '2',
-    date: '2024-01-14',
-    subject: 'English',
-    activity: 'Reading comprehension - Story about animals',
-    notes: 'Good reading skills. Emma participated actively in class discussion.',
-    teacherName: 'Ms. Sarah Johnson'
-  },
-  {
-    id: '3',
-    date: '2024-01-13',
-    subject: 'Science',
-    activity: 'Learning about plants and their parts',
-    notes: 'Emma was curious about plant growth and asked thoughtful questions.',
-    teacherName: 'Ms. Sarah Johnson'
-  }
-];
 
 interface StudentProfileProps {
   studentId: string;
@@ -69,17 +43,65 @@ interface StudentProfileProps {
 export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'learning'>('profile');
   const { user } = useAuth();
-  
-  const studentData = mockStudentData[studentId as keyof typeof mockStudentData] || mockStudentData['1'];
-  
+
+  const [student, setStudent] = useState<Student | any>(fallbackStudent);
+  const [attendance, setAttendance] = useState<AttendanceRecord[]>(fallbackAttendance);
+  const [learningLogs, setLearningLogs] = useState<(LearningLog & { teacherName?: string })[]>([]);
+
   const attendanceStats = {
-    total: mockAttendanceData.length,
-    present: mockAttendanceData.filter(a => a.status === 'present').length,
-    absent: mockAttendanceData.filter(a => a.status === 'absent').length,
-    late: mockAttendanceData.filter(a => a.status === 'late').length
+    total: attendance.length,
+    present: attendance.filter(a => a.status === 'present').length,
+    absent: attendance.filter(a => a.status === 'absent').length,
+    late: attendance.filter(a => a.status === 'late').length
   };
 
-  const attendancePercentage = Math.round((attendanceStats.present / attendanceStats.total) * 100);
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+
+    const fetchData = async () => {
+      try {
+        const [stuRes, attRes, logRes] = await Promise.all([
+          fetch(`${API_BASE}/students/${studentId}`, { headers }),
+          fetch(`${API_BASE}/attendance/student/${studentId}`, { headers }),
+          fetch(`${API_BASE}/learninglogs/student/${studentId}`, { headers })
+        ]);
+
+        if (stuRes.ok) {
+          const data = await stuRes.json();
+          setStudent({ ...data, avatar: withBaseUrl(data.avatar) });
+        } else {
+          setStudent(fallbackStudent);
+        }
+
+        if (attRes.ok) {
+          const data = await attRes.json();
+          setAttendance(Array.isArray(data) ? data : []);
+        } else {
+          setAttendance(fallbackAttendance);
+        }
+
+        if (logRes.ok) {
+          const data = await logRes.json();
+          setLearningLogs(Array.isArray(data) ? data : []);
+        } else {
+          setLearningLogs([]);
+        }
+      } catch (err) {
+        console.error('❌ Error fetching student data:', err);
+        setStudent(fallbackStudent);
+        setAttendance(fallbackAttendance);
+        setLearningLogs([]);
+      }
+    };
+
+    fetchData();
+  }, [studentId]);
+
+  const attendancePercentage = Math.round(
+    attendanceStats.total > 0 ? (attendanceStats.present / attendanceStats.total) * 100 : 0
+  );
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -107,6 +129,15 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
     }
   };
 
+  const parentName =
+    student.parentName ||
+    [student.parentFirstName, student.parentLastName]
+      .filter(Boolean)
+      .join(' ');
+  const parentInitials = parentName
+    ? parentName.split(' ').map(n => n[0]).join('')
+    : '';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center space-x-4">
@@ -119,20 +150,20 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16">
-            <AvatarImage src={studentData.avatar} alt={`${studentData.firstName} ${studentData.lastName}`} />
+            <AvatarImage src={student.avatar} alt={`${student.firstName} ${student.lastName}`} />
             <AvatarFallback className="text-lg">
-              {studentData.firstName[0]}{studentData.lastName[0]}
+              {student.firstName[0]}{student.lastName[0]}
             </AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-3xl font-bold text-gray-900">
-              {studentData.firstName} {studentData.lastName}
+              {student.firstName} {student.lastName}
             </h1>
-            <p className="text-gray-600 mt-2">Roll Number: {studentData.rollNumber} • {studentData.class}</p>
+            <p className="text-gray-600 mt-2">Roll Number: {student.rollNumber} • {student.class}</p>
           </div>
         </div>
-        <Badge variant={studentData.status === 'Active' ? 'default' : 'secondary'}>
-          {studentData.status}
+        <Badge variant={student.status === 'Active' ? 'default' : 'secondary'}>
+          {student.status}
         </Badge>
       </div>
 
@@ -167,12 +198,12 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
               <div className="space-y-4">
                 <div className="text-center mb-6">
                   <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={studentData.avatar} alt={`${studentData.firstName} ${studentData.lastName}`} />
+                    <AvatarImage src={student.avatar} alt={`${student.firstName} ${student.lastName}`} />
                     <AvatarFallback className="text-3xl font-bold">
-                      {studentData.firstName[0]}{studentData.lastName[0]}
+                      {student.firstName[0]}{student.lastName[0]}
                     </AvatarFallback>
                   </Avatar>
-                  <h3 className="text-xl font-semibold">{studentData.firstName} {studentData.lastName}</h3>
+                  <h3 className="text-xl font-semibold">{student.firstName} {student.lastName}</h3>
                 </div>
                 
                 <div className="space-y-3">
@@ -180,7 +211,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <User className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Roll Number</p>
-                      <p className="font-medium">{studentData.rollNumber}</p>
+                      <p className="font-medium">{student.rollNumber}</p>
                     </div>
                   </div>
                   
@@ -188,7 +219,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <Calendar className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Date of Birth</p>
-                      <p className="font-medium">{new Date(studentData.dateOfBirth).toLocaleDateString()}</p>
+                      <p className="font-medium">{new Date(student.dateOfBirth).toLocaleDateString()}</p>
                     </div>
                   </div>
                   
@@ -196,7 +227,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <Phone className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{studentData.phone}</p>
+                      <p className="font-medium">{student.phone}</p>
                     </div>
                   </div>
                   
@@ -204,7 +235,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <MapPin className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Address</p>
-                      <p className="font-medium">{studentData.address}</p>
+                      <p className="font-medium">{student.address}</p>
                     </div>
                   </div>
                 </div>
@@ -220,9 +251,9 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
               <div className="space-y-4">
                 <div className="text-center mb-6">
                   <div className="w-20 h-20 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                    {studentData.parentName.split(' ').map(n => n[0]).join('')}
+                    {parentInitials}
                   </div>
-                  <h3 className="text-lg font-semibold">{studentData.parentName}</h3>
+                  <h3 className="text-lg font-semibold">{parentName || 'N/A'}</h3>
                 </div>
                 
                 <div className="space-y-3">
@@ -230,7 +261,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <User className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{studentData.parentEmail}</p>
+                      <p className="font-medium">{student.parentEmail || 'N/A'}</p>
                     </div>
                   </div>
                   
@@ -238,7 +269,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <Phone className="h-4 w-4 text-gray-500" />
                     <div>
                       <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{studentData.parentPhone}</p>
+                      <p className="font-medium">{student.parentPhone || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -292,7 +323,7 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
             </CardHeader>
             <CardContent>
               <div className="space-y-2">
-                {mockAttendanceData.map((record, index) => (
+                {attendance.map((record, index) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center space-x-3">
                       {getStatusIcon(record.status)}
@@ -330,37 +361,41 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {mockLearningLogs.map((log) => (
-                  <Card key={log.id} className="border-l-4 border-l-indigo-500">
-                    <CardContent className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <div className="flex items-center space-x-2">
-                          <BookOpen className="h-4 w-4 text-indigo-600" />
-                          <Badge variant="secondary">{log.subject}</Badge>
+                {learningLogs.length > 0 ? (
+                  learningLogs.map((log) => (
+                    <Card key={log.id} className="border-l-4 border-l-indigo-500">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex items-center space-x-2">
+                            <BookOpen className="h-4 w-4 text-indigo-600" />
+                            <Badge variant="secondary">{log.subject}</Badge>
+                          </div>
+                          <span className="text-sm text-gray-500">
+                            {new Date(log.date).toLocaleDateString()}
+                          </span>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(log.date).toLocaleDateString()}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">Activity</h4>
-                          <p className="text-gray-700">{log.activity}</p>
+
+                        <div className="space-y-2">
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Activity</h4>
+                            <p className="text-gray-700">{log.activity}</p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-medium text-gray-900 mb-1">Teacher's Notes</h4>
+                            <p className="text-gray-700">{log.notes}</p>
+                          </div>
+
+                          <div className="text-sm text-gray-500">
+                            <span>Logged by {log.teacherName}</span>
+                          </div>
                         </div>
-                        
-                        <div>
-                          <h4 className="font-medium text-gray-900 mb-1">Teacher's Notes</h4>
-                          <p className="text-gray-700">{log.notes}</p>
-                        </div>
-                        
-                        <div className="text-sm text-gray-500">
-                          <span>Logged by {log.teacherName}</span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500">No learning logs available.</p>
+                )}
               </div>
             </CardContent>
           </Card>

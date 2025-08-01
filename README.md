@@ -14,6 +14,7 @@ SmartSchool is a full-stack, role-based school management platform built with **
 - ✅ Modern UI using Tailwind CSS
 - ✅ Secure ASP.NET API with EF Core and JWT
 - ✅ GitHub Copilot / Codex support with embedded guidance
+- ✅ Parents can upload avatar photos for their own children
 
 ## 🛠️ Setup
 

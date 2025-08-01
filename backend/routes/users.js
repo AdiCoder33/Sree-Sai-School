@@ -37,6 +37,17 @@ router.get('/', authenticateToken, authorizeRoles('admin'), async (req, res) => 
   }
 });
 
+// ✅ Get current user's full record
+router.get('/me', authenticateToken, async (req, res) => {
+  try {
+    const { password, ...user } = req.user;
+    res.json(user);
+  } catch (error) {
+    console.error('❌ Get my user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ✅ Create user (admin only)
 router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) => {
   try {
@@ -101,8 +112,8 @@ router.post('/', authenticateToken, authorizeRoles('admin'), async (req, res) =>
   }
 });
 
-// ✅ Update user (admin only)
-router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+// ✅ Update user (admin or self)
+router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const pool = await poolPromise;
 
@@ -115,11 +126,23 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
       emergencyContactRelation, nationality, religion, maritalStatus
     } = req.body;
 
-    await pool.request()
+    const isAdmin = req.user.role === 'admin';
+    const isSelf = req.user.id === id;
+
+    if (!isAdmin && !isSelf) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Fetch the user's current role to preserve it when no new role is supplied
+    const roleResult = await pool.request()
+      .input('id', id)
+      .query('SELECT role FROM users WHERE id = @id');
+    const currentRole = roleResult.recordset[0]?.role;
+
+    const request = pool.request()
       .input('id', id)
       .input('firstName', firstName)
       .input('lastName', lastName)
-      .input('role', role)
       .input('phone', phone)
       .input('address', address)
       .input('qualification', qualification)
@@ -128,28 +151,86 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
       .input('dateOfJoining', dateOfJoining)
       .input('emergencyContact', emergencyContact)
       .input('occupation', occupation)
-      .input('status', status)
       .input('alternatePhone', alternatePhone)
       .input('workplace', workplace)
       .input('annualIncome', annualIncome)
       .input('emergencyContactRelation', emergencyContactRelation)
       .input('nationality', nationality)
       .input('religion', religion)
-      .input('maritalStatus', maritalStatus)
-      .query(`
-        UPDATE users SET 
+      .input('maritalStatus', maritalStatus);
+
+    let query;
+    if (isAdmin) {
+      const roleToUpdate = role !== undefined ? role : currentRole;
+      request.input('role', roleToUpdate).input('status', status);
+      query = `
+        UPDATE users SET
           firstName = @firstName, lastName = @lastName, role = @role, phone = @phone, address = @address,
           qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
           emergencyContact = @emergencyContact,  occupation = @occupation,
           status = @status, alternatePhone = @alternatePhone, workplace = @workplace,
           annualIncome = @annualIncome, emergencyContactRelation = @emergencyContactRelation,
           nationality = @nationality, religion = @religion, maritalStatus = @maritalStatus
-        WHERE id = @id
-      `);
+        WHERE id = @id`;
+    } else {
+      query = `
+        UPDATE users SET
+          firstName = @firstName, lastName = @lastName, phone = @phone, address = @address,
+          qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
+          emergencyContact = @emergencyContact,  occupation = @occupation,
+          alternatePhone = @alternatePhone, workplace = @workplace,
+          annualIncome = @annualIncome, emergencyContactRelation = @emergencyContactRelation,
+          nationality = @nationality, religion = @religion, maritalStatus = @maritalStatus
+        WHERE id = @id`;
+    }
+
+    await request.query(query);
 
     res.json({ message: 'User updated successfully' });
   } catch (error) {
     console.error('❌ Update user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ✅ Change password
+router.post('/:id/password', authenticateToken, async (req, res) => {
+  try {
+    const pool = await poolPromise;
+    const { id } = req.params;
+    const { currentPassword, newPassword } = req.body;
+
+    const isAdmin = req.user.role === 'admin';
+    const isSelf = req.user.id === id;
+
+    if (!isAdmin && !isSelf) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (!newPassword) {
+      return res.status(400).json({ error: 'New password required' });
+    }
+
+    if (!isAdmin) {
+      const result = await pool.request()
+        .input('id', id)
+        .query('SELECT password FROM users WHERE id = @id');
+      const user = result.recordset[0];
+      const match = await bcrypt.compare(currentPassword || '', user.password);
+      if (!match) {
+        return res.status(400).json({ error: 'Current password incorrect' });
+      }
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await pool.request()
+      .input('id', id)
+      .input('password', hashed)
+      .query('UPDATE users SET password = @password WHERE id = @id');
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    console.error('❌ Change password error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

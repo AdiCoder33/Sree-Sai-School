@@ -1,8 +1,19 @@
 const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const multer = require('multer');
+const path = require('path');
 const db = require('../config/database');
 const { authenticateToken, authorizeRoles } = require('../middleware/auth');
 const { sql, poolPromise } = require('../config/database');
+
+// Multer configuration for avatar uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, 'uploads/avatars/'),
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
 
 
 
@@ -13,10 +24,14 @@ router.get('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     const pool = await db.poolPromise;
-    const result = await pool.request()
-      .input('id', db.sql.UniqueIdentifier, id)
-      .query(`
-        SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName
+      const result = await pool.request()
+        .input('id', db.sql.UniqueIdentifier, id)
+        .query(`
+        SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+               s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+               s.avatar, c.name as className, u.firstName as parentFirstName,
+               u.lastName as parentLastName, u.email AS parentEmail,
+               u.phone AS parentPhone
         FROM students s
         LEFT JOIN classes c ON s.class_id = c.id
         LEFT JOIN users u ON s.parent_id = u.id
@@ -100,7 +115,11 @@ router.put('/:id', authenticateToken, authorizeRoles('admin'), async (req, res) 
 router.get('/', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, c.name as className, u.firstName as parentFirstName, u.lastName as parentLastName
+      SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+             s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+             s.avatar, c.name as className, u.firstName as parentFirstName,
+             u.lastName as parentLastName, u.email AS parentEmail,
+             u.phone AS parentPhone
       FROM students s
       LEFT JOIN classes c ON s.class_id = c.id
       LEFT JOIN users u ON s.parent_id = u.id
@@ -115,7 +134,10 @@ router.get('/', authenticateToken, async (req, res) => {
 router.get('/unassigned', authenticateToken, async (req, res) => {
   try {
     const [students] = await db.execute(`
-      SELECT s.*, u.firstName as parentFirstName, u.lastName as parentLastName
+      SELECT s.id, s.firstName, s.lastName, s.gender, s.class_id, s.section,
+             s.rollNumber, s.parent_id, s.dateOfBirth, s.address, s.phone,
+             s.avatar, u.firstName as parentFirstName, u.lastName as parentLastName,
+             u.email AS parentEmail, u.phone AS parentPhone
       FROM students s
       LEFT JOIN users u ON s.parent_id = u.id
       WHERE s.class_id IS NULL OR s.class_id = ''
@@ -152,7 +174,10 @@ router.get('/class/:classId', authenticateToken, async (req, res) => {
     const pool = await db.poolPromise;
     const result = await pool.request()
       .input('class_id', db.sql.UniqueIdentifier, classId)
-      .query('SELECT * FROM students WHERE class_id = @class_id');
+      .query(`
+        SELECT id, firstName, lastName, gender, class_id, section,
+               rollNumber, parent_id, dateOfBirth, address, phone, avatar
+        FROM students WHERE class_id = @class_id`);
 
     res.json(result.recordset);
   } catch (error) {
@@ -168,7 +193,10 @@ router.get('/parent/:parentId', authenticateToken, async (req, res) => {
     const pool = await db.poolPromise;
     const result = await pool.request()
       .input('parent_id', db.sql.UniqueIdentifier, parentId)
-      .query('SELECT * FROM students WHERE parent_id = @parent_id');
+      .query(`
+        SELECT id, firstName, lastName, gender, class_id, section,
+               rollNumber, parent_id, dateOfBirth, address, phone, avatar
+        FROM students WHERE parent_id = @parent_id`);
 
     res.json(result.recordset);
   } catch (err) {
@@ -275,6 +303,52 @@ await pool.request()
     });
   } catch (error) {
     console.error('Student creation error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// Upload student avatar
+router.post('/:id/avatar', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const pool = await db.poolPromise;
+
+    // Validate student ownership before uploading
+    const result = await pool.request()
+      .input('id', db.sql.UniqueIdentifier, id)
+      .query('SELECT parent_id FROM students WHERE id = @id');
+
+    const student = result.recordset[0];
+    if (!student) {
+      return res.status(404).json({ error: 'Student not found' });
+    }
+
+    const isAdmin = req.user.role === 'admin';
+    const isParentOwner = req.user.role === 'parent' && student.parent_id === req.user.id;
+    if (!isAdmin && !isParentOwner) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    upload.single('avatar')(req, res, async err => {
+      if (err) {
+        console.error('❌ Multer error:', err);
+        return res.status(500).json({ error: 'File upload failed' });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+      await pool.request()
+        .input('id', db.sql.UniqueIdentifier, id)
+        .input('avatar', db.sql.VarChar, avatarUrl)
+        .query('UPDATE students SET avatar = @avatar WHERE id = @id');
+
+      res.json({ avatarUrl, message: 'Avatar updated successfully' });
+    });
+  } catch (error) {
+    console.error('❌ Student avatar upload error:', error.message);
     res.status(500).json({ error: 'Server error' });
   }
 });

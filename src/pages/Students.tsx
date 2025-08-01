@@ -246,11 +246,6 @@ const role = user.role;
       </div>
     </div>
     <div className="flex flex-col space-y-2">
-      <AllocateStudentsModal 
-        classId={classData.id}
-        className={classData.name}
-        onSuccess={handleAllocateSuccess}
-      />
     </div>
   </CardContent>
 </Card>

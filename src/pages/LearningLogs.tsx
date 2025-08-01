@@ -5,7 +5,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Badge } from '../components/ui/badge';
-import { Plus, BookOpen, Calendar, User, Search, Users, Filter } from 'lucide-react';
+import { Plus, BookOpen, User, Search } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 import { useStudent } from '../context/StudentContext';
@@ -24,7 +24,6 @@ export const LearningLogs: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState('Class 1');
-  const [selectedSubject, setSelectedSubject] = useState('');
   const [newLog, setNewLog] = useState({
     studentId: '',
     studentName: '',
@@ -311,37 +310,17 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                         <User className="h-4 w-4 text-gray-500" />
                         <span className="font-semibold text-gray-900">
   {Array.isArray(log.studentName)
-  ? log.studentName.join(' ').trim()
-  : log.studentName?.toString().trim() || ''}
-
+    ? [...new Set(log.studentName)].join(' ').trim()
+    : log.studentName?.toString().trim() || ''}
 </span>
+
 
                       </div>
                       <Badge variant="secondary" className="bg-indigo-100 text-indigo-800">
                         {log.subject}
                       </Badge>
                     </div>
-                    <div className="flex items-center space-x-2 text-sm text-gray-500">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(log.date).toLocaleDateString()}</span>
-                    </div>
                   </div>
-                  <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
-  <span>Logged by {log.teacherName}</span>
-  <div className="flex items-center space-x-4">
-    <span>{new Date(log.date).toLocaleDateString('en-US', { 
-      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-    })}</span>
-    <Button
-      variant="destructive"
-      size="sm"
-      onClick={() => handleDeleteLog(log.id)}
-      className="text-xs"
-    >
-      Delete
-    </Button>
-  </div>
-</div>
 
                   
                   <div className="space-y-4">
@@ -360,12 +339,22 @@ setNewLog({ ...newLog, studentId, studentName: fullName });
                     
                     <div className="flex items-center justify-between text-sm text-gray-500 pt-2 border-t">
                       <span>Logged by {log.teacherName}</span>
-                      <span>{new Date(log.date).toLocaleDateString('en-US', { 
-                        weekday: 'long', 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}</span>
+                      <div className="flex items-center space-x-4">
+                        <span>{new Date(log.date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}</span>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteLog(log.id)}
+                          className="text-xs"
+                        >
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>

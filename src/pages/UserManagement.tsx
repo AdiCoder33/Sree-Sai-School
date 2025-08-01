@@ -2,7 +2,7 @@
 
 // (All imports remain unchanged)
 import React, { useState, useEffect } from 'react';
-import { API_BASE } from '../lib/api';
+import { API_BASE, withBaseUrl } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
@@ -65,7 +65,10 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
       });
       if (response.ok) {
         const data = await response.json();
-        setUsers(data);
+        const normalized = Array.isArray(data)
+          ? data.map((u: any) => ({ ...u, avatar: withBaseUrl(u.avatar) }))
+          : [];
+        setUsers(normalized);
       } else {
         toast.error('Failed to fetch users');
       }

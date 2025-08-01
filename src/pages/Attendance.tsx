@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE } from '../lib/api';
+import { API_BASE, withBaseUrl } from '../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
@@ -53,7 +53,10 @@ export const Attendance: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
-        setStudentsInClass(res.data);
+        const data = Array.isArray(res.data)
+          ? res.data.map((s: any) => ({ ...s, avatar: withBaseUrl(s.avatar) }))
+          : [];
+        setStudentsInClass(data);
       })
       .catch(err => {
         console.error('❌ Error fetching students:', err);

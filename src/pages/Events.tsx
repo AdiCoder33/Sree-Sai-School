@@ -79,10 +79,14 @@ export const Events: React.FC = () => {
 
   const getStatusColor = (status: 'upcoming' | 'ongoing' | 'completed') => {
     switch (status) {
-      case 'upcoming': return 'bg-blue-100 text-blue-800';
-      case 'ongoing': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'upcoming':
+        return 'bg-blue-100 text-blue-800';
+      case 'ongoing':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -147,7 +151,14 @@ export const Events: React.FC = () => {
 
       setIsModalOpen(false);
       setSelectedEvent(null);
-      setForm({ title: '', description: '', startDate: '', endDate: '', location: '', type: 'school' });
+      setForm({
+        title: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        location: '',
+        type: 'school'
+      });
       fetchEvents();
     } catch {
       toast({ title: 'Error', description: 'Network error on submitting event' });
@@ -206,11 +217,20 @@ export const Events: React.FC = () => {
           <p className="text-sm text-gray-600">Upcoming school activities</p>
         </div>
         <RoleGuard allowedRoles={['admin', 'teacher']}>
-          <Button onClick={() => {
-            setSelectedEvent(null);
-            setForm({ title: '', description: '', startDate: '', endDate: '', location: '', type: 'school' });
-            setIsModalOpen(true);
-          }}>
+          <Button
+            onClick={() => {
+              setSelectedEvent(null);
+              setForm({
+                title: '',
+                description: '',
+                startDate: '',
+                endDate: '',
+                location: '',
+                type: 'school'
+              });
+              setIsModalOpen(true);
+            }}
+          >
             <CalendarDays className="mr-2 h-4 w-4" />
             Create Event
           </Button>
@@ -261,11 +281,15 @@ export const Events: React.FC = () => {
                 </div>
                 <RoleGuard allowedRoles={['admin', 'teacher']}>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {
-                      setSelectedEvent(event);
-                      setForm({ ...event });
-                      setIsModalOpen(true);
-                    }}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setForm({ ...event });
+                        setIsModalOpen(true);
+                      }}
+                    >
                       <Edit className="h-4 w-4" />
                       <span className="ml-1 hidden sm:inline">Edit</span>
                     </Button>

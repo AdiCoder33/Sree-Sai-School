@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Student } from '../types/auth';
 import { useAuth } from './AuthContext';
-import { API_BASE } from '../lib/api';
+import { API_BASE, withBaseUrl } from '../lib/api';
 
 interface StudentContextType {
   selectedStudent: Student | null;
@@ -55,7 +55,10 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           }
         );
         if (res.ok) {
-          const data = await res.json();
+          const raw = await res.json();
+          const data = Array.isArray(raw)
+            ? raw.map((c: any) => ({ ...c, avatar: withBaseUrl(c.avatar) }))
+            : [];
           setChildList(data);
           if (data.length === 1 && !selectedStudent) {
             setSelectedStudent(data[0]);

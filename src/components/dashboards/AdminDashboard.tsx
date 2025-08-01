@@ -9,6 +9,15 @@ import {
   CardTitle,
 } from '../ui/card';
 import { Button } from '../ui/button';
+import CircularProgress from '../ui/circular-progress';
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from 'recharts';
 import {
   Users,
   GraduationCap,
@@ -25,6 +34,20 @@ interface Fee {
   datePaid?: string;
 }
 
+interface SchoolClass {
+  id: string
+  name?: string
+  studentCount?: number
+}
+
+interface BasicUser {
+  role?: string
+}
+
+interface AttendanceRecord {
+  status: string
+}
+
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
 
@@ -32,6 +55,28 @@ export const AdminDashboard: React.FC = () => {
   const [teacherCount, setTeacherCount] = useState(0);
   const [revenue, setRevenue] = useState(0);
   const [attendanceRate, setAttendanceRate] = useState(0);
+  const [backendStatus, setBackendStatus] = useState('Checking...');
+  const [routeStatuses, setRouteStatuses] = useState<Record<string, string>>({});
+  const [dbSizeMB, setDbSizeMB] = useState<number | null>(null);
+  const [statusError, setStatusError] = useState('');
+
+  const DB_LIMIT_MB = 4096;
+  const formatSize = (mb: number) => {
+    if (mb >= 1024) {
+      return `${(mb / 1024).toFixed(1)}GB`;
+    }
+    return `${mb}MB`;
+  };
+
+  const mockTrafficData = [
+    { name: 'Mon', users: 40 },
+    { name: 'Tue', users: 70 },
+    { name: 'Wed', users: 50 },
+    { name: 'Thu', users: 90 },
+    { name: 'Fri', users: 65 },
+    { name: 'Sat', users: 30 },
+    { name: 'Sun', users: 20 },
+  ];
 
   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
@@ -47,26 +92,26 @@ export const AdminDashboard: React.FC = () => {
           fetch(`${API_BASE}/fees`, { headers })
         ]);
 
-        let filteredClasses: any[] = [];
+        let filteredClasses: SchoolClass[] = [];
 
         if (classesRes.ok) {
-          const classes = await classesRes.json();
-          filteredClasses = classes.filter((cls: any) => {
+          const classes: SchoolClass[] = await classesRes.json();
+          filteredClasses = classes.filter((cls: SchoolClass) => {
             const match = cls.name?.match(/(\d+)/);
             const number = match ? parseInt(match[1], 10) : NaN;
             return number >= 1 && number <= 10;
           });
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
           setTotalStudents(studentTotal);
         }
 
         if (usersRes.ok) {
-          const users = await usersRes.json();
-          const teachers = users.filter((u: any) => u.role === 'teacher');
+          const users: BasicUser[] = await usersRes.json();
+          const teachers = users.filter((u: BasicUser) => u.role === 'teacher');
           setTeacherCount(teachers.length);
         }
 
@@ -98,13 +143,13 @@ export const AdminDashboard: React.FC = () => {
 
           for (const res of attendanceResponses) {
             if (res.ok) {
-              const records = await res.json();
-              presentCount += records.filter((r: any) => r.status === 'present').length;
+              const records: AttendanceRecord[] = await res.json();
+              presentCount += records.filter((r: AttendanceRecord) => r.status === 'present').length;
             }
           }
 
           const studentTotal = filteredClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: SchoolClass) => sum + (cls.studentCount || 0),
             0
           );
 
@@ -113,11 +158,54 @@ export const AdminDashboard: React.FC = () => {
           );
         }
       } catch (err) {
-        console.error('Error fetching dashboard stats:', err);
+        const error = err as Error
+        console.error('Error fetching dashboard stats:', error)
       }
     };
 
     fetchData();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('smartschool_token');
+    const statusHeaders: Record<string, string> = {};
+    if (token) {
+      statusHeaders['Authorization'] = `Bearer ${token}`;
+    }
+
+    const fetchStatus = async () => {
+      try {
+        const healthRes = await fetch(`${API_BASE}/health`);
+        setBackendStatus(healthRes.ok ? 'Online' : 'Offline');
+
+        if (token) {
+          const [dbRes, routeRes] = await Promise.all([
+            fetch(`${API_BASE}/system/db-size`, { headers: statusHeaders }),
+            fetch(`${API_BASE}/system/route-status`, { headers: statusHeaders })
+          ]);
+
+          if (dbRes.ok) {
+            const { sizeKB } = await dbRes.json();
+            setDbSizeMB(Number((sizeKB / 1024).toFixed(2)));
+          } else {
+            setStatusError('Failed to fetch DB size');
+          }
+
+          if (routeRes.ok) {
+            const data = await routeRes.json();
+            setRouteStatuses(data);
+          } else {
+            setStatusError(prev => prev || 'Failed to fetch route status');
+          }
+        }
+      } catch (err) {
+        const error = err as Error
+        setBackendStatus('Offline');
+        setStatusError(error.message);
+      }
+    };
+
+    fetchStatus();
   }, []);
 
   const stats = [
@@ -182,6 +270,19 @@ export const AdminDashboard: React.FC = () => {
     }
   ];
 
+  const statusItems = [
+    { name: 'Backend', status: backendStatus },
+    { name: 'Frontend', status: 'Online' },
+    ...Object.entries(routeStatuses).map(([key, val]) => ({
+      name: key.charAt(0).toUpperCase() + key.slice(1),
+      status: val
+    }))
+  ];
+
+  const halfIndex = Math.ceil(statusItems.length / 2);
+  const firstHalf = statusItems.slice(0, halfIndex);
+  const secondHalf = statusItems.slice(halfIndex);
+
   return (
     <div className="space-y-6">
       <div>
@@ -213,32 +314,65 @@ export const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
-            <CardDescription>Latest updates from your school</CardDescription>
+            <CardTitle>System Health</CardTitle>
+            <CardDescription>Frontend and backend health</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">New student enrolled</p>
-                  <p className="text-gray-600">Emma Johnson joined Grade 5A</p>
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <ul className="space-y-1">
+                  {firstHalf.map(({ name, status }) => {
+                    const online = status.toLowerCase().includes('online');
+                    return (
+                      <li key={name} className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                        />
+                        <span className="font-medium">{name}:</span>
+                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <ul className="space-y-1">
+                  {secondHalf.map(({ name, status }) => {
+                    const online = status.toLowerCase().includes('online');
+                    return (
+                      <li key={name} className="flex items-center space-x-2">
+                        <div
+                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
+                        />
+                        <span className="font-medium">{name}:</span>
+                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                <div className="flex justify-center">
+                  {dbSizeMB !== null && (
+                    <CircularProgress
+                      size={120}
+                      strokeWidth={8}
+                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
+                      label={`${formatSize(dbSizeMB)} / ${formatSize(DB_LIMIT_MB)}`}
+                      className="text-indigo-600"
+                    />
+                  )}
                 </div>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">Fee payment received</p>
-                  <p className="text-gray-600">$2,500 from Grade 3 parents</p>
-                </div>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={mockTrafficData} margin={{ left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" stroke="#64748b" />
+                    <Tooltip />
+                    <Line type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={2} />
+                  </LineChart>
+                </ResponsiveContainer>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                <div className="text-sm">
-                  <p className="font-medium">Teacher update</p>
-                  <p className="text-gray-600">Math curriculum updated for Grade 6</p>
-                </div>
-              </div>
+              {statusError && (
+                <p className="text-red-600">Error: {statusError}</p>
+              )}
             </div>
           </CardContent>
         </Card>

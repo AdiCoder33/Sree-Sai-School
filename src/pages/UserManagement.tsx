@@ -219,7 +219,7 @@ const resetForm = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
           <p className="text-gray-600 mt-2">Manage users and their permissions</p>
@@ -449,7 +449,7 @@ const resetForm = () => {
             {filteredUsers.map((user) => (
               <Card key={user.id} className="hover:shadow-md transition-shadow">
                 <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-center space-x-4">
                       <Avatar className="h-12 w-12">
                         <AvatarImage src={user.avatar} alt={`${user.firstName} ${user.lastName}`} />
@@ -463,7 +463,7 @@ const resetForm = () => {
                         <p className="text-sm text-gray-500">Joined: {new Date(user.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
                       <Badge className={getRoleColor(user.role)}>
                         <div className="flex items-center space-x-1">
                           {getRoleIcon(user.role)}

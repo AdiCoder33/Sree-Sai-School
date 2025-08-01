@@ -4,6 +4,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
+import { useStudent } from '../context/StudentContext';
 import { Pencil, Trash2 } from 'lucide-react';
 
 interface TimeSlot {
@@ -35,6 +36,7 @@ const defaultDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Sa
 
 export const Timetable: React.FC = () => {
   const { user } = useAuth();
+  const { selectedStudent } = useStudent();
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [selectedClass, setSelectedClass] = useState('');
@@ -66,11 +68,17 @@ export const Timetable: React.FC = () => {
     if (user?.role === 'teacher') {
       setViewMode('teacher');
       setSelectedTeacher(user.id);
-    } else if (user?.role === 'parent' && user.class_id) {
-      setViewMode('class');
-      setSelectedClass(user.class_id);
+    } else if (user?.role === 'parent' && selectedStudent) {
+      const classId =
+        (selectedStudent as any).class_id ||
+        (selectedStudent as any).classId ||
+        (selectedStudent as any).class;
+      if (classId) {
+        setViewMode('class');
+        setSelectedClass(classId);
+      }
     }
-  }, [user]);
+  }, [user, selectedStudent]);
 
   useEffect(() => {
     if ((viewMode === 'class' && selectedClass) || (viewMode === 'teacher' && selectedTeacher)) {
@@ -244,6 +252,11 @@ export const Timetable: React.FC = () => {
     };
     return colors[subject.toLowerCase()] || colors['default'];
   };
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view timetable.</div>;
+  }
+
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Timetable</h2>

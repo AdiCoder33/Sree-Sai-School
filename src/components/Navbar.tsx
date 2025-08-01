@@ -21,7 +21,7 @@ export const Navbar: React.FC = () => {
   if (!user) return null;
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 md:px-6 md:py-4">
+    <nav className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 md:px-6 md:py-4 sticky top-0 z-50">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           {/* Mobile-only sidebar trigger */}

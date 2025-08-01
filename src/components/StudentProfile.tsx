@@ -11,8 +11,10 @@ import { Student, AttendanceRecord, LearningLog } from '../types/auth';
 const fallbackStudent = {
   firstName: 'Emma',
   lastName: 'Wilson',
+  gender: 'Female',
   rollNumber: '001',
   class: 'Class 1',
+  section: 'A',
   dateOfBirth: '2018-03-15',
   phone: '+1-555-1001',
   address: '123 Oak St, City',
@@ -73,7 +75,13 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
 
         if (stuRes.ok) {
           const data = await stuRes.json();
-          setStudent({ ...data, avatar: withBaseUrl(data.avatar) });
+          setStudent({
+            ...data,
+            class: data.className,
+            section: data.section,
+            gender: data.gender,
+            avatar: withBaseUrl(data.avatar)
+          });
         } else {
           setStudent(fallbackStudent);
         }
@@ -215,6 +223,22 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
                     <div>
                       <p className="text-sm text-gray-600">Roll Number</p>
                       <p className="font-medium">{student.rollNumber}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Gender</p>
+                      <p className="font-medium">{student.gender || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center space-x-3">
+                    <BookOpen className="h-4 w-4 text-gray-500" />
+                    <div>
+                      <p className="text-sm text-gray-600">Class/Section</p>
+                      <p className="font-medium">{student.class} / {student.section}</p>
                     </div>
                   </div>
                   

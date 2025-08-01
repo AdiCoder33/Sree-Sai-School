@@ -11,8 +11,8 @@ import { useSidebar } from "@/components/ui/sidebar"
 // width. The swipe must begin within this zone to trigger the sidebar.
 export function useSwipeOpen(
   threshold = 50,
-  startFraction = 0.5,
-  zoneFraction = 0.2,
+  startFraction = 0.2,
+  zoneFraction = 0.1,
 ) {
   const { setOpenMobile, openMobile } = useSidebar()
   const isMobile = useIsMobile()

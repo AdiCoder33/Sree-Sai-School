@@ -232,7 +232,6 @@ export const ParentDashboard: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          <Button variant="outline" size="sm" onClick={fetchData}>Refresh</Button>
         </div>
       </div>
 

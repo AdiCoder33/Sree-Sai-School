@@ -26,6 +26,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  useSidebar,
 } from './ui/sidebar';
 
 interface SidebarItem {
@@ -112,6 +113,7 @@ const sidebarItems: SidebarItem[] = [
 
 export const Sidebar: React.FC = () => {
   const { user } = useAuth();
+  const { isMobile, setOpenMobile } = useSidebar();
 
   if (!user) return null;
 
@@ -141,7 +143,12 @@ export const Sidebar: React.FC = () => {
                 const Icon = item.icon;
                 return (
                   <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton asChild>
+                    <SidebarMenuButton
+                      asChild
+                      onClick={() => {
+                        if (isMobile) setOpenMobile(false);
+                      }}
+                    >
                       <NavLink
                         to={item.path}
                         className={({ isActive }) =>

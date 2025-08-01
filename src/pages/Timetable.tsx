@@ -1,6 +1,5 @@
-// Timetable.tsx (Final Version with Colored Subject Tags)
 import React, { useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { API_BASE } from '../lib/api';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { toast } from '../hooks/use-toast';
@@ -81,8 +80,9 @@ export const Timetable: React.FC = () => {
 
   const fetchClasses = async () => {
     try {
-      const res = await api.get('/classes', config);
-      const classList = Array.isArray(res.data) ? res.data : [];
+      const res = await fetch(`${API_BASE}/classes`, config);
+      const data = await res.json();
+      const classList = Array.isArray(data) ? data : [];
       setClasses(classList);
       if (!selectedClass && classList.length && user?.role !== 'parent') {
         setSelectedClass(classList[0].id);
@@ -94,8 +94,9 @@ export const Timetable: React.FC = () => {
 
   const fetchTeachers = async () => {
     try {
-      const res = await api.get('/users?role=teacher', config);
-      const onlyTeachers = res.data.filter((u: any) => u.role?.toLowerCase() === 'teacher');
+      const res = await fetch(`${API_BASE}/users?role=teacher`, config);
+      const data = await res.json();
+      const onlyTeachers = data.filter((u: any) => u.role?.toLowerCase() === 'teacher');
       setTeachers(onlyTeachers);
       if (!selectedTeacher && onlyTeachers.length && user?.role !== 'teacher') {
         setSelectedTeacher(onlyTeachers[0].id);
@@ -109,10 +110,11 @@ export const Timetable: React.FC = () => {
     try {
       const endpoint =
         viewMode === 'class'
-          ? `/timetable/class/${selectedClass}`
-          : `/timetable/teacher/${selectedTeacher}`;
+          ? `${API_BASE}/timetable/class/${selectedClass}`
+          : `${API_BASE}/timetable/teacher/${selectedTeacher}`;
 
-      const res = await api.get(endpoint, config);
+      const res = await fetch(endpoint, config);
+      const data = await res.json();
       const newGrid: Record<string, Record<string, CellEntry>> = {};
       defaultDays.forEach((day) => (newGrid[day] = {}));
 
@@ -122,7 +124,7 @@ export const Timetable: React.FC = () => {
         return `${hour?.padStart(2, '0')}:${minute?.padStart(2, '0')}`;
       };
 
-      res.data.forEach((entry: any) => {
+      data.forEach((entry: any) => {
         const day = entry.dayOfWeek.charAt(0).toUpperCase() + entry.dayOfWeek.slice(1).toLowerCase();
         const startTime = formatSlotTime(entry.startTime);
         const endTime = formatSlotTime(entry.endTime);
@@ -155,67 +157,74 @@ export const Timetable: React.FC = () => {
     }));
   };
 
- const handleSave = async (day: string, slot: TimeSlot) => {
-  const slotKey = `${slot.startTime}-${slot.endTime}`;
-  const cell = grid[day]?.[slotKey];
-  if (!cell || !cell.subject || !cell.teacher_id) {
-    toast({ title: 'Error', description: 'Please fill subject and select teacher.' });
-    return;
-  }
-
-  const payload = {
-    class_id: selectedClass,
-    dayOfWeek: day,
-    startTime: slot.startTime,
-    endTime: slot.endTime,
-    subject: cell.subject,
-    teacher_id: cell.teacher_id,
-  };
-
-  try {
-    if (cell.id) {
-      await api.put(`/timetable/${cell.id}`, payload, config);
-    } else {
-      await api.post('/timetable', payload, config);
+  const handleSave = async (day: string, slot: TimeSlot) => {
+    const slotKey = `${slot.startTime}-${slot.endTime}`;
+    const cell = grid[day]?.[slotKey];
+    if (!cell || !cell.subject || !cell.teacher_id) {
+      toast({ title: 'Error', description: 'Please fill subject and select teacher.' });
+      return;
     }
 
-    toast({
-      title: 'Success',
-      description: 'Timetable saved successfully',
-      variant: 'default',
-    });
+    const payload = {
+      class_id: selectedClass,
+      dayOfWeek: day,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      subject: cell.subject,
+      teacher_id: cell.teacher_id,
+    };
 
-    fetchTimetable();
-    setEditing((prev) => ({ ...prev, [`${day}-${slotKey}`]: false }));
-  } catch (error: any) {
-    const message =
-      error?.response?.status === 409
-        ? error.response.data?.message || 'Conflict error.'
-        : 'Something went wrong. Please try again.';
+    try {
+      const url = cell.id
+        ? `${API_BASE}/timetable/${cell.id}`
+        : `${API_BASE}/timetable`;
 
-   toast({
-  title: error?.response?.status === 409 ? 'Conflict Detected' : 'Error',
-  description: message,
-  variant: 'destructive',
-});
+      const method = cell.id ? 'PUT' : 'POST';
 
-    console.error('Save Error:', error);
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
-  }
-};
+      if (!res.ok) {
+        const err = await res.json();
+        throw { response: { status: res.status, data: err } };
+      }
+
+      toast({ title: 'Success', description: 'Timetable saved successfully' });
+      fetchTimetable();
+      setEditing((prev) => ({ ...prev, [`${day}-${slotKey}`]: false }));
+    } catch (error: any) {
+      const message =
+        error?.response?.status === 409
+          ? error.response.data?.message || 'Conflict error.'
+          : 'Something went wrong. Please try again.';
+
+      toast({
+        title: error?.response?.status === 409 ? 'Conflict Detected' : 'Error',
+        description: message,
+        variant: 'destructive',
+      });
+    }
+  };
 
   const handleDelete = async (id?: string) => {
     if (!id) return;
     try {
-      await api.delete(`/timetable/${id}`, config);
+      await fetch(`${API_BASE}/timetable/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
       toast({ title: 'Success', description: 'Deleted successfully' });
       fetchTimetable();
     } catch {
       toast({ title: 'Error', description: 'Failed to delete entry' });
-
     }
   };
-  
 
   const getTeacherName = (id: string) => {
     const t = teachers.find((x) => x.id === id);
@@ -235,7 +244,6 @@ export const Timetable: React.FC = () => {
     };
     return colors[subject.toLowerCase()] || colors['default'];
   };
-
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Timetable</h2>

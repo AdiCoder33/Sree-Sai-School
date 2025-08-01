@@ -411,7 +411,7 @@ export const Attendance: React.FC = () => {
           className="border-red-600 text-red-600 hover:bg-red-50 w-full sm:w-auto"
         >
           <UserX className="mr-0.5 h-4 w-4" />
-          Mark Selected Absent
+          Mark Absent
         </Button>
       </div>
 

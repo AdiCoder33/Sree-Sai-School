@@ -25,6 +25,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RoleGuard } from '@/components/RoleGuard';
 
 const API_BASE = `${import.meta.env.VITE_API_URL}/events`;
+
 interface Event {
   id: string;
   title: string;
@@ -39,7 +40,6 @@ interface Event {
   creatorFirstName?: string;
   creatorLastName?: string;
 }
-
 
 export const Events: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -151,7 +151,14 @@ export const Events: React.FC = () => {
 
       setIsModalOpen(false);
       setSelectedEvent(null);
-      setForm({ title: '', description: '', startDate: '', endDate: '', location: '', type: 'school' });
+      setForm({
+        title: '',
+        description: '',
+        startDate: '',
+        endDate: '',
+        location: '',
+        type: 'school'
+      });
       fetchEvents();
     } catch {
       toast({ title: 'Error', description: 'Network error on submitting event' });
@@ -210,11 +217,20 @@ export const Events: React.FC = () => {
           <p className="text-sm text-gray-600">Upcoming school activities</p>
         </div>
         <RoleGuard allowedRoles={['admin', 'teacher']}>
-          <Button onClick={() => {
-            setSelectedEvent(null);
-            setForm({ title: '', description: '', startDate: '', endDate: '', location: '', type: 'school' });
-            setIsModalOpen(true);
-          }}>
+          <Button
+            onClick={() => {
+              setSelectedEvent(null);
+              setForm({
+                title: '',
+                description: '',
+                startDate: '',
+                endDate: '',
+                location: '',
+                type: 'school'
+              });
+              setIsModalOpen(true);
+            }}
+          >
             <CalendarDays className="mr-2 h-4 w-4" />
             Create Event
           </Button>
@@ -256,37 +272,37 @@ export const Events: React.FC = () => {
                     <Badge className={getStatusColor(status)}>{status}</Badge>
                   </h3>
                   <p className="text-gray-600 mt-2">{event.description}</p>
-                <div className="text-sm text-gray-500 mt-3">
-                  <p>Start: {format(new Date(event.startDate), 'PPP')}</p>
-                  <p>End: {format(new Date(event.endDate), 'PPP')}</p>
-                  <p>Location: {event.location}</p>
-                  <p>Type: {event.type}</p>
+                  <div className="text-sm text-gray-500 mt-3">
+                    <p>Start: {format(new Date(event.startDate), 'PPP')}</p>
+                    <p>End: {format(new Date(event.endDate), 'PPP')}</p>
+                    <p>Location: {event.location}</p>
+                    <p>Type: {event.type}</p>
+                  </div>
                 </div>
+                <RoleGuard allowedRoles={['admin', 'teacher']}>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedEvent(event);
+                        setForm({ ...event });
+                        setIsModalOpen(true);
+                      }}
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="ml-1 hidden sm:inline">Edit</span>
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDelete(event.id)}>
+                      <Trash2 className="h-4 w-4" />
+                      <span className="ml-1 hidden sm:inline">Delete</span>
+                    </Button>
+                  </div>
+                </RoleGuard>
               </div>
-              <RoleGuard allowedRoles={['admin', 'teacher']}>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedEvent(event);
-                      setForm({ ...event });
-                      setIsModalOpen(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="ml-1 hidden sm:inline">Edit</span>
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => handleDelete(event.id)}>
-                    <Trash2 className="h-4 w-4" />
-                    <span className="ml-1 hidden sm:inline">Delete</span>
-                  </Button>
-                </div>
-                      </RoleGuard>
-      </div>
-    </Card>
-  );
-})}
+            </Card>
+          );
+        })}
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

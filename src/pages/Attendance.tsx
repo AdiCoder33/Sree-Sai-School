@@ -441,7 +441,7 @@ export const Attendance: React.FC = () => {
               return (
                 <div
                   key={student.id}
-                  className={`flex items-center justify-between p-3 md:p-4 border rounded-lg ${getStatusColor(
+                  className={`flex flex-wrap items-center justify-between gap-3 sm:flex-nowrap p-3 md:p-4 border rounded-lg ${getStatusColor(
                     status,
                   )} ${isSelected ? 'ring-2 ring-indigo-500' : ''}`}
                 >
@@ -466,7 +466,7 @@ export const Attendance: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2 md:space-x-3">
+                  <div className="flex items-center space-x-2 md:space-x-3 mt-2 sm:mt-0">
                     <div className="flex space-x-2">
                       <Button
                         size="sm"

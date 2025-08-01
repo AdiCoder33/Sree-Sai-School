@@ -1,57 +1,54 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Users, CheckSquare, BookOpen, Calendar, CalendarDays } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '../../lib/api';
+import { useAuth } from '../../context/AuthContext';
 
 export const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const [studentCount, setStudentCount] = useState(0);
+  const [presentCount, setPresentCount] = useState(0);
+  const [classCount, setClassCount] = useState(0);
+  const [logCount, setLogCount] = useState(0);
+  const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
 
   const todayStats = [
     {
       title: 'My Students',
-      value: '32',
+      value: studentCount.toString(),
       icon: Users,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50'
     },
     {
       title: 'Attendance Marked',
-      value: '28/32',
+      value: `${presentCount}/${studentCount}`,
       icon: CheckSquare,
       color: 'text-green-600',
       bgColor: 'bg-green-50'
     },
     {
       title: 'Classes Today',
-      value: '5',
+      value: classCount.toString(),
       icon: Calendar,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50'
     },
     {
       title: 'Learning Logs',
-      value: '3',
+      value: logCount.toString(),
       icon: BookOpen,
       color: 'text-orange-600',
       bgColor: 'bg-orange-50'
     }
   ];
 
-  const upcomingEvents = [
-    {
-      title: 'Parent-Teacher Meeting',
-      date: '2024-02-20',
-      time: '02:00 PM',
-      type: 'meeting'
-    },
-    {
-      title: 'Science Fair',
-      date: '2024-02-25',
-      time: '10:00 AM',
-      type: 'academic'
-    }
-  ];
+  const upcomingEvents = events;
 
   const handleMarkAttendance = () => {
     navigate('/attendance');
@@ -60,6 +57,82 @@ export const TeacherDashboard: React.FC = () => {
   const handleAddLearningLog = () => {
     navigate('/learning-logs');
   };
+
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    if (time.includes('T')) return time.slice(11, 16);
+    return time.slice(0, 5);
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const token = localStorage.getItem('smartschool_token');
+      if (!token || !user) return;
+
+      const headers = { Authorization: `Bearer ${token}` };
+
+      try {
+        const classRes = await fetch(`${API_BASE}/classes`, { headers });
+        let teacherClasses: any[] = [];
+        if (classRes.ok) {
+          const data = await classRes.json();
+          teacherClasses = data.filter((cls: any) => cls.teacher_id === user.id);
+          const count = teacherClasses.reduce(
+            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            0
+          );
+          setStudentCount(count);
+        }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+
+        let present = 0;
+        for (const cls of teacherClasses) {
+          const attRes = await fetch(`${API_BASE}/attendance/${todayStr}/${cls.id}`, {
+            headers
+          });
+          if (attRes.ok) {
+            const records = await attRes.json();
+            present += records.filter((r: any) => r.status === 'present').length;
+          }
+        }
+        setPresentCount(present);
+
+        const ttRes = await fetch(`${API_BASE}/timetable/teacher/${user.id}`, { headers });
+        if (ttRes.ok) {
+          const data = await ttRes.json();
+          const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+          const filtered = data.filter((t: any) =>
+            t.dayOfWeek.toLowerCase() === dayName.toLowerCase()
+          );
+          setTodaySchedule(filtered);
+          setClassCount(filtered.length);
+        }
+
+        let logTotal = 0;
+        for (const cls of teacherClasses) {
+          const logRes = await fetch(`${API_BASE}/learninglogs?classId=${cls.id}`, { headers });
+          if (logRes.ok) {
+            const logs = await logRes.json();
+            const todayLogs = logs.filter((l: any) => l.date?.startsWith(todayStr));
+            logTotal += todayLogs.length;
+          }
+        }
+        setLogCount(logTotal);
+
+        const eventRes = await fetch(`${API_BASE}/events`, { headers });
+        if (eventRes.ok) {
+          const data = await eventRes.json();
+          const upcoming = data.filter((ev: any) => new Date(ev.startDate) >= new Date(todayStr));
+          setEvents(upcoming.slice(0, 5));
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+      }
+    };
+
+    fetchData();
+  }, [user]);
 
   return (
     <div className="space-y-6">
@@ -97,27 +170,21 @@ export const TeacherDashboard: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                <div>
-                  <p className="font-medium">Mathematics - Grade 5A</p>
-                  <p className="text-sm text-gray-600">9:00 AM - 10:00 AM</p>
+              {todaySchedule.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">
+                      {item.subject} - {item.className}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      {formatTime(item.startTime)} - {formatTime(item.endTime)}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Current</span>
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Science - Grade 5B</p>
-                  <p className="text-sm text-gray-600">11:00 AM - 12:00 PM</p>
-                </div>
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Next</span>
-              </div>
-              <div className="flex items-center justify-between p-3 border rounded-lg">
-                <div>
-                  <p className="font-medium">Mathematics - Grade 6A</p>
-                  <p className="text-sm text-gray-600">2:00 PM - 3:00 PM</p>
-                </div>
-                <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">Later</span>
-              </div>
+              ))}
+              {todaySchedule.length === 0 && (
+                <p className="text-sm text-gray-500">No classes today.</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -168,11 +235,16 @@ export const TeacherDashboard: React.FC = () => {
                   <p className="font-medium text-gray-900">{event.title}</p>
                   <div className="flex items-center space-x-2 text-sm text-gray-600 mt-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{new Date(event.date).toLocaleDateString()}</span>
-                    <span>at {event.time}</span>
+                    <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                    {event.startDate && (
+                      <span>{formatTime(event.startDate)}</span>
+                    )}
                   </div>
                 </div>
               ))}
+              {upcomingEvents.length === 0 && (
+                <p className="text-sm text-gray-500">No upcoming events.</p>
+              )}
             </div>
           </CardContent>
         </Card>

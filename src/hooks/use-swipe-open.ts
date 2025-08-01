@@ -12,7 +12,7 @@ import { useSidebar } from "@/components/ui/sidebar"
 export function useSwipeOpen(
   threshold = 50,
   startFraction = 0.2,
-  zoneFraction = 0.1,
+  zoneFraction = 0.2,
 ) {
   const { setOpenMobile, openMobile } = useSidebar()
   const isMobile = useIsMobile()

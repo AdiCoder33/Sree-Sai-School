@@ -3,11 +3,17 @@ import * as React from "react"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useSidebar } from "@/components/ui/sidebar"
 
-// Detects a left-to-right swipe starting from the middle of the screen.
+// Detects a left-to-right swipe starting roughly from the middle of the screen.
 // `threshold` determines the minimum swipe distance in pixels.
-// `startFraction` determines how far from the left edge the swipe must begin
-// (e.g. 0.5 means the swipe must start on the right half of the screen).
-export function useSwipeOpen(threshold = 50, startFraction = 0.2) {
+// `startFraction` sets the center point of the swipe zone, expressed as a
+// fraction of the screen width (e.g. 0.5 is dead center).
+// `zoneFraction` determines how wide the swipe zone is relative to the screen
+// width. The swipe must begin within this zone to trigger the sidebar.
+export function useSwipeOpen(
+  threshold = 50,
+  startFraction = 0.5,
+  zoneFraction = 0.2,
+) {
   const { setOpenMobile, openMobile } = useSidebar()
   const isMobile = useIsMobile()
 
@@ -19,8 +25,13 @@ export function useSwipeOpen(threshold = 50, startFraction = 0.2) {
     const handleTouchStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return
       const touch = e.touches[0]
-      const startZone = window.innerWidth * startFraction
-      startX = touch.clientX >= startZone ? touch.clientX : null
+      const zoneCenter = window.innerWidth * startFraction
+      const halfZone = (window.innerWidth * zoneFraction) / 2
+      startX =
+        touch.clientX >= zoneCenter - halfZone &&
+        touch.clientX <= zoneCenter + halfZone
+          ? touch.clientX
+          : null
     }
 
     const handleTouchEnd = (e: TouchEvent) => {
@@ -39,5 +50,5 @@ export function useSwipeOpen(threshold = 50, startFraction = 0.2) {
       window.removeEventListener("touchstart", handleTouchStart)
       window.removeEventListener("touchend", handleTouchEnd)
     }
-  }, [isMobile, threshold, startFraction, setOpenMobile, openMobile])
+  }, [isMobile, threshold, startFraction, zoneFraction, setOpenMobile, openMobile])
 }

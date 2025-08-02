@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { SelectParentModal } from './SelectParentModal';
-import { Student, Class } from '../types/auth';
+import { Student, Class, Parent } from '../types/auth';
 
 interface EditStudentModalProps {
   open: boolean;
@@ -70,11 +70,11 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
         },
         body: JSON.stringify(formData)
       });
-      if (res.ok) {
-        toast.success('Student updated successfully');
-        onSuccess && onSuccess();
-        setOpen(false);
-      } else {
+        if (res.ok) {
+          toast.success('Student updated successfully');
+          if (onSuccess) onSuccess();
+          setOpen(false);
+        } else {
         toast.error('Failed to update student');
       }
     } catch (err) {
@@ -187,7 +187,7 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
             <SelectParentModal
               open={showParentModal}
               onClose={() => setShowParentModal(false)}
-              onSelect={(parent) => {
+              onSelect={(parent: Parent) => {
                 setFormData({
                   ...formData,
                   parent_id: parent.id,

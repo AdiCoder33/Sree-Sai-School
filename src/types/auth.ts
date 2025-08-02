@@ -27,6 +27,7 @@ export interface Student {
   id: string;
   firstName: string;
   lastName: string;
+  name?: string;
   gender?: string;
   class?: string;
   className?: string;
@@ -50,6 +51,16 @@ export interface Student {
   medicalConditions?: string;
   emergencyContact?: string;
   status?: string;
+}
+
+export interface Teacher extends User {
+  subject?: string;
+  qualification?: string;
+  experience?: string;
+}
+
+export interface Parent extends User {
+  children?: Student[];
 }
 
 export interface AttendanceRecord {

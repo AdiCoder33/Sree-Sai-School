@@ -11,15 +11,7 @@ import { Input } from './ui/input';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { toast } from 'sonner';
-
-interface Parent {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  address?: string;
-}
+import { Parent } from '../types/auth';
 
 interface SelectParentModalProps {
   open: boolean;
@@ -57,7 +49,7 @@ export const SelectParentModal: React.FC<SelectParentModalProps> = ({
       throw new Error(`HTTP ${res.status}: ${errorText}`);
     }
 
-    const data = await res.json();
+    const data: Parent[] = await res.json();
     setParents(data);
   } catch (error) {
     console.error('Error fetching parents:', error);

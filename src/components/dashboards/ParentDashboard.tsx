@@ -118,16 +118,6 @@ export const ParentDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, [selectedChild, fetchData]);
 
-  interface EventItem {
-    id: string;
-    title: string;
-    description: string;
-    startDate: string;
-    endDate: string;
-    location: string;
-    type: string;
-  }
-
   const [events, setEvents] = useState<EventItem[]>([]);
 
   const getEventTypeColor = (type: string) => {

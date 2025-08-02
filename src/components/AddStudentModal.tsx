@@ -10,16 +10,10 @@ import { Textarea } from './ui/textarea';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { SelectParentModal } from './SelectParentModal';
-import { Student } from '../types/auth';
+import { Student, Class, Parent } from '../types/auth';
 
 interface AddStudentModalProps {
   onAddStudent: (student: Student) => void;
-}
-
-interface Class {
-  id: string;
-  name: string;
-  teacher_id?: string;
 }
 
 export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }) => {
@@ -27,7 +21,7 @@ export const AddStudentModal: React.FC<AddStudentModalProps> = ({ onAddStudent }
   const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(false);
   const [useExistingParent, setUseExistingParent] = useState(false);
-const [existingParents, setExistingParents] = useState([]);
+const [existingParents, setExistingParents] = useState<Parent[]>([]);
 const [showParentModal, setShowParentModal] = useState(false);
 
 
@@ -68,7 +62,7 @@ const [showParentModal, setShowParentModal] = useState(false);
     });
 
     if (response.ok) {
-      const data = await response.json();
+      const data: Class[] = await response.json();
       setClasses(data);
     } else {
       toast.error('Failed to fetch classes');
@@ -134,7 +128,7 @@ const [showParentModal, setShowParentModal] = useState(false);
   const res = await fetch('/api/users/parents', {
     headers: { 'Authorization': `Bearer ${token}` }
   });
-  const data = await res.json();
+  const data: Parent[] = await res.json();
   setExistingParents(data);
 };
 
@@ -248,7 +242,7 @@ useEffect(() => {
   <SelectParentModal
     open={showParentModal}
     onClose={() => setShowParentModal(false)}
-    onSelect={(parent) => {
+    onSelect={(parent: Parent) => {
       setFormData({
         ...formData,
         parent_id: parent.id,

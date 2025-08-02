@@ -16,6 +16,9 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
+        srcDir: "src",
+        filename: "sw.ts",
+        strategies: "injectManifest",
         manifest: {
           name: "Sree Sai School",
           short_name: "SreeSai",
@@ -24,26 +27,6 @@ export default defineConfig(({ mode }) => {
             { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
             { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
             { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-          ],
-        },
-        workbox: {
-          runtimeCaching: [
-            {
-              urlPattern: ({ request }) => request.destination === "image",
-              handler: "CacheFirst",
-              options: {
-                cacheName: "images-cache",
-                expiration: {
-                  maxEntries: 50,
-                  maxAgeSeconds: 60 * 60 * 24 * 30,
-                },
-              },
-            },
-            {
-              urlPattern: /\/api\//,
-              handler: "NetworkFirst",
-              options: { cacheName: "api-cache" },
-            },
           ],
         },
       }),

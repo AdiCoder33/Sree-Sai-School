@@ -42,8 +42,8 @@ export const TargetedFeeRequestModal: React.FC<TargetedFeeRequestModalProps> = (
   }, [open]);
 
   useEffect(() => {
-    let filtered = students.filter(student => {
-      const searchMatch = 
+    const filtered = students.filter(student => {
+      const searchMatch =
         `${student.firstName} ${student.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         `${student.parentFirstName} ${student.parentLastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
         student.className.toLowerCase().includes(searchTerm.toLowerCase());

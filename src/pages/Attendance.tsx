@@ -24,7 +24,7 @@ export const Attendance: React.FC = () => {
   const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
   const [studentsInClass, setStudentsInClass] = useState<Student[]>([]);
 
-   useEffect(() => {
+  useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
     axios
       .get(`${API_BASE}/classes`, {
@@ -32,9 +32,7 @@ export const Attendance: React.FC = () => {
       })
       .then(res => {
         setClassList(res.data);
-        if (res.data.length > 0 && !selectedClass) {
-          setSelectedClass(res.data[0].id);
-        }
+        setSelectedClass(prev => prev || (res.data[0]?.id || ''));
       })
       .catch(err => {
         console.error('❌ Error fetching class list:', err);

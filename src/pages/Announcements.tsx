@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { API_BASE } from '../lib/api';
 import { format } from 'date-fns';
 import { Button } from '../components/ui/button';
@@ -22,12 +22,12 @@ export const Announcements = () => {
   const token = localStorage.getItem('smartschool_token');
 
   // 📦 Reusable fetch logic
-  const fetchAnnouncements = async () => {
+  const fetchAnnouncements = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/announcements`, {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -38,11 +38,11 @@ export const Announcements = () => {
       console.error(error);
       toast.error('❌ Failed to fetch announcements');
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchAnnouncements();
-  }, [token]);
+  }, [token, fetchAnnouncements]);
 
   // ✅ Just trigger refetch instead of local mutation
   const handleCreateSuccess = () => {

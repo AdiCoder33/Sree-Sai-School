@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { CalendarDays, Edit, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -90,7 +90,7 @@ export const Events: React.FC = () => {
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchEvents = useCallback(async () => {
     const token = getToken();
     if (!isTokenValid(token)) {
       toast({ title: 'Invalid token', description: 'Please log in again.' });
@@ -112,11 +112,11 @@ export const Events: React.FC = () => {
     } catch {
       toast({ title: 'Error', description: 'Network error on fetching events' });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchEvents();
-  }, []);
+  }, [fetchEvents]);
 
   const handleSubmit = async () => {
     const token = getToken();

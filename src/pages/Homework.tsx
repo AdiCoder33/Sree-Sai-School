@@ -94,7 +94,7 @@ useEffect(() => {
   };
 
   if (selectedClass) fetchHomework();
-}, [selectedClass, selectedDate]);
+}, [selectedClass, selectedDate, classList]);
 
 
 const handleEditHomework = async () => {

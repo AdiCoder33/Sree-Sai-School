@@ -29,8 +29,8 @@ Use [pwa-asset-generator](https://github.com/elegantapp/pwa-asset-generator) to 
 
 ```bash
 npx pwa-asset-generator public/placeholder.svg public --icon-only --background '#ffffff'
-mv public/android-chrome-192x192.png public/pwa-192x192.png
-mv public/android-chrome-512x512.png public/pwa-512x512.png
+mv public/manifest-icon-192.maskable.png public/pwa-192x192.png
+mv public/manifest-icon-512.maskable.png public/pwa-512x512.png
 # apple-touch-icon.png is generated automatically
 ```
 

@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => {
           name: "Sree Sai School",
           short_name: "SreeSai",
           theme_color: "#ffffff",
+          icons: [
+            { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+            { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+            { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+          ],
         },
         workbox: {
           runtimeCaching: [
@@ -33,6 +38,11 @@ export default defineConfig(({ mode }) => {
                   maxAgeSeconds: 60 * 60 * 24 * 30,
                 },
               },
+            },
+            {
+              urlPattern: /\/api\//,
+              handler: "NetworkFirst",
+              options: { cacheName: "api-cache" },
             },
           ],
         },

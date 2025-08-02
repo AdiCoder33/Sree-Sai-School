@@ -10,13 +10,14 @@ import { RoleGuard } from '../components/RoleGuard';
 import { CreateAnnouncement } from '../components/modals/CreateAnnouncement';
 import { EditAnnouncement } from '../components/modals/EditAnnouncement';
 import toast, { Toaster } from 'react-hot-toast';
+import { Announcement } from '../types/auth';
 
 export const Announcements = () => {
-  const [announcements, setAnnouncements] = useState([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
+  const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
 
   const token = localStorage.getItem('smartschool_token');
 
@@ -31,7 +32,7 @@ export const Announcements = () => {
       });
 
       if (!res.ok) throw new Error('Failed to fetch announcements');
-      const data = await res.json();
+      const data: Announcement[] = await res.json();
       setAnnouncements(data);
     } catch (error) {
       console.error(error);
@@ -56,7 +57,7 @@ export const Announcements = () => {
     toast.success('✏️ Announcement Updated Successfully!');
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (id: string) => {
     try {
       await fetch(`${API_BASE}/announcements/${id}`, {
         method: 'DELETE',

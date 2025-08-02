@@ -92,7 +92,7 @@ export const LearningLogs: React.FC = () => {
     );
   });
 
-  const handleClassChange = (className) => {
+  const handleClassChange = (className: string) => {
     setSelectedClass(className);
     const selected = classList.find(cls => cls.name === className);
     if (!selected) return;
@@ -129,7 +129,7 @@ export const LearningLogs: React.FC = () => {
       });
   };
 
-  const handleStudentChange = (studentId) => {
+  const handleStudentChange = (studentId: string) => {
     const student = students.find(s => s.id === studentId);
     const fullName = `${student?.firstName || ''} ${student?.lastName || ''}`.trim();
     setNewLog({ ...newLog, studentId, studentName: fullName });

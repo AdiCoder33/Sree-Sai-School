@@ -11,7 +11,7 @@ import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
-import { Student, AttendanceEntry } from '../types/auth';
+import { Student, AttendanceRecord, AttendanceEntry } from '../types/auth';
 
 export const Attendance: React.FC = () => {
   const { user } = useAuth();
@@ -20,15 +20,11 @@ export const Attendance: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | 'unmarked'>>({});
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
-  const [mockChildAttendance, setMockChildAttendance] = useState([]);
+  const [mockChildAttendance, setMockChildAttendance] = useState<AttendanceRecord[]>([]);
   const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
-  const [studentsInClass, setStudentsInClass] = useState([]);
+  const [studentsInClass, setStudentsInClass] = useState<Student[]>([]);
 
-  if (user?.role === 'parent' && !selectedStudent) {
-    return <div className="p-4">Please select a student to view attendance.</div>;
-  }
-
-  useEffect(() => {
+   useEffect(() => {
     const token = localStorage.getItem('smartschool_token');
     axios
       .get(`${API_BASE}/classes`, {
@@ -103,7 +99,8 @@ export const Attendance: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         })
         .then(res => {
-          setMockChildAttendance(res.data);
+          const records: AttendanceRecord[] = res.data;
+          setMockChildAttendance(records);
         });
     }
   }, [user, selectedStudent]);
@@ -182,7 +179,7 @@ export const Attendance: React.FC = () => {
   const generateExcelReport = () => {
     try {
       const reportData = studentsInClass.map(student => ({
-        'Student Name': student.name,
+        'Student Name': student.name || `${student.firstName ?? ''} ${student.lastName ?? ''}`,
         'Roll Number': student.rollNumber,
         Class: student.class,
         Date: selectedDate,
@@ -252,6 +249,9 @@ export const Attendance: React.FC = () => {
 
   // Parent view - show only their child's attendance records
   if (user?.role === 'parent') {
+    if (!selectedStudent) {
+      return <div className="p-4">Please select a student to view attendance.</div>;
+    }
     const presentDays = mockChildAttendance.filter(record => record.status === 'present').length;
     const absentDays = mockChildAttendance.filter(record => record.status === 'absent').length;
     const lateDays = mockChildAttendance.filter(record => record.status === 'late').length;

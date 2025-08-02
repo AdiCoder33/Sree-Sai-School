@@ -13,6 +13,7 @@ import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
+import { HomeworkItem } from '../types/auth';
 
 
 
@@ -22,7 +23,7 @@ import { toast } from 'sonner';
 export const Homework: React.FC = () => {
   const { user } = useAuth();
   const { selectedStudent } = useStudent();
-  const [homework, setHomework] = useState([]);
+  const [homework, setHomework] = useState<HomeworkItem[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedClass, setSelectedClass] = useState(''); // instead of 'Class 1'
   const [selectedStudents, setSelectedStudents] = useState<{[homeworkId: string]: string[]}>({});
@@ -42,11 +43,7 @@ export const Homework: React.FC = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  if (user?.role === 'parent' && !selectedStudent) {
-    return <div className="p-4">Please select a student to view homework.</div>;
-  }
-
-  useEffect(() => {
+    useEffect(() => {
     if (user?.role === 'parent' && selectedStudent) {
       const classId =
         selectedStudent.class_id ||
@@ -67,15 +64,15 @@ useEffect(() => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      let combined;
+      let combined: HomeworkItem[];
       if (res.data.results) {
-        combined = res.data.results;
+        combined = res.data.results as HomeworkItem[];
       } else {
         combined = [
           ...(res.data.today || []),
           ...(res.data.yesterday || []),
           ...(res.data.dayBefore || [])
-        ];
+        ] as HomeworkItem[];
       }
       const formatted = combined.map(hw => ({
         ...hw,
@@ -116,15 +113,15 @@ const handleEditHomework = async () => {
     const refreshed = await axios.get(`${API_BASE}/homework/class/${selectedClass}?date=${selectedDate}`, {
       headers: { Authorization: `Bearer ${user.token}` }
     });
-    let combined;
+    let combined: HomeworkItem[];
     if (refreshed.data.results) {
-      combined = refreshed.data.results;
+      combined = refreshed.data.results as HomeworkItem[];
     } else {
       combined = [
         ...(refreshed.data.today || []),
         ...(refreshed.data.yesterday || []),
         ...(refreshed.data.dayBefore || [])
-      ];
+      ] as HomeworkItem[];
     }
     const formatted = combined.map(hw => ({
       ...hw,
@@ -211,7 +208,7 @@ const handleDeleteHomework = async (homeworkId: string) => {
   }
 };
 
-const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
+  const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 
 
 const fetchClasses = async () => {
@@ -228,9 +225,9 @@ const res = await axios.get(`${API_BASE}/classes`, {
   }
 };
 
-useEffect(() => {
-  fetchClasses();
-}, []);
+  useEffect(() => {
+    fetchClasses();
+  }, []);
 
 
 
@@ -316,6 +313,10 @@ const toggleStudentSelection = (homeworkId: string, studentId: string) => {
     : user?.role === 'parent'
       ? homework
       : [];
+
+  if (user?.role === 'parent' && !selectedStudent) {
+    return <div className="p-4">Please select a student to view homework.</div>;
+  }
 
   return (
     <div className="space-y-6">

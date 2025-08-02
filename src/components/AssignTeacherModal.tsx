@@ -4,6 +4,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from 
 import { Button } from './ui/button';
 import { toast } from 'sonner';
 import { Pencil } from 'lucide-react';
+import { User } from '../types/auth';
 
 export interface AssignTeacherModalProps {
   classId: string;
@@ -11,16 +12,9 @@ export interface AssignTeacherModalProps {
   onSuccess: () => void;
 }
 
-interface Teacher {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
-
 export const AssignTeacherModal: React.FC<AssignTeacherModalProps> = ({ classId, currentTeacher,onSuccess }) => {
   const [open, setOpen] = useState(false);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachers, setTeachers] = useState<User[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [loading, setLoading] = useState(false);
   
@@ -63,8 +57,8 @@ useEffect(() => {
 
     if (!res.ok) throw new Error("Failed to fetch teachers");
 
-    const data = await res.json();
-    const onlyTeachers = data.filter((user: any) => user.role === 'teacher');
+    const data: User[] = await res.json();
+    const onlyTeachers = data.filter(user => user.role === 'teacher');
     setTeachers(onlyTeachers);
   } catch (err) {
     console.error("Failed to fetch teachers:", err);

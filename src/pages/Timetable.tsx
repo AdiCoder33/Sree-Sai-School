@@ -6,6 +6,7 @@ import { toast } from '../hooks/use-toast';
 import { useAuth } from '../context/AuthContext';
 import { useStudent } from '../context/StudentContext';
 import { Pencil, Trash2 } from 'lucide-react';
+import { User, Student, TimetableEntry } from '../types/auth';
 
 interface TimeSlot {
   id: string;
@@ -70,9 +71,9 @@ export const Timetable: React.FC = () => {
       setSelectedTeacher(user.id);
     } else if (user?.role === 'parent' && selectedStudent) {
       const classId =
-        (selectedStudent as any).class_id ||
-        (selectedStudent as any).classId ||
-        (selectedStudent as any).class;
+        selectedStudent.class_id ||
+        selectedStudent.classId ||
+        selectedStudent.class;
       if (classId) {
         setViewMode('class');
         setSelectedClass(classId);
@@ -103,8 +104,8 @@ export const Timetable: React.FC = () => {
   const fetchTeachers = async () => {
     try {
       const res = await fetch(`${API_BASE}/users?role=teacher`, config);
-      const data = await res.json();
-      const onlyTeachers = data.filter((u: any) => u.role?.toLowerCase() === 'teacher');
+      const data: User[] = await res.json();
+      const onlyTeachers = data.filter((u) => u.role?.toLowerCase() === 'teacher');
       setTeachers(onlyTeachers);
       if (!selectedTeacher && onlyTeachers.length && user?.role !== 'teacher') {
         setSelectedTeacher(onlyTeachers[0].id);
@@ -132,7 +133,7 @@ export const Timetable: React.FC = () => {
         return `${hour?.padStart(2, '0')}:${minute?.padStart(2, '0')}`;
       };
 
-      data.forEach((entry: any) => {
+      (data as TimetableEntry[]).forEach((entry) => {
         const day = entry.dayOfWeek.charAt(0).toUpperCase() + entry.dayOfWeek.slice(1).toLowerCase();
         const startTime = formatSlotTime(entry.startTime);
         const endTime = formatSlotTime(entry.endTime);
@@ -206,10 +207,11 @@ export const Timetable: React.FC = () => {
       toast({ title: 'Success', description: 'Timetable saved successfully' });
       fetchTimetable();
       setEditing((prev) => ({ ...prev, [`${day}-${slotKey}`]: false }));
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number; data?: { message?: string } } };
       const message =
-        error?.response?.status === 409
-          ? error.response.data?.message || 'Conflict error.'
+        err?.response?.status === 409
+          ? err.response?.data?.message || 'Conflict error.'
           : 'Something went wrong. Please try again.';
 
       toast({

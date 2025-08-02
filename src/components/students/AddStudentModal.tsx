@@ -5,11 +5,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Student } from '../../types/auth';
 
 interface AddStudentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  student?: any; // Pass student object for edit
+  student?: Student; // Pass student object for edit
   mode?: 'add' | 'edit'; // Determines the operation
 }
 

@@ -5,14 +5,15 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import toast from 'react-hot-toast';
+import { Announcement } from '../../types/auth';
 
 interface EditAnnouncementProps {
   isOpen: boolean;
   onClose: () => void;
-  announcement: any;
-  setAnnouncements: React.Dispatch<React.SetStateAction<any[]>>;
-  announcements: any[];
-  onSuccess: (updatedAnnouncement: any) => void;
+  announcement: Announcement | null;
+  setAnnouncements: React.Dispatch<React.SetStateAction<Announcement[]>>;
+  announcements: Announcement[];
+  onSuccess: (updatedAnnouncement: Announcement) => void;
 }
 
 export const EditAnnouncement: React.FC<EditAnnouncementProps> = ({

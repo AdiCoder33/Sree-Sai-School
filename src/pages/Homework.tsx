@@ -49,9 +49,9 @@ export const Homework: React.FC = () => {
   useEffect(() => {
     if (user?.role === 'parent' && selectedStudent) {
       const classId =
-        (selectedStudent as any).class_id ||
-        (selectedStudent as any).classId ||
-        (selectedStudent as any).class;
+        selectedStudent.class_id ||
+        selectedStudent.classId ||
+        selectedStudent.class;
       if (classId) {
         setSelectedClass(classId);
       }
@@ -89,8 +89,9 @@ useEffect(() => {
       const selectedClassName = classList.find(c => c.id === selectedClass)?.name || 'Selected Class';
       const formattedDate = new Date(selectedDate).toLocaleDateString();
       toast.success(`📚 Homework for ${selectedClassName} on ${formattedDate} loaded successfully`);
-    } catch (error: any) {
-      console.error('❌ Failed to fetch homework:', error.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      console.error('❌ Failed to fetch homework:', err.message);
       toast.error("Failed to fetch homework");
     }
   };
@@ -221,8 +222,9 @@ const res = await axios.get(`${API_BASE}/classes`, {
 });
 
     setClassList(res.data);
-  } catch (error: any) {
-    console.error('❌ Failed to fetch classes:', error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('❌ Failed to fetch classes:', err.message);
   }
 };
 

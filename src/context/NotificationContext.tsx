@@ -1,18 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { API_BASE } from '../lib/api';
-
-export interface Notification {
-  id: string;
-  type: 'fee_request' | 'announcement' | 'homework' | 'event';
-  title: string;
-  message: string;
-  createdAt: string;
-  read: boolean;
-  priority: 'low' | 'medium' | 'high';
-  targetRole?: string;
-  createdBy?: string;
-}
+import { Notification, NotificationAPI } from '../types/auth';
 
 interface NotificationContextType {
   notifications: Notification[];
@@ -39,7 +28,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const data = await res.json();
 
         // Convert backend field to match your Notification type
-        const formatted = data.map((n: any) => ({
+        const formatted = (data as NotificationAPI[]).map((n) => ({
           ...n,
           createdAt: n.created_at,
           read: n.isRead === 1,

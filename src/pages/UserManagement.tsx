@@ -11,19 +11,7 @@ import { Plus, Search, Edit, Trash2, Users, UserCheck, GraduationCap } from 'luc
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
-
-// User interface definition stays the same
-interface User {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: 'admin' | 'teacher' | 'parent';
-  phone?: string;
-  status: 'active' | 'inactive';
-  avatar?: string;
-  created_at: string;
-}
+import { User } from '../types/auth';
 
 export const UserManagement: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
@@ -64,9 +52,9 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
           }
       });
       if (response.ok) {
-        const data = await response.json();
+        const data: User[] = await response.json();
         const normalized = Array.isArray(data)
-          ? data.map((u: any) => ({ ...u, avatar: withBaseUrl(u.avatar) }))
+          ? data.map((u: User) => ({ ...u, avatar: withBaseUrl(u.avatar) }))
           : [];
         setUsers(normalized);
       } else {

@@ -57,7 +57,7 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (res.ok) {
           const raw = await res.json();
           const data = Array.isArray(raw)
-            ? raw.map((c: any) => ({ ...c, avatar: withBaseUrl(c.avatar) }))
+            ? raw.map((c: Student) => ({ ...c, avatar: withBaseUrl(c.avatar) }))
             : [];
           setChildList(data);
           if (data.length === 1 && !selectedStudent) {

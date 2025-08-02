@@ -6,12 +6,7 @@ import { Label } from './ui/label';
 import { Input } from './ui/input';
 import { Edit, User } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Teacher {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
+import { User as AppUser } from '../types/auth';
 
 interface EditClassModalProps {
   classId: string;
@@ -27,7 +22,7 @@ export const EditClassModal: React.FC<EditClassModalProps> = ({
   onClassUpdated 
 }) => {
   const [open, setOpen] = useState(false);
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [teachers, setTeachers] = useState<AppUser[]>([]);
   const [selectedTeacherId, setSelectedTeacherId] = useState(currentTeacherId || '');
   const [newClassName, setNewClassName] = useState(className);
   const [loading, setLoading] = useState(false);
@@ -48,8 +43,8 @@ export const EditClassModal: React.FC<EditClassModalProps> = ({
       });
       
       if (response.ok) {
-        const data = await response.json();
-        const teacherUsers = data.filter((user: any) => user.role === 'teacher');
+        const data: AppUser[] = await response.json();
+        const teacherUsers = data.filter(user => user.role === 'teacher');
         setTeachers(teacherUsers);
       } else {
         toast.error('Failed to fetch teachers');

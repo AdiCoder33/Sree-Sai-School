@@ -26,7 +26,7 @@ import {
   X,
   Calendar
 } from 'lucide-react';
-import { Student, AttendanceRecord, LearningLog, HomeworkItem } from '../../types/auth';
+import { Student, AttendanceRecord, LearningLog, HomeworkItem, EventItem } from '../../types/auth';
 
 // This dashboard now supports parents with multiple children. On mount,
 // it fetches all children for the logged-in parent and displays a
@@ -52,9 +52,9 @@ export const ParentDashboard: React.FC = () => {
 
       const token = localStorage.getItem('smartschool_token');
       const classId =
-        (selectedChild as any).class_id ||
-        (selectedChild as any).classId ||
-        (selectedChild as any).class;
+        selectedChild.class_id ||
+        selectedChild.classId ||
+        selectedChild.class;
       const today = new Date().toISOString().split('T')[0];
 
       try {
@@ -78,7 +78,7 @@ export const ParentDashboard: React.FC = () => {
           setAttendanceRecords(records);
         }
         if (hwRes.ok) {
-          const hwData: any = await hwRes.json();
+          const hwData: unknown = await hwRes.json();
           const combined: HomeworkItem[] = Array.isArray(hwData)
             ? hwData
             : [

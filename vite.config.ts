@@ -20,13 +20,6 @@ export default defineConfig(({ mode }) => {
           name: "Sree Sai School",
           short_name: "SreeSai",
           theme_color: "#ffffff",
-          icons: [
-            {
-              src: "/placeholder.svg",
-              sizes: "512x512",
-              type: "image/svg+xml",
-            },
-          ],
         },
         workbox: {
           runtimeCaching: [

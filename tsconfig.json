@@ -9,6 +9,8 @@
     "paths": {
       "@/*": ["./src/*"]
     },
+    "module": "ESNext",
+    "moduleResolution": "node",
     "noImplicitAny": false,
     "noUnusedParameters": false,
     "skipLibCheck": true,

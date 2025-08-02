@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { API_BASE } from '../lib/api';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
@@ -58,36 +58,9 @@ export const Timetable: React.FC = () => {
   const [editing, setEditing] = useState<Record<string, boolean>>({});
 
   const token = localStorage.getItem('smartschool_token');
-  const config = { headers: { Authorization: `Bearer ${token}` } };
+  const config = useMemo(() => ({ headers: { Authorization: `Bearer ${token}` } }), [token]);
 
-  useEffect(() => {
-    fetchClasses();
-    fetchTeachers();
-  }, []);
-
-  useEffect(() => {
-    if (user?.role === 'teacher') {
-      setViewMode('teacher');
-      setSelectedTeacher(user.id);
-    } else if (user?.role === 'parent' && selectedStudent) {
-      const classId =
-        selectedStudent.class_id ||
-        selectedStudent.classId ||
-        selectedStudent.class;
-      if (classId) {
-        setViewMode('class');
-        setSelectedClass(classId);
-      }
-    }
-  }, [user, selectedStudent]);
-
-  useEffect(() => {
-    if ((viewMode === 'class' && selectedClass) || (viewMode === 'teacher' && selectedTeacher)) {
-      fetchTimetable();
-    }
-  }, [selectedClass, selectedTeacher, viewMode]);
-
-  const fetchClasses = async () => {
+  const fetchClasses = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/classes`, config);
       const data = await res.json();
@@ -99,9 +72,9 @@ export const Timetable: React.FC = () => {
     } catch {
       toast({ title: 'Error', description: 'Failed to fetch classes' });
     }
-  };
+  }, [config, selectedClass, user]);
 
-  const fetchTeachers = async () => {
+  const fetchTeachers = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/users?role=teacher`, config);
       const data: User[] = await res.json();
@@ -113,9 +86,9 @@ export const Timetable: React.FC = () => {
     } catch {
       toast({ title: 'Error', description: 'Failed to fetch teachers' });
     }
-  };
+  }, [config, selectedTeacher, user]);
 
-  const fetchTimetable = async () => {
+  const fetchTimetable = useCallback(async () => {
     try {
       const endpoint =
         viewMode === 'class'
@@ -151,7 +124,34 @@ export const Timetable: React.FC = () => {
     } catch {
       toast({ title: 'Error', description: 'Failed to fetch timetable' });
     }
-  };
+  }, [config, selectedClass, selectedTeacher, viewMode]);
+
+  useEffect(() => {
+    fetchClasses();
+    fetchTeachers();
+  }, [fetchClasses, fetchTeachers]);
+
+  useEffect(() => {
+    if (user?.role === 'teacher') {
+      setViewMode('teacher');
+      setSelectedTeacher(user.id);
+    } else if (user?.role === 'parent' && selectedStudent) {
+      const classId =
+        selectedStudent.class_id ||
+        selectedStudent.classId ||
+        selectedStudent.class;
+      if (classId) {
+        setViewMode('class');
+        setSelectedClass(classId);
+      }
+    }
+  }, [user, selectedStudent]);
+
+  useEffect(() => {
+    if ((viewMode === 'class' && selectedClass) || (viewMode === 'teacher' && selectedTeacher)) {
+      fetchTimetable();
+    }
+  }, [selectedClass, selectedTeacher, viewMode, fetchTimetable]);
 
   const handleChange = (day: string, slotKey: string, field: 'subject' | 'teacher_id', value: string) => {
     setGrid((prev) => ({

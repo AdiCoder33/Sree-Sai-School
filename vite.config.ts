@@ -23,6 +23,11 @@ export default defineConfig(({ mode }) => {
           name: "Sree Sai School",
           short_name: "SreeSai",
           theme_color: "#ffffff",
+          start_url: "/",
+          scope: "/",
+          display: "standalone",
+          background_color: "#ffffff",
+          description: "Sree Sai School web application",
           icons: [
             {
               src: "/manifest-icon-192.maskable.png",

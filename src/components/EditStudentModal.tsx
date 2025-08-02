@@ -72,7 +72,9 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpe
       });
         if (res.ok) {
           toast.success('Student updated successfully');
-          if (onSuccess) onSuccess();
+          if (onSuccess) {
+            onSuccess();
+          }
           setOpen(false);
         } else {
         toast.error('Failed to update student');

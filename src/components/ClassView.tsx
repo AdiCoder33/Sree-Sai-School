@@ -59,7 +59,11 @@ const role = user.role;
 
   const toggleSelect = (id: string) => {
     const newSet = new Set(selectedStudents);
-    newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+    if (newSet.has(id)) {
+      newSet.delete(id);
+    } else {
+      newSet.add(id);
+    }
     setSelectedStudents(newSet);
   };
 

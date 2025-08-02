@@ -10,11 +10,12 @@ declare const self: ServiceWorkerGlobalScope;
 precacheAndRoute(self.__WB_MANIFEST);
 
 const OFFLINE_URL = '/offline.html';
+const OFFLINE_ASSETS = [OFFLINE_URL, '/apple-icon-180.png'];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
   event.waitUntil(
-    caches.open('offline-cache').then((cache) => cache.add(OFFLINE_URL))
+    caches.open('offline-cache').then((cache) => cache.addAll(OFFLINE_ASSETS))
   );
 });
 

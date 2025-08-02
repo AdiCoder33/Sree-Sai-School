@@ -90,7 +90,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
             if (nextClassName === 'Last Year Students') {
               // For Class 10 students, we'll handle them specially
               // First, let's check if there's already a "Last Year Students" class
-              let lastYearClass = classes.find(c => c.name === 'Last Year Students');
+              const lastYearClass = classes.find(c => c.name === 'Last Year Students');
               let targetClassId;
 
               if (!lastYearClass) {
@@ -132,7 +132,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
               }
             } else {
               // Find or create the next class
-              let nextClass = classes.find(c => c.name === nextClassName);
+              const nextClass = classes.find(c => c.name === nextClassName);
               let targetClassId;
 
               if (!nextClass) {

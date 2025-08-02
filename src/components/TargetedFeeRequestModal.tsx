@@ -10,20 +10,10 @@ import { Checkbox } from './ui/checkbox';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { toast } from 'sonner';
-
-interface Student {
-  id: string;
-  firstName: string;
-  lastName: string;
-  class_id: string;
-  className: string;
-  parentFirstName: string;
-  parentLastName: string;
-  parent_id: string;
-}
+import { Student, FeeData } from '../types/auth';
 
 interface TargetedFeeRequestModalProps {
-  onSendRequest: (studentIds: string[], feeData: any) => void;
+  onSendRequest: (studentIds: string[], feeData: FeeData) => void;
 }
 
 export const TargetedFeeRequestModal: React.FC<TargetedFeeRequestModalProps> = ({ onSendRequest }) => {

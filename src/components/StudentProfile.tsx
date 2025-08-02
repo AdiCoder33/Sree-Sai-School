@@ -48,8 +48,7 @@ interface StudentProfileProps {
 export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBack }) => {
   const [activeTab, setActiveTab] = useState<'profile' | 'attendance' | 'learning'>('profile');
   const { user } = useAuth();
-
-  const [student, setStudent] = useState<Student | any>(fallbackStudent);
+  const [student, setStudent] = useState<Student>(fallbackStudent as Student);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>(fallbackAttendance);
   const [learningLogs, setLearningLogs] = useState<(LearningLog & { teacherName?: string })[]>([]);
 

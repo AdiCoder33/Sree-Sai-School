@@ -5,6 +5,7 @@ import { Users, CheckSquare, BookOpen, Calendar, CalendarDays } from 'lucide-rea
 import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../../lib/api';
 import { useAuth } from '../../context/AuthContext';
+import { Class, TimetableEntry, EventItem, AttendanceRecord, LearningLog } from '../../types/auth';
 
 export const TeacherDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ export const TeacherDashboard: React.FC = () => {
   const [presentCount, setPresentCount] = useState(0);
   const [classCount, setClassCount] = useState(0);
   const [logCount, setLogCount] = useState(0);
-  const [todaySchedule, setTodaySchedule] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
+  const [todaySchedule, setTodaySchedule] = useState<TimetableEntry[]>([]);
+  const [events, setEvents] = useState<EventItem[]>([]);
 
   const todayStats = [
     {
@@ -73,12 +74,12 @@ export const TeacherDashboard: React.FC = () => {
 
       try {
         const classRes = await fetch(`${API_BASE}/classes`, { headers });
-        let teacherClasses: any[] = [];
+        let teacherClasses: Class[] = [];
         if (classRes.ok) {
-          const data = await classRes.json();
-          teacherClasses = data.filter((cls: any) => cls.teacher_id === user.id);
+          const data: Class[] = await classRes.json();
+          teacherClasses = data.filter(cls => cls.teacher_id === user.id);
           const count = teacherClasses.reduce(
-            (sum: number, cls: any) => sum + (cls.studentCount || 0),
+            (sum: number, cls: Class) => sum + (cls.studentCount || 0),
             0
           );
           setStudentCount(count);
@@ -92,19 +93,17 @@ export const TeacherDashboard: React.FC = () => {
             headers
           });
           if (attRes.ok) {
-            const records = await attRes.json();
-            present += records.filter((r: any) => r.status === 'present').length;
+            const records: AttendanceRecord[] = await attRes.json();
+            present += records.filter(r => r.status === 'present').length;
           }
         }
         setPresentCount(present);
 
         const ttRes = await fetch(`${API_BASE}/timetable/teacher/${user.id}`, { headers });
         if (ttRes.ok) {
-          const data = await ttRes.json();
+          const data: TimetableEntry[] = await ttRes.json();
           const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
-          const filtered = data.filter((t: any) =>
-            t.dayOfWeek.toLowerCase() === dayName.toLowerCase()
-          );
+          const filtered = data.filter(t => t.dayOfWeek?.toLowerCase() === dayName.toLowerCase());
           setTodaySchedule(filtered);
           setClassCount(filtered.length);
         }
@@ -113,8 +112,8 @@ export const TeacherDashboard: React.FC = () => {
         for (const cls of teacherClasses) {
           const logRes = await fetch(`${API_BASE}/learninglogs?classId=${cls.id}`, { headers });
           if (logRes.ok) {
-            const logs = await logRes.json();
-            const todayLogs = logs.filter((l: any) => l.date?.startsWith(todayStr));
+            const logs: LearningLog[] = await logRes.json();
+            const todayLogs = logs.filter(l => l.date?.startsWith(todayStr));
             logTotal += todayLogs.length;
           }
         }
@@ -122,8 +121,8 @@ export const TeacherDashboard: React.FC = () => {
 
         const eventRes = await fetch(`${API_BASE}/events`, { headers });
         if (eventRes.ok) {
-          const data = await eventRes.json();
-          const upcoming = data.filter((ev: any) => new Date(ev.startDate) >= new Date(todayStr));
+          const data: EventItem[] = await eventRes.json();
+          const upcoming = data.filter(ev => new Date(ev.startDate) >= new Date(todayStr));
           setEvents(upcoming.slice(0, 5));
         }
       } catch (err) {

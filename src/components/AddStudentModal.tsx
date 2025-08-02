@@ -10,9 +10,10 @@ import { Textarea } from './ui/textarea';
 import { Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { SelectParentModal } from './SelectParentModal';
+import { Student } from '../types/auth';
 
 interface AddStudentModalProps {
-  onAddStudent: (student: any) => void;
+  onAddStudent: (student: Student) => void;
 }
 
 interface Class {

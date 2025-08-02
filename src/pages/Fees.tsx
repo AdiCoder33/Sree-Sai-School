@@ -13,6 +13,7 @@ import { TargetedFeeRequestModal } from '../components/TargetedFeeRequestModal';
 import { useNotifications } from '../context/NotificationContext';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { FeeData } from '../types/auth';
 
 const mockFeeRecords = [
   {
@@ -114,7 +115,7 @@ export const Fees: React.FC = () => {
     });
   };
 
-  const handleTargetedFeeRequest = (studentIds: string[], feeData: any) => {
+  const handleTargetedFeeRequest = (studentIds: string[], feeData: FeeData) => {
     // Create fee records for selected students
     const newFeeRecords = studentIds.map(studentId => ({
       id: Date.now().toString() + studentId,
@@ -171,7 +172,7 @@ export const Fees: React.FC = () => {
           name: 'Sree Sai English Medium High School',
           description: `Fee Payment - ${feeRecord.monthYear}`,
           order_id: razorpayOrderId,
-          handler: function (response: any) {
+          handler: function (response: unknown) {
             // Payment successful
             setFeeRecords(prev => prev.map(record => 
               record.id === feeId 
@@ -190,6 +191,7 @@ export const Fees: React.FC = () => {
           }
         };
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rzp = new (window as any).Razorpay(options);
         rzp.open();
       } else {

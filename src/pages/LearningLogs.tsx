@@ -9,13 +9,14 @@ import { Plus, BookOpen, User, Search } from 'lucide-react';
 import { RoleGuard } from '../components/RoleGuard';
 import { useAuth } from '../context/AuthContext';
 import { useStudent } from '../context/StudentContext';
+import { Student, LearningLog, Class } from '../types/auth';
 
 export const LearningLogs: React.FC = () => {
   const { user } = useAuth();
   const { selectedStudent } = useStudent();
-  const [classList, setClassList] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [logs, setLogs] = useState<any[]>([]); // 👈 ensures logs is always an array
+  const [classList, setClassList] = useState<Class[]>([]);
+  const [students, setStudents] = useState<Student[]>([]);
+  const [logs, setLogs] = useState<LearningLog[]>([]); // 👈 ensures logs is always an array
 
 
   const token = localStorage.getItem('smartschool_token');
@@ -67,10 +68,10 @@ useEffect(() => {
 useEffect(() => {
   if (user?.role === 'parent') {
     if (!selectedStudent) return;
-    const classId =
-      (selectedStudent as any).class_id ||
-      (selectedStudent as any).classId ||
-      (selectedStudent as any).class;
+      const classId =
+      selectedStudent.class_id ||
+      selectedStudent.classId ||
+      selectedStudent.class;
     fetch(`${API_BASE}/learninglogs?classId=${classId}`, { headers: authHeader })
       .then(res => res.json())
       .then(data => {

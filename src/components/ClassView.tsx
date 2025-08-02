@@ -7,6 +7,7 @@ import { Badge } from './ui/badge';
 import { ArrowLeft, Search, User, Phone, Pencil, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { EditStudentModal } from './EditStudentModal';
+import { Class, Student } from '../types/auth';
 
 interface ClassViewProps {
   classId: string;
@@ -16,12 +17,12 @@ interface ClassViewProps {
 
 export const ClassView: React.FC<ClassViewProps> = ({ classId, onBack, onStudentClick }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [classData, setClassData] = useState<any>(null);
-  const [students, setStudents] = useState<any[]>([]);
+  const [classData, setClassData] = useState<Class | null>(null);
+  const [students, setStudents] = useState<Student[]>([]);
   const [deleteMode, setDeleteMode] = useState(false);
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set());
   const [editOpen, setEditOpen] = useState(false);
-const [selectedStudent, setSelectedStudent] = useState<any>(null);
+const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 const user = JSON.parse(localStorage.getItem('smartschool_user') || '{}');
 const role = user.role;
 

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { toast } from 'sonner';
 import { SelectParentModal } from './SelectParentModal';
+import { Student, Class } from '../types/auth';
 
 interface EditStudentModalProps {
   open: boolean;
@@ -22,8 +23,8 @@ interface EditStudentModalProps {
 }
 
 export const EditStudentModal: React.FC<EditStudentModalProps> = ({ open, setOpen, studentId, onSuccess }) => {
-  const [formData, setFormData] = useState<any>(null);
-  const [classes, setClasses] = useState<any[]>([]);
+  const [formData, setFormData] = useState<Student | null>(null);
+  const [classes, setClasses] = useState<Class[]>([]);
   const [loading, setLoading] = useState(false);
   const [showParentModal, setShowParentModal] = useState(false);
 

@@ -5,12 +5,7 @@ import { Button } from './ui/button';
 import { Card, CardContent } from './ui/card';
 import { ArrowUp, Users, AlertTriangle, GraduationCap } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface Class {
-  id: string;
-  name: string;
-  studentCount: number;
-}
+import { Class, Student } from '../types/auth';
 
 interface BulkPromotionModalProps {
   onPromotionComplete: () => void;
@@ -41,7 +36,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
       
       if (response.ok) {
         const data = await response.json();
-        setClasses(data.map((cls: any) => ({
+        setClasses(data.map((cls: Class) => ({
           id: cls.id,
           name: cls.name,
           studentCount: cls.studentCount || 0
@@ -89,7 +84,7 @@ export const BulkPromotionModal: React.FC<BulkPromotionModalProps> = ({ onPromot
 
         if (studentsResponse.ok) {
           const students = await studentsResponse.json();
-          const studentIds = students.map((s: any) => s.id);
+          const studentIds = students.map((s: Student) => s.id);
 
           if (studentIds.length > 0) {
             if (nextClassName === 'Last Year Students') {

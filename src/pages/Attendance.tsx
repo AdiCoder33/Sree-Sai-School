@@ -11,6 +11,7 @@ import { useStudent } from '../context/StudentContext';
 import { toast } from 'sonner';
 import * as XLSX from 'xlsx';
 import axios from 'axios';
+import { Student, AttendanceEntry } from '../types/auth';
 
 export const Attendance: React.FC = () => {
   const { user } = useAuth();
@@ -54,7 +55,7 @@ export const Attendance: React.FC = () => {
       })
       .then(res => {
         const data = Array.isArray(res.data)
-          ? res.data.map((s: any) => ({ ...s, avatar: withBaseUrl(s.avatar) }))
+          ? res.data.map((s: Student) => ({ ...s, avatar: withBaseUrl(s.avatar) }))
           : [];
         setStudentsInClass(data);
       })
@@ -235,10 +236,13 @@ export const Attendance: React.FC = () => {
         headers: { Authorization: `Bearer ${token}` },
       })
       .then(res => {
-        const fetched = res.data.reduce((acc: any, curr: any) => {
-          acc[curr.student_id] = curr.status;
-          return acc;
-        }, {});
+        const fetched = res.data.reduce(
+          (acc: Record<string, string>, curr: AttendanceEntry) => {
+            acc[curr.student_id] = curr.status;
+            return acc;
+          },
+          {} as Record<string, string>
+        );
         setAttendance(fetched);
       })
       .catch(err => {

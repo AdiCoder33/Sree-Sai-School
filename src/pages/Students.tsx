@@ -13,11 +13,11 @@ import { GlobalAllocateStudentModal } from '../components/GlobalAllocateStudentM
 import { toast } from 'sonner';
 import { BulkPromotionModal } from '../components/BulkPromotionModal'; // adjust path if needed
 import { AssignTeacherModal } from '../components/AssignTeacherModal';
+import { Class as ApiClass } from '../types/auth';
 
 
 
-
-interface Class {
+interface ClassInfo {
   id: string;
   name: string;
   students: number;
@@ -30,7 +30,7 @@ export const Students: React.FC = () => {
   const [currentView, setCurrentView] = useState<'classes' | 'class-detail' | 'student-profile'>('classes');
   const [selectedClassId, setSelectedClassId] = useState<string>('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
-  const [classes, setClasses] = useState<Class[]>([]);
+  const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshKey, setRefreshKey] = useState(0);
   const user = JSON.parse(localStorage.getItem('smartschool_user') || '{}');
@@ -52,13 +52,13 @@ const role = user.role;
       });
       
       if (response.ok) {
-        const data = await response.json();
-        const formattedClasses = data.map((cls: any) => ({
+        const data: ApiClass[] = await response.json();
+        const formattedClasses = data.map((cls: ApiClass) => ({
           id: cls.id,
           name: cls.name,
           students: cls.studentCount || 0,
-          teacher: cls.teacherFirstName && cls.teacherLastName 
-            ? `${cls.teacherFirstName} ${cls.teacherLastName}` 
+          teacher: cls.teacherFirstName && cls.teacherLastName
+            ? `${cls.teacherFirstName} ${cls.teacherLastName}`
             : 'No teacher assigned',
           description: `Students enrolled in ${cls.name}`
         }));

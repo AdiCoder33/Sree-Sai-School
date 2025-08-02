@@ -2,7 +2,7 @@
 
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
-import { CacheFirst, NetworkFirst } from 'workbox-strategies';
+import { CacheFirst, NetworkFirst, StaleWhileRevalidate } from 'workbox-strategies';
 import { ExpirationPlugin } from 'workbox-expiration';
 
 declare const self: ServiceWorkerGlobalScope;
@@ -40,6 +40,34 @@ registerRoute(
     plugins: [
       new ExpirationPlugin({
         maxEntries: 50,
+        maxAgeSeconds: 60 * 60 * 24 * 30,
+      }),
+    ],
+  })
+);
+
+registerRoute(
+  ({ request }) => request.destination === 'font',
+  new CacheFirst({
+    cacheName: 'fonts-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 20,
+        maxAgeSeconds: 60 * 60 * 24 * 365,
+      }),
+    ],
+  })
+);
+
+registerRoute(
+  ({ request, url }) =>
+    (request.destination === 'style' || request.destination === 'script') &&
+    url.origin !== self.location.origin,
+  new StaleWhileRevalidate({
+    cacheName: 'external-resources-cache',
+    plugins: [
+      new ExpirationPlugin({
+        maxEntries: 30,
         maxAgeSeconds: 60 * 60 * 24 * 30,
       }),
     ],

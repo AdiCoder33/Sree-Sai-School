@@ -21,6 +21,52 @@ SmartSchool is a full-stack, role-based school management platform built with **
 1. Copy `.env.example` to `.env` in the project root.
 2. Update `VITE_API_URL` with your backend's base URL. It defaults to `http://localhost:5000/api`.
 
+## 📱 PWA
+
+### Generate icons
+
+Use [pwa-asset-generator](https://github.com/elegantapp/pwa-asset-generator) to create the required icons:
+
+```bash
+npx pwa-asset-generator public/placeholder.svg public --icon-only --background '#ffffff'
+mv public/android-chrome-192x192.png public/pwa-192x192.png
+mv public/android-chrome-512x512.png public/pwa-512x512.png
+# apple-touch-icon.png is generated automatically
+```
+
+If these images are missing in `public/`, generate them and commit the files in a follow-up PR.
+
+### Manifest & VitePWA
+
+Add the icons to the manifest used by [vite-plugin-pwa](https://vite-pwa-org.netlify.app/):
+
+```ts
+// vite.config.ts
+VitePWA({
+  registerType: "autoUpdate",
+  srcDir: "src",
+  filename: "sw.ts",
+  strategies: "injectManifest",
+  manifest: {
+    name: "Sree Sai School",
+    short_name: "SreeSai",
+    theme_color: "#ffffff",
+    icons: [
+      { src: "/pwa-192x192.png", sizes: "192x192", type: "image/png" },
+      { src: "/pwa-512x512.png", sizes: "512x512", type: "image/png" },
+      { src: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }
+    ]
+  }
+});
+```
+
+### Verify installability & offline support
+
+1. Run `npm run build` followed by `npm run preview` to serve the production build.
+2. In Chrome DevTools, open **Application → Manifest** to confirm the install prompt and icons.
+3. Run a **Lighthouse** audit and ensure the **Progressive Web App** category passes.
+4. To test offline, toggle **Offline** in the **Network** panel and reload – the cached `offline.html` should appear.
+
 ---
 
 ## 🧠 Tech Stack

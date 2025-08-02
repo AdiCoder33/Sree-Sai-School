@@ -12,9 +12,14 @@ precacheAndRoute(self.__WB_MANIFEST);
 const OFFLINE_URL = '/offline.html';
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open('offline-cache').then((cache) => cache.add(OFFLINE_URL))
   );
+});
+
+self.addEventListener('activate', () => {
+  self.clientsClaim();
 });
 
 const navigationHandler = async (params: { request: Request }) => {

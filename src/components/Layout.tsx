@@ -24,7 +24,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   if (!user || isHomePage) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <main className="p-4 md:p-6">
+        <main className="p-0 md:p-0">
           {children}
         </main>
       </div>

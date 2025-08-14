@@ -330,14 +330,12 @@ React.useEffect(() => {
           />
           {/* full-width hero content */}
           <div className="relative z-10 w-full px-0">
-            <div className="min-h-[60vh] sm:min-h-[72vh] lg:min-h-[78vh] pb-24 sm:pb-36 lg:pb-44 flex flex-col items-center justify-center text-center">
-              <h2 className="mt-6 sm:mt-10 text-white text-4xl sm:text-6xl lg:text-7xl font-extrabold leading-tight drop-shadow-md">
-                Welcome to Sreesai <br className="hidden sm:block" /> School
+            <div className=" min-h-[60vh] sm:mt-20 lg:mt-20 sm:min-h-[78vh] lg:min-h-[78vh] pb-10 sm:pb-0 lg:pb-10 flex flex-col items-center justify-center text-center">
+              <h2 className="mt-20 sm:mt-25 text-white text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-md">
+                Welcome to Sreesai School
               </h2>
-              <p className="mt-4 sm:mt-6 text-white/95 text-lg sm:text-2xl max-w-3xl px-2">
-                Inspiring young minds to Dream, Learn, and Achieve — Since 1995
-              </p>
-              <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4">
+             
+              <div className="mt-6 sm:mt-10 flex flex-row sm:flex-row gap-3 sm:gap-2">
                 <a href="#admissions">
                   <Button className="bg-[hsl(var(--brand-cta))] hover:bg-[hsl(var(--brand-cta-hover))] focus:ring-4 ring-[hsl(var(--ring))]">
                     Enroll Now
@@ -348,19 +346,14 @@ React.useEffect(() => {
                     Contact Us
                   </Button>
                 </a>
-                <Link
-                  to="/prospectus"
-                  className="text-white/90 underline underline-offset-4 hover:text-white text-sm sm:text-base text-center sm:self-center"
-                >
-                  Download Prospectus
-                </Link>
+                
               </div>
             </div>
           </div>
 
           {/* wave */}
           <svg
-            className="pointer-events-none absolute bottom-0 left-0 w-full h-[100px] sm:h-[160px] lg:h-[220px] z-0"
+            className="  pointer-events-none absolute bottom-0 left-0 w-full h-[100px] sm:h-[160px] lg:h-[220px] z-0"
             viewBox="0 0 1440 320"
             preserveAspectRatio="none"
           >

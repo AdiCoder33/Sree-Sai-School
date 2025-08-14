@@ -423,17 +423,17 @@ export const Home: React.FC = () => {
             </div>
 
             <div className="px-3 sm:px-6">
-              <CampusShowcaseCard
-                imageSrc="/images/sreesai_3.JPG"
-                alt="Annual day group photo at Sree Sai School"
-                chip="Since 1995"
-                title="Sree Sai"
-                blurb="Excellence in education since 1995. Nurturing minds with strong values, modern facilities, and dedicated faculty for holistic development."
-                className="w-full max-w-[820px] justify-self-center ring-1 ring-[hsl(var(--line))] bg-white/90 backdrop-blur-sm"
-              />
+                <CampusShowcaseCard
+                  imageSrc="/images/sreesai_3.JPG"
+                  alt="Annual day group photo at Sree Sai School"
+                  chip="Since 1995"
+                  title="Sree Sai"
+                  blurb="Excellence in education since 1995. Nurturing minds with strong values, modern facilities, and dedicated faculty for holistic development."
+                  className="w-full max-w-[820px] justify-self-center ring-1 ring-[hsl(var(--line))] bg-white/90 backdrop-blur-sm"
+                />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
 
         {/* ===== PROGRAMS (Carousel) ===== */}
         <section id="programs" className="py-10 sm:py-16 px-0">
@@ -443,17 +443,18 @@ export const Home: React.FC = () => {
               <div className="absolute -bottom-20 -right-12 h-40 sm:h-56 w-40 sm:w-56 rounded-full blur-3xl bg-[hsl(var(--brand-cta))]/10" />
             </div>
 
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))] mb-6 sm:mb-8 px-3 sm:px-6">
-              Programs & Facilities
-            </h3>
+            <div className="px-3 sm:px-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))] mb-6 sm:mb-8">
+                Programs & Facilities
+              </h3>
 
-            <div className="relative">
-              <div
-                ref={progTrackRef}
-                className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden px-3 sm:px-6"
-                aria-label="Programs & Facilities carousel"
-              >
-                {programSlides.map((s) => (
+              <div className="relative">
+                <div
+                  ref={progTrackRef}
+                  className="flex gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                  aria-label="Programs & Facilities carousel"
+                >
+                  {programSlides.map((s) => (
                   <figure
                     key={s.title}
                     className="relative w-[88%] sm:w-[420px] lg:w-[520px] flex-shrink-0 snap-center rounded-2xl overflow-hidden border border-[hsl(var(--line))] bg-white/95 backdrop-blur-sm shadow-sm"
@@ -473,24 +474,25 @@ export const Home: React.FC = () => {
                     </figcaption>
                   </figure>
                 ))}
-              </div>
+                </div>
 
-              <button
-                type="button"
-                aria-label="Previous"
-                onClick={() => scrollPrograms(-1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-[hsl(var(--line))] shadow hover:bg-white"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                aria-label="Next"
-                onClick={() => scrollPrograms(1)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-[hsl(var(--line))] shadow hover:bg-white"
-              >
-                ›
-              </button>
+                <button
+                  type="button"
+                  aria-label="Previous"
+                  onClick={() => scrollPrograms(-1)}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-[hsl(var(--line))] shadow hover:bg-white"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next"
+                  onClick={() => scrollPrograms(1)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 z-10 hidden sm:inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/90 ring-1 ring-[hsl(var(--line))] shadow hover:bg-white"
+                >
+                  ›
+                </button>
+              </div>
             </div>
           </div>
         </section>
@@ -619,8 +621,10 @@ export const Home: React.FC = () => {
         {/* ===== GALLERY ===== */}
         <section id="gallery" className="py-10 sm:py-16 px-0">
           <div className="w-full">
-            <div className="flex items-center justify-between mb-5 sm:mb-6 px-3 sm:px-6">
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))]">Campus Gallery</h3>
+            <div className="mb-5 sm:mb-6">
+              <div className="flex items-center justify-between px-3 sm:px-6">
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))]">Campus Gallery</h3>
+              </div>
             </div>
             <ImageCarousel
               className="h-[220px] sm:h-[300px] lg:h-[360px] rounded-xl overflow-hidden ring-1 ring-[hsl(var(--line))] mx-3 sm:mx-6"
@@ -765,10 +769,11 @@ export const Home: React.FC = () => {
           </div>
 
           <div className="w-full">
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))] mb-2 sm:mb-3 px-3 sm:px-6">Get in touch</h3>
-            <p className="text-[hsl(var(--body))]/80 mb-6 sm:mb-8 px-3 sm:px-6">We’re here to help with admissions, campus visits, and general queries.</p>
+            <div className="px-3 sm:px-6">
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-[hsl(var(--ink))] mb-2 sm:mb-3">Get in touch</h3>
+              <p className="text-[hsl(var(--body))]/80 mb-6 sm:mb-8">We’re here to help with admissions, campus visits, and general queries.</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-start px-3 sm:px-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 items-start">
               {/* PHONE */}
               <div className="group relative self-start rounded-2xl p-[1px] bg-gradient-to-b from-blue-300/25 to-indigo-200/20">
                 <Card className="relative overflow-hidden text-center bg-white/95 backdrop-blur-sm border border-[hsl(var(--line))] shadow-sm group-hover:shadow-lg transition-all rounded-2xl">
@@ -877,29 +882,30 @@ export const Home: React.FC = () => {
             </div>
 
             {/* admissions strip CTA */}
-            <div className="mt-8 relative overflow-hidden rounded-2xl p-5 sm:p-7 text-white ring-1 ring-white/15 bg-[linear-gradient(90deg,hsl(var(--brand))_0%,hsl(var(--brand-cta))_100%)] mx-3 sm:mx-6">
-              <div className="pointer-events-none absolute -top-24 left-1/3 h-40 sm:h-48 w-[140%] rotate-[-8deg] bg-white/10 blur-2xl" />
-              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-between">
-                <div className="text-center sm:text-left">
-                  <p className="text-xs sm:text-sm text-white/80">Need help right away?</p>
-                  <h4 className="text-lg sm:text-xl font-semibold">Admissions Helpline</h4>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <a href="tel:+919876543210" className="flex-1 sm:flex-initial">
-                    <Button className="w-full sm:w-auto bg-white text-[hsl(var(--brand))] hover:bg-blue-50 ring-1 ring-white/40">
-                      Call Now
-                    </Button>
-                  </a>
-                  <a href="mailto:admissions@sreesaischool.edu" className="flex-1 sm:flex-initial">
-                    <Button variant="secondary" className="w-full sm:w-auto bg-transparent text-white border border-white/40 hover:bg-white/10">
-                      Email Admissions
-                    </Button>
-                  </a>
+              <div className="mt-8 relative overflow-hidden rounded-2xl p-5 sm:p-7 text-white ring-1 ring-white/15 bg-[linear-gradient(90deg,hsl(var(--brand))_0%,hsl(var(--brand-cta))_100%)] mx-3 sm:mx-6">
+                <div className="pointer-events-none absolute -top-24 left-1/3 h-40 sm:h-48 w-[140%] rotate-[-8deg] bg-white/10 blur-2xl" />
+                <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-4 justify-between">
+                  <div className="text-center sm:text-left">
+                    <p className="text-xs sm:text-sm text-white/80">Need help right away?</p>
+                    <h4 className="text-lg sm:text-xl font-semibold">Admissions Helpline</h4>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                    <a href="tel:+919876543210" className="flex-1 sm:flex-initial">
+                      <Button className="w-full sm:w-auto bg-white text-[hsl(var(--brand))] hover:bg-blue-50 ring-1 ring-white/40">
+                        Call Now
+                      </Button>
+                    </a>
+                    <a href="mailto:admissions@sreesaischool.edu" className="flex-1 sm:flex-initial">
+                      <Button variant="secondary" className="w-full sm:w-auto bg-transparent text-white border border-white/40 hover:bg-white/10">
+                        Email Admissions
+                      </Button>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
+            </div>
+          </section>
       </main>
 
       {/* ===== FOOTER (full-width, sticks to bottom because parent is flex-col) ===== */}
@@ -915,9 +921,10 @@ export const Home: React.FC = () => {
 
         {/* full-width: no side padding */}
         <div className="relative w-full px-0 py-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10 px-3 sm:px-6">
-            <div>
-              <div className="flex items-center gap-3">
+          <div className="px-3 sm:px-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-10">
+              <div>
+                <div className="flex items-center gap-3">
                 <School className="h-7 w-7 text-[hsl(var(--brand-cta))]" />
                 <span className="font-semibold tracking-tight">Sree Sai English Medium High School</span>
               </div>
@@ -986,18 +993,21 @@ export const Home: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
 
-          <div className="mt-8 md:mt-10 border-t border-white/10 pt-5 md:pt-6 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 px-3 sm:px-6">
-            <p className="text-white/60 text-xs sm:text-sm text-center md:text-left">
-              © {new Date().getFullYear()} Sree Sai English Medium High School. All rights reserved.
-            </p>
-            <div className="flex items-center gap-4 sm:gap-6 text-sm">
-              <Link to="#" className="text-white/70 hover:text-white">Privacy</Link>
-              <Link to="#" className="text-white/70 hover:text-white">Terms</Link>
+            <div className="mt-8 md:mt-10 border-t border-white/10 pt-5 md:pt-6">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 px-3 sm:px-6">
+                <p className="text-white/60 text-xs sm:text-sm text-center md:text-left">
+                  © {new Date().getFullYear()} Sree Sai English Medium High School. All rights reserved.
+                </p>
+                <div className="flex items-center gap-4 sm:gap-6 text-sm">
+                  <Link to="#" className="text-white/70 hover:text-white">Privacy</Link>
+                  <Link to="#" className="text-white/70 hover:text-white">Terms</Link>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </footer>
+        </footer>
 
       {/* Floating “back to top” arrow (shows near bottom) */}
       {showToTop && (

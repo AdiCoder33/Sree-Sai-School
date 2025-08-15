@@ -42,6 +42,7 @@ export const Homework: React.FC = () => {
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
 
     useEffect(() => {
     if (user?.role === 'parent' && selectedStudent) {
@@ -208,12 +209,9 @@ const handleDeleteHomework = async (homeworkId: string) => {
   }
 };
 
-  const [classList, setClassList] = useState<{ id: string; name: string }[]>([]);
-
-
-const fetchClasses = async () => {
-  try {
-    const token = localStorage.getItem('smartschool_token');
+  const fetchClasses = async () => {
+    try {
+      const token = localStorage.getItem('smartschool_token');
 const res = await axios.get(`${API_BASE}/classes`, {
   headers: { Authorization: `Bearer ${token}` }
 });

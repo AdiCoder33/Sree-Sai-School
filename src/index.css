@@ -1,113 +1,183 @@
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Global theme tokens (HSL only) */
+/* Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+
 @layer base {
-  :root {
-    /* ── Brand palette ───────────────────────────── */
+  :root{
+    /* HSL tokens */
     --brand:            224.4 64.3% 32.9%;
     --brand-cta:        221.2 83.2% 53.3%;
     --brand-cta-hover:  224.3 76.3% 48%;
-
-    --accent-amber:      37.7 92.1% 50.2%;
-    --success-emerald:  161.4 93.5% 30.4%;
-
     --ink:   222.2 47.4% 11.2%;
-    --body:  215.3 25% 26.7%;
-    --line:  214.3 31.8% 91.4%;
     --bg:    210 40% 98%;
     --surface: 0 0% 100%;
+    --line:  214.3 31.8% 91.4%;
     --ring-highlight: 211.7 96.4% 78.4%;
 
-    /* Map to shadcn tokens */
     --background: var(--bg);
     --foreground: var(--ink);
     --card: var(--surface);
     --card-foreground: var(--ink);
-    --popover: var(--surface);
-    --popover-foreground: var(--ink);
-    --primary: var(--brand-cta);
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: var(--ink);
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: var(--accent-amber);
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 100%;
     --border: var(--line);
     --input: var(--line);
     --ring: var(--ring-highlight);
-    --radius: 0.5rem;
 
-    /* Sidebar */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: var(--brand);
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: var(--ring-highlight);
+    /* Brand hex references */
+    --brand-600:#2563EB;
+    --brand-500:#3B82F6;
+    --brand-800:#1D4ED8;
   }
 
-  .dark {
-    --background: 222.2 84% 6%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 7.5%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 7.5%;
-    --popover-foreground: 210 40% 98%;
-    --primary: var(--brand-cta);
-    --primary-foreground: 0 0% 100%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: var(--accent-amber);
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 62.8% 46%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 222.2 84% 5.5%;
-    --sidebar-foreground: 210 40% 96%;
-    --sidebar-primary: var(--brand-cta);
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 15%;
-    --sidebar-accent-foreground: 210 40% 96%;
-    --sidebar-border: 220 15% 15%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+  html{
+    font-family:Poppins, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    overflow-x:hidden;                 /* allow horizontal lock only */
   }
-
-  /* Base defaults using tokens */
-  * { border-color: hsl(var(--border)); }
-
-  body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    overflow-x: hidden;           /* prevent stray horizontal bar */
-    margin: 0;                    /* kill browser default 8px margin */
+  body{
+    margin:0;
+    color:hsl(var(--foreground));
+    background:hsl(var(--background));
+    overflow-x:hidden;                 /* DO NOT globally hide vertical scroll */
   }
-
-  /* Edge-to-edge layout reset (kills top/left gutters) */
-  html, body, #root, #__next {
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;       /* not 100vw */
-    min-height: 100%;
-  }
-
-  #root, #__next { max-width: none !important; }
-  html { overflow-x: hidden; }
+  *{ border-color:hsl(var(--border)); }
 }
 
-/* Optional: nice focus ring for a11y */
-:root :is(a,button,[role="button"]):focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 4px hsl(var(--ring));
-  border-radius: 0.75rem;
+/* 3D split backgrounds */
+.clay-bg{
+  background:
+    radial-gradient(1200px 600px at 70% 80%, rgba(0,0,0,.12) 0%, transparent 60%),
+    linear-gradient(135deg, #2b6ae9 0%, #4b82f7 52%, #2461db 100%);
+}
+.right-bg{
+  background:
+    radial-gradient(900px 450px at 30% 85%, rgba(0,0,0,.10) 0%, transparent 60%),
+    linear-gradient(180deg, #f6f8fb 0%, #ffffff 100%);
+}
+
+/* ========== LOGIN PAGE SCOPED LAYOUT ========== */
+/* (Works with your current markup; also supports adding 'login-page' as a class) */
+
+/* Keep the login scene fixed-height without blocking site scroll globally */
+.login-page,
+.h-screen.relative.overflow-hidden{
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+/* --- keep two columns on mobile with a nicer ratio --- */
+.mobile-two-col{ display:grid; grid-template-columns: 1fr 1fr; }
+.two-col-compact{ grid-template-columns: 62% 38%; }   /* phone balance */
+@media (min-width:640px){
+  .two-col-compact{ grid-template-columns: 1fr 1fr; }  /* normal at sm+ */
+}
+
+/* make the illustration size relative to its column on phones */
+@media (max-width:640px){
+  .base-illustration{ width:92% !important; left:auto !important; }
+  .floor-shadow{ width:88% !important; left:4% !important; }
+}
+
+/* handy: slightly taller art on very small screens */
+@media (max-width:400px){
+  .hero-ill{ height: 200px !important; }
+}
+
+/* Illustration sizing helpers (keep shadow aligned) */
+.base-illustration{ left:0; width:min(86vw, 640px); }
+.floor-shadow{ left:6px; width:min(78vw, 580px); }
+
+/* On very small screens the login card scrolls internally if needed */
+.clay-card{
+  position:relative;
+  background:#eff3f9;
+  border:1px solid rgba(0,0,0,.035);
+  border-radius:28px;
+  box-shadow:
+    0 26px 60px rgba(16,38,90,.25),
+    inset 0 2px 0 rgba(255,255,255,.92),
+    inset 0 -2px 0 rgba(0,0,0,.035);
+
+  /* internal scrolling only when content exceeds viewport */
+  max-height: 92dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.clay-card:after{
+  content:"";
+  position:absolute; inset:0;
+  border-radius:28px;
+  background:radial-gradient(transparent 60%, rgba(0,0,0,.02) 100%);
+  pointer-events:none;
+}
+.clay-title{ text-shadow:0 2px 0 rgba(0,0,0,.08); }
+
+/* Subtle custom scrollbar for the login card only (keeps the rest native) */
+.clay-card::-webkit-scrollbar { width: 8px; }
+.clay-card::-webkit-scrollbar-thumb { background: rgba(0,0,0,.12); border-radius: 8px; }
+
+/* Headline subtle 3D extrusion (used in login hero text) */
+.hero-headline{
+  text-shadow:
+    0 2px 0 rgba(0,0,0,.08),
+    0 18px 40px rgba(0,0,0,.35);
+}
+
+/* Inputs / button */
+.clay-input{
+  height:48px;
+  border-radius:14px;
+  border:1px solid #d9e0ea;
+  background:#f7f9fc;
+  box-shadow: inset 0 1.5px 2.5px rgba(0,0,0,.06), 0 3px 8px rgba(34,86,180,.06);
+}
+.clay-input:focus{
+  outline:none; border-color:#c8d7ff; background:#fff;
+  box-shadow:
+    inset 0 1px 2px rgba(0,0,0,.05),
+    0 0 0 3px rgba(37,99,235,.22),
+    0 12px 24px rgba(37,99,235,.12);
+}
+.clay-btn{
+  height:52px; border-radius:16px; color:#fff; font-weight:700;
+  background:linear-gradient(#2f6bea,#285fe0);
+  box-shadow:0 18px 32px rgba(37,99,235,.30), inset 0 2px 0 rgba(255,255,255,.65);
+  transition:transform .08s ease, filter .2s ease;
+}
+.clay-btn:hover{ filter:brightness(1.04); }
+.clay-btn:active{ transform:translateY(1px); }
+
+/* Parallax helpers */
+.parallax{ transform-style:preserve-3d; }
+.depth-2{ transform: translate3d(calc(var(--mx)*6px), calc(var(--my)*-8px), 0); }
+
+/* Ambient glows for extra depth */
+.scene-glow-1,
+.scene-glow-2{
+  position:fixed; pointer-events:none; z-index:0; filter:blur(60px); opacity:.6;
+}
+.scene-glow-1{
+  width:320px; height:320px; left:2%; bottom:8%;
+  background: radial-gradient(closest-side, rgba(59,130,246,.20), transparent 70%);
+}
+.scene-glow-2{
+  width:280px; height:280px; right:3%; top:10%;
+  background: radial-gradient(closest-side, rgba(37,99,235,.18), transparent 70%);
+}
+
+/* Focus ring a11y */
+:root :is(a,button,[role="button"]):focus-visible{
+  outline:none;
+  box-shadow:0 0 0 4px hsl(var(--ring-highlight));
+  border-radius:.75rem;
+}
+
+/* ====== OPTIONAL: mobile fine‑tuning for the login card width ====== */
+/* The TSX already sets widths via Tailwind; these ensure a nice split on tiny screens */
+@media (max-width: 639px){
+  .login-card{ width: 52vw; }
+  .base-illustration{ width: 46vw; }
+  .floor-shadow{ width: 44vw; left: 4px; }
 }

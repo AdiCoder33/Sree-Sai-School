@@ -22,6 +22,7 @@ import { Settings } from './pages/Settings';
 import { Profile } from './pages/Profile';
 import NotFound from './pages/NotFound';
 import { Toaster } from './components/ui/sonner';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
@@ -37,7 +38,7 @@ function App() {
               <Route path="/students" element={<Students />} />
               <Route path="/attendance" element={<Attendance />} />
               <Route path="/learning-logs" element={<LearningLogs />} />
-              <Route path="/homework" element={<Homework />} />
+              <Route path="/homework" element={<ErrorBoundary><Homework /></ErrorBoundary>} />
               <Route path="/timetable" element={<Timetable />} />
               <Route path="/events" element={<Events />} />
               <Route path="/announcements" element={<Announcements />} />

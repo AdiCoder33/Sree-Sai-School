@@ -9,6 +9,7 @@ import { API_BASE, withBaseUrl } from '../lib/api';
 import { Student, AttendanceRecord, LearningLog } from '../types/auth';
 
 const fallbackStudent = {
+  id: 'stu-001',
   firstName: 'Emma',
   lastName: 'Wilson',
   gender: 'Female',
@@ -30,13 +31,13 @@ const fallbackStudent = {
 };
 
 const fallbackAttendance: AttendanceRecord[] = [
-  { date: '2024-01-15', status: 'present', remarks: '' },
-  { date: '2024-01-14', status: 'present', remarks: '' },
-  { date: '2024-01-13', status: 'absent', remarks: 'Sick leave' },
-  { date: '2024-01-12', status: 'present', remarks: '' },
-  { date: '2024-01-11', status: 'late', remarks: 'Traffic delay' },
-  { date: '2024-01-10', status: 'present', remarks: '' },
-  { date: '2024-01-09', status: 'present', remarks: '' }
+  { id: 'att-001', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-15', status: 'present', remarks: '' },
+  { id: 'att-002', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-14', status: 'present', remarks: '' },
+  { id: 'att-003', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-13', status: 'absent', remarks: 'Sick leave' },
+  { id: 'att-004', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-12', status: 'present', remarks: '' },
+  { id: 'att-005', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-11', status: 'late', remarks: 'Traffic delay' },
+  { id: 'att-006', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-10', status: 'present', remarks: '' },
+  { id: 'att-007', studentId: 'stu-001', teacherId: 't-001', date: '2024-01-09', status: 'present', remarks: '' }
 ];
 
 
@@ -148,307 +149,171 @@ export const StudentProfile: React.FC<StudentProfileProps> = ({ studentId, onBac
     ? parentName.split(' ').map(n => n[0]).join('')
     : '';
 
-  return (
-    <div className="space-y-6">
+   return (
+    <div className="space-y-8">
+      {/* Top bar */}
       <div className="flex items-center space-x-4">
-        <Button variant="ghost" onClick={onBack}>
+        <Button
+          variant="ghost"
+          onClick={onBack}
+          className="hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white"
+        >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
       </div>
 
-      <div className="flex justify-between items-center">
+      {/* Student Header */}
+      <div className="flex justify-between items-center p-6 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl shadow-lg text-white">
         <div className="flex items-center space-x-4">
-          <Avatar className="h-16 w-16">
-            <AvatarImage src={student.avatar} alt={`${student.firstName} ${student.lastName}`} />
-            <AvatarFallback className="text-lg">
-              {student.firstName[0]}{student.lastName[0]}
+          <Avatar className="h-20 w-20 ring-4 ring-white">
+            <AvatarImage
+              src={student.avatar}
+              alt={`${student.firstName} ${student.lastName}`}
+            />
+            <AvatarFallback className="text-xl">
+              {student.firstName[0]}
+              {student.lastName[0]}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold">
               {student.firstName} {student.lastName}
             </h1>
-            <p className="text-gray-600 mt-2">Roll Number: {student.rollNumber} • {student.class}</p>
+            <p className="mt-1 text-indigo-100">
+              🎓 Roll No: {student.rollNumber} • {student.class}
+            </p>
           </div>
         </div>
-        <Badge variant={student.status === 'Active' ? 'default' : 'secondary'}>
+        <Badge
+          className={`text-white px-4 py-2 rounded-full shadow-lg ${
+            student.status === "Active"
+              ? "bg-green-500"
+              : "bg-gray-400"
+          }`}
+        >
           {student.status}
         </Badge>
       </div>
 
-      <div className="flex space-x-1 mb-6">
-        <Button
-          variant={activeTab === 'profile' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('profile')}
-        >
-          Profile
-        </Button>
-        <Button
-          variant={activeTab === 'attendance' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('attendance')}
-        >
-          Attendance
-        </Button>
-        <Button
-          variant={activeTab === 'learning' ? 'default' : 'outline'}
-          onClick={() => setActiveTab('learning')}
-        >
-          Learning Logs
-        </Button>
+      {/* Tabs */}
+      <div className="flex space-x-3 border-b pb-2">
+        {["profile", "attendance", "learning"].map((tab) => (
+          <Button
+            key={tab}
+            variant="ghost"
+            className={`relative px-4 ${
+              activeTab === tab
+                ? "text-indigo-600 font-semibold after:absolute after:bottom-0 after:left-0 after:h-1 after:w-full after:bg-indigo-600 after:rounded-full"
+                : "text-gray-500 hover:text-indigo-600"
+            }`}
+            onClick={() => setActiveTab(tab as 'profile' | 'attendance' | 'learning')}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </Button>
+        ))}
       </div>
 
-      {activeTab === 'profile' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
+      {/* Profile */}
+      {activeTab === "profile" && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Student Info */}
+          <Card className="shadow-xl hover:shadow-2xl transition rounded-2xl">
+            <CardHeader className="bg-indigo-600 text-white rounded-t-2xl">
               <CardTitle>Student Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="text-center mb-6">
-                  <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={student.avatar} alt={`${student.firstName} ${student.lastName}`} />
-                    <AvatarFallback className="text-3xl font-bold">
-                      {student.firstName[0]}{student.lastName[0]}
-                    </AvatarFallback>
-                  </Avatar>
-                  <h3 className="text-xl font-semibold">{student.firstName} {student.lastName}</h3>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex flex-col space-y-4">
+                <div className="flex items-center space-x-3">
+                  <User className="h-5 w-5 text-indigo-500" />
+                  <p><strong>Roll Number:</strong> {student.rollNumber}</p>
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Roll Number</p>
-                      <p className="font-medium">{student.rollNumber}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Gender</p>
-                      <p className="font-medium">{student.gender || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <BookOpen className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Class/Section</p>
-                      <p className="font-medium">{student.class} / {student.section}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Calendar className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Date of Birth</p>
-                      <p className="font-medium">{new Date(student.dateOfBirth).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{student.phone}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Address</p>
-                      <p className="font-medium">{student.address}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <Droplet className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Blood Group</p>
-                      <p className="font-medium">{student.bloodGroup || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <Activity className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Medical Conditions/Disabilities</p>
-                      <p className="font-medium">{student.medicalConditions || 'N/A'}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Emergency Contact</p>
-                      <p className="font-medium">{student.emergencyContact || 'N/A'}</p>
-                    </div>
-                  </div>
+                <div className="flex items-center space-x-3">
+                  <BookOpen className="h-5 w-5 text-indigo-500" />
+                  <p><strong>Class:</strong> {student.class}/{student.section}</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Calendar className="h-5 w-5 text-indigo-500" />
+                  <p><strong>DOB:</strong> {new Date(student.dateOfBirth).toLocaleDateString()}</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <Phone className="h-5 w-5 text-indigo-500" />
+                  <p><strong>Phone:</strong> {student.phone}</p>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <MapPin className="h-5 w-5 text-indigo-500" />
+                  <p><strong>Address:</strong> {student.address}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
+          {/* Parent Info */}
+          <Card className="shadow-xl hover:shadow-2xl transition rounded-2xl">
+            <CardHeader className="bg-pink-500 text-white rounded-t-2xl">
               <CardTitle>Parent Information</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="text-center mb-6">
-                  <div className="w-20 h-20 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full mx-auto mb-4 flex items-center justify-center text-white text-2xl font-bold">
-                    {parentInitials}
-                  </div>
-                  <h3 className="text-lg font-semibold">{parentName || 'N/A'}</h3>
+            <CardContent className="p-6 space-y-4">
+              <div className="flex flex-col items-center space-y-4">
+                <div className="w-24 h-24 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full flex items-center justify-center text-white text-3xl font-bold shadow-md">
+                  {parentInitials}
                 </div>
-                
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3">
-                    <User className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Email</p>
-                      <p className="font-medium">{student.parentEmail || 'N/A'}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-4 w-4 text-gray-500" />
-                    <div>
-                      <p className="text-sm text-gray-600">Phone</p>
-                      <p className="font-medium">{student.parentPhone || 'N/A'}</p>
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-xl font-semibold">{parentName || "N/A"}</h3>
+                <p>Email: {student.parentEmail || "N/A"}</p>
+                <p>Phone: {student.parentPhone || "N/A"}</p>
               </div>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {activeTab === 'attendance' && (
+      {/* Attendance */}
+      {activeTab === "attendance" && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">{attendanceStats.present}</p>
-                  <p className="text-sm text-gray-600">Present</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-red-600">{attendanceStats.absent}</p>
-                  <p className="text-sm text-gray-600">Absent</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late}</p>
-                  <p className="text-sm text-gray-600">Late</p>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">{attendancePercentage}%</p>
-                  <p className="text-sm text-gray-600">Attendance Rate</p>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+            {[
+              { label: "Present", value: attendanceStats.present, color: "green" },
+              { label: "Absent", value: attendanceStats.absent, color: "red" },
+              { label: "Late", value: attendanceStats.late, color: "yellow" },
+              { label: "Rate", value: `${attendancePercentage}%`, color: "blue" },
+            ].map((stat, i) => (
+              <Card key={i} className="shadow-md rounded-xl">
+                <CardContent className="p-5 text-center">
+                  <p className={`text-3xl font-bold text-${stat.color}-500`}>
+                    {stat.value}
+                  </p>
+                  <p className="text-gray-600">{stat.label}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Attendance History</CardTitle>
-              <CardDescription>Recent attendance records</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                {attendance.map((record, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      {getStatusIcon(record.status)}
-                      <div>
-                        <p className="font-medium">{new Date(record.date).toLocaleDateString()}</p>
-                        {record.remarks && (
-                          <p className="text-sm text-gray-600">{record.remarks}</p>
-                        )}
-                      </div>
-                    </div>
-                    <Badge className={getStatusColor(record.status)}>
-                      {record.status.charAt(0).toUpperCase() + record.status.slice(1)}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
-      {activeTab === 'learning' && (
+      {/* Learning Logs */}
+      {activeTab === "learning" && (
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Learning Logs</CardTitle>
-              <CardDescription>
-                Daily learning activities and progress updates 
-                {user?.role === 'parent' && (
-                  <span className="block mt-1 text-sm text-indigo-600">
-                    Teacher: Ms. Sarah Johnson
+          {learningLogs.map((log) => (
+            <Card
+              key={log.id}
+              className="border-l-4 border-l-indigo-500 rounded-lg shadow-md hover:shadow-xl transition"
+            >
+              <CardContent className="p-5">
+                <div className="flex justify-between items-center mb-2">
+                  <Badge className="bg-indigo-500 text-white">{log.subject}</Badge>
+                  <span className="text-sm text-gray-500">
+                    {new Date(log.date).toLocaleDateString()}
                   </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {learningLogs.length > 0 ? (
-                  learningLogs.map((log) => (
-                    <Card key={log.id} className="border-l-4 border-l-indigo-500">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex items-center space-x-2">
-                            <BookOpen className="h-4 w-4 text-indigo-600" />
-                            <Badge variant="secondary">{log.subject}</Badge>
-                          </div>
-                          <span className="text-sm text-gray-500">
-                            {new Date(log.date).toLocaleDateString()}
-                          </span>
-                        </div>
-
-                        <div className="space-y-2">
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Activity</h4>
-                            <p className="text-gray-700">{log.activity}</p>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium text-gray-900 mb-1">Teacher's Notes</h4>
-                            <p className="text-gray-700">{log.notes}</p>
-                          </div>
-
-                          <div className="text-sm text-gray-500">
-                            <span>Logged by {log.teacherName}</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <p className="text-sm text-gray-500">No learning logs available.</p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+                </div>
+                <p className="font-medium">{log.activity}</p>
+                <p className="text-sm text-gray-600 mt-2">{log.notes}</p>
+                <p className="text-xs text-gray-500 mt-1">
+                  – {log.teacherName}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       )}
     </div>

@@ -94,47 +94,55 @@ useEffect(() => {
   }
 };
 
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-  <Button
-    variant="ghost"
-    size="icon"
-    className="ml-1"
-    onClick={(e) => {
-      e.stopPropagation(); // prevent triggering parent onClick
-      setOpen(true);
-    }}
-  >
-    <Pencil className="w-4 h-4" />
-  </Button>
-</DialogTrigger>
+ return (
+  <Dialog open={open} onOpenChange={setOpen}>
+    <DialogTrigger asChild>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="ml-1 text-indigo-600 hover:bg-indigo-100 rounded-full shadow-sm"
+        onClick={(e) => {
+          e.stopPropagation(); // prevent triggering parent onClick
+          setOpen(true);
+        }}
+      >
+        <Pencil className="w-4 h-4" />
+      </Button>
+    </DialogTrigger>
 
+    <DialogContent className="max-w-md rounded-3xl bg-gradient-to-br from-indigo-50 via-white to-emerald-50 shadow-xl border border-indigo-100">
+      <DialogHeader>
+        <DialogTitle className="text-lg font-bold text-indigo-700">
+          Assign Teacher
+        </DialogTitle>
+        <p className="text-sm text-gray-500">
+          Choose a teacher from the list and allocate them to this class.
+        </p>
+      </DialogHeader>
 
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Assign Teacher</DialogTitle>
-        </DialogHeader>
+      <div className="space-y-4 mt-4">
+        <select
+          className="w-full border border-indigo-200 rounded-3xl p-2 text-sm focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 bg-white shadow-sm"
+          value={selectedTeacherId}
+          onChange={(e) => setSelectedTeacherId(e.target.value)}
+        >
+          <option value="">Select a teacher</option>
+          {teachers.map((teacher) => (
+            <option key={teacher.id}  value={teacher.id}>
+              {teacher.firstName} {teacher.lastName} ({teacher.email})
+            </option>
+          ))}
+        </select>
 
-        <div className="space-y-4">
-          <select
-            className="w-full border rounded p-2 text-sm"
-            value={selectedTeacherId}
-            onChange={(e) => setSelectedTeacherId(e.target.value)}
-          >
-            <option value="">Select a teacher</option>
-            {teachers.map((teacher) => (
-              <option key={teacher.id} value={teacher.id}>
-                {teacher.firstName} {teacher.lastName} ({teacher.email})
-              </option>
-            ))}
-          </select>
-
-          <Button disabled={loading} onClick={handleAssign} className="w-full">
-            {loading ? 'Assigning...' : 'Assign Teacher'}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-};
+        <Button
+          disabled={loading}
+          onClick={handleAssign}
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-md transition-transform hover:scale-[1.02]"
+        >
+          {loading ? 'Assigning...' : 'Assign Teacher'}
+        </Button>
+      </div>
+    </DialogContent>
+  </Dialog>
+);
+}

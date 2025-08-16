@@ -47,7 +47,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         
         <SidebarInset className="flex-1 flex flex-col w-full md:w-auto">
           <Navbar />
-          <main className="flex-1 p-4 md:p-6 overflow-hidden">
+          <main className="flex-1 p-0 md:p-0 overflow-hidden">
             <div className="h-full overflow-auto">
               {children}
             </div>

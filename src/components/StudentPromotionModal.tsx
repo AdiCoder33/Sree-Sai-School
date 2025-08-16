@@ -150,8 +150,8 @@ export const StudentPromotionModal: React.FC<StudentPromotionModalProps> = ({ on
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100">
-          <ArrowUp className="h-4 w-4 mr-2" />
+        <Button variant="outline" className="bg-green-50 text-white-700 border-green-200 hover:bg-green-100">
+          <ArrowUp className="h-4 w-4 mr-2 " />
           Promote Students
         </Button>
       </DialogTrigger>

@@ -166,30 +166,37 @@ useEffect(() => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700">
+        <Button className="bg-gradient-to-r from-emerald-500 to-indigo-600 text-white shadow-md hover:opacity-90 transition-all duration-300">
           <Plus className="h-4 w-4 mr-2" />
           Add Student
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Add New Student</DialogTitle>
-          <DialogDescription>
-            Enter student and parent details to create a new student record and parent account
+
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-50 to-white rounded-xl shadow-xl border border-gray-200">
+        <DialogHeader className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white p-6 rounded-t-xl shadow-md">
+          <DialogTitle className="text-2xl font-bold">🎓 Add New Student</DialogTitle>
+          <DialogDescription className="text-sm text-gray-100">
+            Enter student and parent details to create a new student record.
           </DialogDescription>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">Student Information</h3>
-            
+
+        <form onSubmit={handleSubmit} className=" space-y-6 p-4">
+          {/* Student Info */}
+          <div className="space-y-4 bg-blue-400 rounded-3xl p-4 shadow-md border border-indigo-100">
+            <h3 className="text-lg font-semibold text-indigo-700 border-b pb-2">
+              Student Information
+            </h3>
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="firstName">First Name *</Label>
                 <Input
                   id="firstName"
+                  className="focus:ring-2 focus:ring-indigo-400"
                   value={formData.firstName}
-                  onChange={(e) => setFormData({...formData, firstName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, firstName: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -197,15 +204,23 @@ useEffect(() => {
                 <Label htmlFor="lastName">Last Name *</Label>
                 <Input
                   id="lastName"
+                  className="focus:ring-2 focus:ring-indigo-400"
                   value={formData.lastName}
-                  onChange={(e) => setFormData({...formData, lastName: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lastName: e.target.value })
+                  }
                   required
                 />
               </div>
               <div>
                 <Label htmlFor="gender">Gender *</Label>
-                <Select value={formData.gender} onValueChange={(value) => setFormData({...formData, gender: value})}>
-                  <SelectTrigger>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, gender: value })
+                  }
+                >
+                  <SelectTrigger className="focus:ring-2 focus:ring-indigo-400">
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -220,50 +235,40 @@ useEffect(() => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="classId">Select Class *</Label>
-                <Select value={formData.classId} onValueChange={(value) => setFormData({...formData, classId: value})}>
-                  <SelectTrigger>
+                <Select
+                  value={formData.classId}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, classId: value })
+                  }
+                >
+                  <SelectTrigger className="focus:ring-2 focus:ring-indigo-400">
                     <SelectValue placeholder="Choose a class" />
                   </SelectTrigger>
                   <SelectContent>
-                    {classes.map((cls) => (
-                      <SelectItem key={cls.id} value={cls.id}>
-                        {cls.name}
-                      </SelectItem>
-                    ))}
+                    <SelectItem value="1">Class 1</SelectItem>
+                    <SelectItem value="2">Class 2</SelectItem>
+                    <SelectItem value="3">Class 3</SelectItem>
+                    <SelectItem value="3">Class 4</SelectItem>
+                    <SelectItem value="3">Class 5</SelectItem>
+                    <SelectItem value="3">Class 6</SelectItem>
+                    <SelectItem value="3">Class 7</SelectItem>
+                    <SelectItem value="3">Class 8</SelectItem>
+                    <SelectItem value="3">Class 9</SelectItem>
+                    <SelectItem value="3">Class 10</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-  <Label>Select Parent Option</Label>
-  <Button type="button" variant="secondary" onClick={() => setShowParentModal(true)}>
-  {formData.parentFirstName ? `${formData.parentFirstName} ${formData.parentLastName}` : "Select Parent"}
-</Button>
-{showParentModal && (
-  <SelectParentModal
-    open={showParentModal}
-    onClose={() => setShowParentModal(false)}
-    onSelect={(parent: Parent) => {
-      setFormData({
-        ...formData,
-        parent_id: parent.id,
-        parentFirstName: parent.firstName,
-        parentLastName: parent.lastName,
-        parentEmail: parent.email,
-        parentPhone: parent.phone,
-        parentAddress: parent.address || ''
-      });
-      toast.success(`Parent ${parent.firstName} selected`);
-    }}
-  />
-)}
-
-</div>
 
               <div>
                 <Label htmlFor="section">Section</Label>
-                <Select value={formData.section} onValueChange={(value) => setFormData({...formData, section: value})}>
-                  <SelectTrigger>
-                    <SelectValue />
+                <Select
+                  value={formData.section}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, section: value })
+                  }
+                >
+                  <SelectTrigger className="focus:ring-2 focus:ring-indigo-400">
+                    <SelectValue placeholder="Select section" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="A">A</SelectItem>
@@ -272,88 +277,116 @@ useEffect(() => {
                   </SelectContent>
                 </Select>
               </div>
+
               <div>
                 <Label htmlFor="rollNumber">Roll Number *</Label>
                 <Input
                   id="rollNumber"
+                  className="focus:ring-2 focus:ring-indigo-400"
                   value={formData.rollNumber}
-                  onChange={(e) => setFormData({...formData, rollNumber: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, rollNumber: e.target.value })
+                  }
                   required
                 />
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <Label htmlFor="dateOfBirth">Date of Birth *</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={(e) => setFormData({...formData, dateOfBirth: e.target.value})}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                />
-              </div>
-              <div>
-                <Label htmlFor="bloodGroup">Blood Group</Label>
-                <Select value={formData.bloodGroup} onValueChange={(value) => setFormData({...formData, bloodGroup: value})}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select blood group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A+">A+</SelectItem>
-                    <SelectItem value="A-">A-</SelectItem>
-                    <SelectItem value="B+">B+</SelectItem>
-                    <SelectItem value="B-">B-</SelectItem>
-                    <SelectItem value="AB+">AB+</SelectItem>
-                    <SelectItem value="AB-">AB-</SelectItem>
-                    <SelectItem value="O+">O+</SelectItem>
-                    <SelectItem value="O-">O-</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* More Fields */}
+          <div className="bg-blue-400  grid grid-cols-1 md:grid-cols-3 gap-4 bg-white p-4 rounded-3xl shadow-md border border-pink-100">
+            <div>
+              <Label htmlFor="dateOfBirth">Date of Birth *</Label>
+              <Input
+                id="dateOfBirth"
+                type="date"
+                className="focus:ring-2 focus:ring-pink-400"
+                value={formData.dateOfBirth}
+                onChange={(e) =>
+                  setFormData({ ...formData, dateOfBirth: e.target.value })
+                }
+                required
+              />
             </div>
+            <div>
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                className="focus:ring-2 focus:ring-pink-400"
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="bloodGroup">Blood Group</Label>
+              <Select
+                value={formData.bloodGroup}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, bloodGroup: value })
+                }
+              >
+                <SelectTrigger className="focus:ring-2 focus:ring-pink-400">
+                  <SelectValue placeholder="Select blood group" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="A+">A+</SelectItem>
+                  <SelectItem value="O+">O+</SelectItem>
+                  <SelectItem value="B+">B+</SelectItem>
+                  <SelectItem value="AB+">AB+</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
+          <div className="bg-blue-400 rounded-3xl p-4  shadow-md border border-emerald-100 space-y-4">
             <div>
               <Label htmlFor="address">Address</Label>
               <Textarea
                 id="address"
+                className="focus:ring-2 focus:ring-emerald-400"
                 value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, address: e.target.value })
+                }
                 placeholder="Student's full address"
                 rows={2}
               />
             </div>
 
             <div>
-              <Label htmlFor="medicalConditions">Medical Conditions (if any)</Label>
+              <Label htmlFor="medicalConditions">Medical Conditions</Label>
               <Textarea
                 id="medicalConditions"
+                className="focus:ring-2 focus:ring-emerald-400"
                 value={formData.medicalConditions}
-                onChange={(e) => setFormData({...formData, medicalConditions: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, medicalConditions: e.target.value })
+                }
                 placeholder="Any medical conditions or allergies"
                 rows={2}
               />
             </div>
           </div>
 
-         
+          {/* Actions */}
           <div className="flex justify-end space-x-2 pt-4 border-t">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              className="hover:bg-gray-100 bg-red-600 text-white rounded-xl"
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
-  {loading ? 'Creating...' : 'Create Student'}
-</Button>
-
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-gradient-to-r from-emerald-500 to-indigo-600 rounded-xl text-white shadow-md hover:opacity-90"
+            >
+              {loading ? "Creating..." : "Create Student"}
+            </Button>
           </div>
         </form>
       </DialogContent>

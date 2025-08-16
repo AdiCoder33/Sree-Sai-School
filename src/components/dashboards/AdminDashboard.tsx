@@ -67,6 +67,28 @@ export const AdminDashboard: React.FC = () => {
     }
     return `${mb}MB`;
   };
+  // ⏰ dynamic greeting
+const [greeting, setGreeting] = useState("Hello");
+
+useEffect(() => {
+  const updateGreeting = () => {
+    const hour = new Date().getHours();
+    const g =
+      hour >= 5 && hour < 12
+        ? "Good Morning"
+        : hour >= 12 && hour < 17
+        ? "Good Afternoon"
+        : hour >= 17 && hour < 21
+        ? "Good Evening"
+        : "Good Night";
+    setGreeting(g);
+  };
+
+  updateGreeting();                      // set immediately on mount
+  const id = setInterval(updateGreeting, 60 * 1000); // refresh every minute
+  return () => clearInterval(id);
+}, []);
+
 
   const mockTrafficData = [
     { name: 'Mon', users: 40 },
@@ -284,125 +306,174 @@ export const AdminDashboard: React.FC = () => {
   const secondHalf = statusItems.slice(halfIndex);
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p className="text-gray-600 mt-2">Welcome back! Here's what's happening at your school.</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <Card key={stat.title}>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                  </div>
-                  <div className={`p-3 rounded-full ${stat.bgColor}`}>
-                    <Icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>System Health</CardTitle>
-            <CardDescription>Frontend and backend health</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <ul className="space-y-1">
-                  {firstHalf.map(({ name, status }) => {
-                    const online = status.toLowerCase().includes('online');
-                    return (
-                      <li key={name} className="flex items-center space-x-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
-                        />
-                        <span className="font-medium">{name}:</span>
-                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <ul className="space-y-1">
-                  {secondHalf.map(({ name, status }) => {
-                    const online = status.toLowerCase().includes('online');
-                    return (
-                      <li key={name} className="flex items-center space-x-2">
-                        <div
-                          className={`w-2 h-2 rounded-full ${online ? 'bg-green-600' : 'bg-red-600'}`}
-                        />
-                        <span className="font-medium">{name}:</span>
-                        <span className={!online ? 'text-red-600' : ''}>{status}</span>
-                      </li>
-                    );
-                  })}
-                </ul>
-                <div className="flex justify-center">
-                  {dbSizeMB !== null && (
-                    <CircularProgress
-                      size={120}
-                      strokeWidth={8}
-                      value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
-                      label={`${formatSize(dbSizeMB)} / ${formatSize(DB_LIMIT_MB)}`}
-                      className="text-indigo-600"
-                    />
-                  )}
-                </div>
-              </div>
-              <div className="h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={mockTrafficData} margin={{ left: -20 }}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" stroke="#64748b" />
-                    <Tooltip />
-                    <Line type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-              {statusError && (
-                <p className="text-red-600">Error: {statusError}</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick Actions</CardTitle>
-            <CardDescription>Frequently used features</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4">
-              {quickActions.map((action) => {
-                const Icon = action.icon;
-                return (
-                  <Button
-                    key={action.title}
-                    variant="outline"
-                    className="p-4 h-auto text-left flex flex-col items-start hover:bg-gray-50 transition-colors"
-                    onClick={action.action}
-                  >
-                    <Icon className={`h-8 w-8 ${action.color} mb-2`} />
-                    <p className="font-medium text-gray-900">{action.title}</p>
-                    <p className="text-sm text-gray-600">{action.description}</p>
-                  </Button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  <div className="space-y-2 relative brand-surface overflow-x-clip rounded-2xl m-0 p-3 md:p-4">
+    {/* Decorative blobs — visual only */}
+    <div className="pointer-events-none absolute inset-0 -z-10">
+      <div className="admin-blob admin-blob-a" />
+      <div className="admin-blob admin-blob-b" />
+      <div className="admin-blob admin-blob-c" />
     </div>
-  );
-};
+
+    {/* Header */}
+    <div>
+      <h1 className="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-sky-600 to-emerald-600 drop-shadow-sm">
+        Admin Dashboard
+      </h1>
+      <p className="text-slate-600 mt-2">
+        {greeting}! Here's what's happening at your school.
+      </p>
+    </div>
+
+    {/* Stats — brand glass with 3D hover */}
+    <div className="grid rounded-xl grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      {stats.map((stat) => {
+        const Icon = stat.icon;
+        return (
+          <Card
+            key={stat.title}
+            className="admin-card--brand group rounded-xl transition duration-200 hover:-translate-y-0.5 hover:shadow-2xl"
+          >
+            <div className="card-top-accent--brand h-1.5 w-full" />
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-slate-600">{stat.title}</p>
+                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                </div>
+
+                {/* Right pill – soft gradient + inner shine */}
+                <div
+                  className={[
+                    'icon-pill--brand p-3 rounded-2xl ring-1 ring-black/5 shadow-inner',
+                    'bg-gradient-to-br', // enables the pill gradient
+                  ].join(' ')}
+                >
+                  <Icon className={`h-6 w-6 ${stat.color}`} />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+
+    {/* System + Quick Actions */}
+    <div className="pb-4 rounded-2xl grid grid-cols-1 lg:grid-cols-2 gap-6 ring-1 ring-black/5 shadow-md">
+      {/* System Health */}
+      <Card className="admin-card--brand rounded-2xl shadow-sm hover:shadow-xl transition-shadow">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,.15)]"></span>
+            System Health
+          </CardTitle>
+          <CardDescription>Frontend and backend health</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <ul className="space-y-1">
+                {firstHalf.map(({ name, status }) => {
+                  const online = status.toLowerCase().includes('online');
+                  return (
+                    <li
+                      key={name}
+                      className="flex items-center space-x-2 rounded-xl px-2.5 py-1.5 bg-white/70 ring-1 ring-black/5 hover:bg-white transition"
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          online
+                            ? 'bg-green-600 shadow-[0_0_0_3px_rgba(16,185,129,.18)]'
+                            : 'bg-red-600 shadow-[0_0_0_3px_rgba(244,63,94,.18)]'
+                        }`}
+                      />
+                      <span className="font-medium">{name}:</span>
+                      <span className={!online ? 'text-red-600' : 'text-emerald-700'}>{status}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <ul className="space-y-1">
+                {secondHalf.map(({ name, status }) => {
+                  const online = status.toLowerCase().includes('online');
+                  return (
+                    <li
+                      key={name}
+                      className="flex items-center space-x-2 rounded-xl px-2.5 py-1.5 bg-white/70 ring-1 ring-black/5 hover:bg-white transition"
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          online
+                            ? 'bg-green-600 shadow-[0_0_0_3px_rgba(16,185,129,.18)]'
+                            : 'bg-red-600 shadow-[0_0_0_3px_rgba(244,63,94,.18)]'
+                        }`}
+                      />
+                      <span className="font-medium">{name}:</span>
+                      <span className={!online ? 'text-red-600' : 'text-emerald-700'}>{status}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="flex justify-center">
+                {dbSizeMB !== null && (
+                  <CircularProgress
+                    size={120}
+                    strokeWidth={8}
+                    value={Math.min(100, (dbSizeMB / DB_LIMIT_MB) * 100)}
+                    label={`${formatSize(dbSizeMB)} / ${formatSize(DB_LIMIT_MB)}`}
+                    className="text-indigo-600"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Chart with brand surface */}
+            <div className="h-32 rounded-xl chart-surface--brand p-2 ring-1 ring-black/5">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mockTrafficData} margin={{ left: -20 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" stroke="#64748b" />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="users" stroke="#4f46e5" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {statusError && <p className="text-red-600">Error: {statusError}</p>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Quick Actions */}
+      <Card className="admin-card--brand rounded-2xl shadow-sm hover:shadow-xl transition-shadow">
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+          <CardDescription>Frequently used features</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 gap-4">
+            {quickActions.map((action) => {
+              const Icon = action.icon;
+              return (
+                <Button
+                  key={action.title}
+                  variant="outline"
+                  onClick={action.action}
+                  className="group p-4 h-auto text-left flex flex-col items-start bg-white/70 hover:bg-white transition-all rounded-2xl ring-1 ring-black/5 border-slate-200/70 hover:shadow-lg"
+                >
+                  <span className="rounded-xl ring-1 ring-black/5 bg-white p-2 shadow-inner mb-1 group-hover:scale-105 transition">
+                    <Icon className={`h-8 w-8 ${action.color}`} />
+                  </span>
+                  <p className="font-medium text-slate-900">{action.title}</p>
+                  <p className="text-sm text-slate-600">{action.description}</p>
+                </Button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+);
+}

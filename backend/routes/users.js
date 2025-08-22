@@ -119,6 +119,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
     const { id } = req.params;
     const {
+      email,
       firstName, lastName, role, phone, address, qualification,
       experience, subject, dateOfJoining, emergencyContact,
        occupation, status,
@@ -133,14 +134,29 @@ router.put('/:id', authenticateToken, async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Fetch the user's current role to preserve it when no new role is supplied
+    // Fetch the user's current role and email to preserve them when not supplied
     const roleResult = await pool.request()
       .input('id', id)
-      .query('SELECT role FROM users WHERE id = @id');
+      .query('SELECT role, email FROM users WHERE id = @id');
     const currentRole = roleResult.recordset[0]?.role;
+    const currentEmail = roleResult.recordset[0]?.email;
+
+    const emailToUpdate = email !== undefined ? email : currentEmail;
+
+    // Ensure email uniqueness if it is being changed
+    if (emailToUpdate !== currentEmail) {
+      const emailCheck = await pool.request()
+        .input('email', emailToUpdate)
+        .input('id', id)
+        .query('SELECT 1 FROM users WHERE email = @email AND id <> @id');
+      if (emailCheck.recordset.length > 0) {
+        return res.status(400).json({ error: 'Email already exists' });
+      }
+    }
 
     const request = pool.request()
       .input('id', id)
+      .input('email', emailToUpdate)
       .input('firstName', firstName)
       .input('lastName', lastName)
       .input('phone', phone)
@@ -165,7 +181,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       request.input('role', roleToUpdate).input('status', status);
       query = `
         UPDATE users SET
-          firstName = @firstName, lastName = @lastName, role = @role, phone = @phone, address = @address,
+          firstName = @firstName, lastName = @lastName, email = @email, role = @role, phone = @phone, address = @address,
           qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
           emergencyContact = @emergencyContact,  occupation = @occupation,
           status = @status, alternatePhone = @alternatePhone, workplace = @workplace,
@@ -175,7 +191,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     } else {
       query = `
         UPDATE users SET
-          firstName = @firstName, lastName = @lastName, phone = @phone, address = @address,
+          firstName = @firstName, lastName = @lastName, email = @email, phone = @phone, address = @address,
           qualification = @qualification, experience = @experience, subject = @subject, dateOfJoining = @dateOfJoining,
           emergencyContact = @emergencyContact,  occupation = @occupation,
           alternatePhone = @alternatePhone, workplace = @workplace,

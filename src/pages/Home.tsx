@@ -23,12 +23,12 @@ import CampusShowcaseCard from "@/components/CampusShowcaseCard";
 
 /* ---------- Slides for Programs carousel ---------- */
 const programSlides = [
-  { src: "/images/sreesai_1.JPG", title: "CBSE Curriculum", desc: "Strong academic foundation with experienced mentors." },
-  { src: "/images/sreesai_2.JPG", title: "Science Labs", desc: "Hands-on learning with modern equipment." },
-  { src: "/images/sreesai_3.JPG", title: "Arts & Music", desc: "Clubs, stage, and competitions for creative growth." },
-  { src: "/images/sreesai_1.JPG", title: "Sports & Fitness", desc: "Playgrounds, coaching, house events, and tournaments." },
-  { src: "/images/sreesai_2.JPG", title: "Technology", desc: "Smart classrooms, computer labs, coding clubs." },
-  { src: "/images/sreesai_3.JPG", title: "Clubs & Values", desc: "Eco club, leadership, service & life skills." },
+  { src: "/images/sreesai_1.jpg", title: "CBSE Curriculum", desc: "Strong academic foundation with experienced mentors." },
+  { src: "/images/sreesai_2.jpg", title: "Science Labs", desc: "Hands-on learning with modern equipment." },
+  { src: "/images/sreesai_3.jpg", title: "Arts & Music", desc: "Clubs, stage, and competitions for creative growth." },
+  { src: "/images/sreesai_1.jpg", title: "Sports & Fitness", desc: "Playgrounds, coaching, house events, and tournaments." },
+  { src: "/images/sreesai_2.jpg", title: "Technology", desc: "Smart classrooms, computer labs, coding clubs." },
+  { src: "/images/sreesai_3.jpg", title: "Clubs & Values", desc: "Eco club, leadership, service & life skills." },
 ];
 
 /* ---------- Global decorative background ---------- */
@@ -96,7 +96,7 @@ export const Home: React.FC = () => {
 
   // --- Contact section helpers ---
   const ADDRESS =
-    "14/96, 3, Tirupati- Renigunta Flyover Bridge, Gowri Nagar, Renigunta, Tirupati, Andhra Pradesh 517520";
+    "8GPP+3V3, Pendlimarri, Idupulapaya, Andhra Pradesh 516330";
 
   const [copiedKey, setCopiedKey] = React.useState<string | null>(null);
   const copyToClipboard = (key: string, text: string) => {
@@ -176,7 +176,7 @@ React.useEffect(() => {
             <School className="h-7 w-7 sm:h-8 sm:w-8 text-white" />
             <div className="leading-tight">
               <span className="block text-base sm:text-xl font-extrabold text-white">
-                Sree Sai E.M High School
+                School Management System
               </span>
               <span className="block text-[10px] sm:text-[11px] text-white/80">Excellence in Education Since 1995</span>
             </div>
@@ -315,9 +315,9 @@ React.useEffect(() => {
               showArrows={false}
               showDots
               slides={[
-                { src: "/images/sreesai_1.JPG", alt: "Students arriving at campus" },
-                { src: "/images/sreesai_3.JPG", alt: "Annual day celebration" },
-                { src: "/images/sreesai_2.JPG", alt: "School building exterior" },
+                { src: "/images/sreesai_1.jpg", alt: "Students arriving at campus" },
+                { src: "/images/sreesai_3.jpg", alt: "Annual day celebration" },
+                { src: "/images/sreesai_2.jpg", alt: "School building exterior" },
               ]}
             />
           </div>
@@ -331,8 +331,8 @@ React.useEffect(() => {
           {/* full-width hero content */}
           <div className="relative z-10 w-full px-0">
             <div className=" min-h-[60vh] sm:mt-20 lg:mt-20 sm:min-h-[78vh] lg:min-h-[78vh] pb-10 sm:pb-0 lg:pb-10 flex flex-col items-center justify-center text-center">
-              <h2 className="mt-20 sm:mt-25 text-white text-4xl sm:text-6xl lg:text-7xl font-bold leading-tight drop-shadow-md">
-                Welcome to Sreesai School
+              <h2 className="mt-20 sm:mt-25 text-white text-5xl sm:text-2xl lg:text-6xl font-bold leading-tight drop-shadow-md">
+                Welcome to School Management System
               </h2>
              
               <div className="mt-6 sm:mt-10 flex flex-row sm:flex-row gap-3 sm:gap-2">
@@ -450,7 +450,7 @@ React.useEffect(() => {
 
             <div className="px-3 sm:px-6">
               <CampusShowcaseCard
-                imageSrc="/images/sreesai_3.JPG"
+                imageSrc="/images/sreesai_3.jpg"
                 alt="Annual day group photo at Sree Sai School"
                 chip="Since 1995"
                 title="Sree Sai"
@@ -676,9 +676,9 @@ React.useEffect(() => {
               showArrows
               showDots
               slides={[
-                { src: "/images/sreesai_1.JPG", alt: "Assembly at campus" },
-                { src: "/images/sreesai_2.JPG", alt: "Labs and classrooms" },
-                { src: "/images/sreesai_3.JPG", alt: "Cultural program" },
+                { src: "/images/sreesai_1.jpg", alt: "Assembly at campus" },
+                { src: "/images/sreesai_2.jpg", alt: "Labs and classrooms" },
+                { src: "/images/sreesai_3.jpg", alt: "Cultural program" },
               ]}
             />
           </div>
@@ -742,7 +742,7 @@ React.useEffect(() => {
                           className="h-full w-full object-cover"
                         />
                       </div>
-                      <div className="font-semibold text-[hsl(var(--ink))] text-base sm:text-lg">Mr. Prakash</div>
+                      <div className="font-semibold text-[hsl(var(--ink))] text-base sm:text-lg">Mr.JackSparrow</div>
                       <div className="text-xs sm:text-sm text-[hsl(var(--body))]/75">Principal</div>
 
                       <div className="mt-5 grid grid-cols-3 gap-2 text-center">
@@ -828,8 +828,8 @@ React.useEffect(() => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {[
-                      { label: "+919440479822", tel: "+919440479822", key: "tel1" },
-                      { label: "+919440479822", tel: "+919440479822", key: "tel2" },
+                      { label: "+916303625094", tel: "+916303625094", key: "tel1" },
+                      { label: "+919652163415", tel: "+919652163415", key: "tel2" },
                     ].map((p) => (
                       <div key={p.key} className="flex items-center justify-center gap-2">
                         <a href={`tel:${p.tel}`} className="font-medium text-[hsl(var(--ink))] hover:underline" aria-label={`Call ${p.label}`}>
@@ -864,8 +864,8 @@ React.useEffect(() => {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     {[
-                      { e: "info@sreesaischool.edu", key: "email1" },
-                      { e: "admissions@sreesaischool.edu", key: "email2" },
+                      { e: "info@SchoolManagementSystem.edu", key: "email1" },
+                      { e: "admissions@SchoolManagementSystem.edu", key: "email2" },
                     ].map(({ e, key }) => (
                       <div key={key} className="flex items-center justify-center gap-2">
                         <a href={`mailto:${e}`} className="font-medium text-[hsl(var(--ink))] hover:underline break-all" aria-label={`Email ${e}`}>
@@ -932,12 +932,12 @@ React.useEffect(() => {
                   <h4 className="text-lg sm:text-xl font-semibold">Admissions Helpline</h4>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <a href="tel:+919876543210" className="flex-1 sm:flex-initial">
+                  <a href="tel:+916303625094" className="flex-1 sm:flex-initial">
                     <Button className="w-full sm:w-auto bg-white text-[hsl(var(--brand))] hover:bg-blue-50 ring-1 ring-white/40">
                       Call Now
                     </Button>
                   </a>
-                  <a href="mailto:admissions@sreesaischool.edu" className="flex-1 sm:flex-initial">
+                  <a href="mailto:admissions@SchoolManagementSystem.edu" className="flex-1 sm:flex-initial">
                     <Button variant="secondary" className="w-full sm:w-auto bg-transparent text-white border border-white/40 hover:bg-white/10">
                       Email Admissions
                     </Button>
@@ -966,7 +966,7 @@ React.useEffect(() => {
             <div>
               <div className="flex items-center gap-3">
                 <School className="h-7 w-7 text-[hsl(var(--brand-cta))]" />
-                <span className="font-semibold tracking-tight">Sree Sai English Medium High School</span>
+                <span className="font-semibold tracking-tight">School Management System</span>
               </div>
               <p className="mt-3 text-white/80">Excellence in Education Since 1995</p>
 
@@ -998,22 +998,21 @@ React.useEffect(() => {
                 ))}
               </ul>
             </nav>
-
             <div>
               <h4 className="text-sm font-semibold text-white/90">Contact</h4>
               <ul className="mt-3 space-y-2 text-sm text-white/80">
                 <li>
-                  <a href="tel:+919876543210" className="hover:text-white">+91 98765 43210</a>
+                  <a href="tel:+916303625094" className="hover:text-white">+916303625094</a>
                   <span className="mx-2 text-white/30">•</span>
-                  <a href="tel:+919876543211" className="hover:text-white">+91 98765 43211</a>
+                  <a href="tel:+919652163415" className="hover:text-white">+919652163415</a>
                 </li>
                 <li className="break-all">
                   <span className="mx-2 text-white/30">•</span>
-                  <a href="mailto:info@sreesaischool.edu" className="hover:text-white">info@sreesaischool.edu</a><br/>
+                  <a href="mailto:info@SchoolManagementSystem.edu" className="hover:text-white">info@SchoolManagementSystem.edu</a><br/>
                   <span className="mx-2 text-white/30">•</span>
-                  <a href="mailto:admissions@sreesaischool.edu" className="hover:text-white">admissions@sreesaischool.edu</a>
+                  <a href="mailto:admissions@SchoolManagementSystem.edu" className="hover:text-white">admissions@SchoolManagementSystem.edu</a>
                 </li>
-                <li className="text-white/75">14/96, 3, Tirupati–Renigunta Flyover Bridge, Gowri Nagar, Renigunta, Tirupati, Andhra Pradesh 517520</li>
+                <li className="text-white/75">8GPP+3V3, Idupulapaya, Andhra Pradesh</li>
               </ul>
 
               <div className="mt-4 flex flex-col sm:flex-row gap-3">
@@ -1022,7 +1021,7 @@ React.useEffect(() => {
                 </a>
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                    "14/96, 3, Tirupati- Renigunta Flyover Bridge, Gowri Nagar, Renigunta, Tirupati, Andhra Pradesh 517520",
+                    "8GPP+3V3, Pendlimarri, Idupulapaya, Andhra Pradesh 516330",
                   )}`}
                   target="_blank"
                   rel="noreferrer"
@@ -1036,7 +1035,7 @@ React.useEffect(() => {
 
           <div className="mt-8 md:mt-10 border-t border-white/10 pt-5 md:pt-6 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 px-3 sm:px-6">
             <p className="text-white/60 text-xs sm:text-sm text-center md:text-left">
-              © {new Date().getFullYear()} Sree Sai English Medium High School. All rights reserved.
+              © {new Date().getFullYear()} School Management System. All rights reserved.
             </p>
             <div className="flex items-center gap-4 sm:gap-6 text-sm">
               <Link to="#" className="text-white/70 hover:text-white">Privacy</Link>

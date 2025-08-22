@@ -131,7 +131,7 @@ export const Sidebar: React.FC = () => {
       SS
     </div>
     <div className="min-w-0">
-      <h2 className="text-lg font-bold text-gray-900 leading-tight">Sree Sai School</h2>
+      <h2 className="text-lg font-bold text-gray-900 leading-tight">School</h2>
       <p className="text-xs text-gray-500 leading-none">Management System</p>
     </div>
   </div>

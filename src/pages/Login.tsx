@@ -53,9 +53,9 @@ export const Login: React.FC = () => {
               <School className="h-6 w-6 text-white" />
             </div>
             <div className="leading-tight">
-              <h1 className="text-2xl sm:text-3xl font-extrabold">Sree Sai</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold">School</h1>
               <p className="text-white/85 text-sm -mt-0.5">
-                English Medium High School
+                 Management System
               </p>
             </div>
           </div>
@@ -208,7 +208,7 @@ export const Login: React.FC = () => {
                   </Button>
 
                   <p className="text-center text-xs text-gray-500 mt-4">
-                    © 2025 Sreesai English Medium High School. All rights
+                    © 2025  School Management System. All rights
                     reserved.
                   </p>
                 </form>

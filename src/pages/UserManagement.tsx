@@ -68,47 +68,52 @@ const [editUserId, setEditUserId] = useState<string | null>(null);
     }
   };
   const handleEditUser = (user: User) => {
-  setNewUser({
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    password: '',
-    role: user.role,
-    phone: user.phone || '',
-    address: '',
-    qualification: '',
-    experience: '',
-    subject: '',
-    dateOfJoining: '',
-    emergencyContact: '',
-    occupation: '',
-    status: user.status || 'active'  // ✅ Add this line
-  });
-  setEditUserId(user.id);
-  setEditMode(true);
-  setShowAddForm(true);
-  toast.info(`Editing ${user.firstName} ${user.lastName}`);
-};
+    setNewUser({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: '',
+      role: user.role,
+      phone: user.phone || '',
+      address: user.address || '',
+      qualification: user.qualification || '',
+      experience: user.experience || '',
+      subject: user.subject || '',
+      dateOfJoining: user.dateOfJoining || '',
+      emergencyContact: user.emergencyContact || '',
+      occupation: user.occupation || '',
+      status: user.status || 'active'
+    });
+    setEditUserId(user.id);
+    setEditMode(true);
+    setShowAddForm(true);
+    toast.info(`Editing ${user.firstName} ${user.lastName}`);
+  };
 
 
 
   const handleAddOrUpdateUser = async (e: React.FormEvent) => {
-  e.preventDefault();
-  const token = localStorage.getItem('smartschool_token');
-  const url = editMode
-    ? `${API_BASE}/users/${editUserId}`
-    : `${API_BASE}/users`;
-  const method = editMode ? 'PUT' : 'POST';
+    e.preventDefault();
+    const token = localStorage.getItem('smartschool_token');
+    const url = editMode
+      ? `${API_BASE}/users/${editUserId}`
+      : `${API_BASE}/users`;
+    const method = editMode ? 'PUT' : 'POST';
 
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(newUser)
-    });
+    const payload: Partial<typeof newUser> = { ...newUser };
+    if (editMode && !newUser.password) {
+      delete payload.password;
+    }
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
 
     if (response.ok) {
       toast.success(editMode ? 'User updated successfully!' : 'User added successfully!');
@@ -274,8 +279,10 @@ const resetForm = () => {
       {showAddForm && (
         <Card>
           <CardHeader>
-            <CardTitle>Add New User</CardTitle>
-            <CardDescription>Create a new user account</CardDescription>
+            <CardTitle>{editMode ? 'Update User' : 'Add New User'}</CardTitle>
+            <CardDescription>
+              {editMode ? 'Modify user details' : 'Create a new user account'}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleAddOrUpdateUser} className="space-y-4">
@@ -305,15 +312,17 @@ const resetForm = () => {
                     required
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
-                  <Input
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-                    required
-                  />
-                </div>
+                {!editMode && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Password *</label>
+                    <Input
+                      type="password"
+                      value={newUser.password}
+                      onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                      required
+                    />
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Role *</label>
                   <Select value={newUser.role} onValueChange={(value: 'admin' | 'teacher' | 'parent') => setNewUser({...newUser, role: value})}>
@@ -407,7 +416,7 @@ const resetForm = () => {
                   Cancel
                 </Button>
                 <Button type="submit">
-                  Add User
+                  {editMode ? 'Update User' : 'Add User'}
                 </Button>
               </div>
             </form>
